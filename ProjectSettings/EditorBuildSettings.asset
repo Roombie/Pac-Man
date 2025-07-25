@@ -7,10 +7,13 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/MainMenu.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+    guid: 767ccbe982303974793f662a033af286
   - enabled: 1
     path: Assets/Scenes/Pacman.unity
-    guid: 767ccbe982303974793f662a033af286
+    guid: 2cda990e2423bbf4892e6590ba056729
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 980ae20e61865b94a9dca22948c5a83f, type: 2}
+    com.unity.input.settings: {fileID: 11400000, guid: b76b9af743308e6468937006cfc4d521, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+    com.unity.localization.settings: {fileID: 11400000, guid: 095e69757d9af09458e7f7377f641f14, type: 2}
   m_UseUCBPForAssetBundles: 0
