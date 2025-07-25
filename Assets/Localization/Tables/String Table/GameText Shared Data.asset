@@ -79,6 +79,10 @@ MonoBehaviour:
     m_Key: MainMenu/Canva/ServiceMenu/Buttons/Extra Text (TMP)
     m_Metadata:
       m_Items: []
+  - m_Id: 23594795888640
+    m_Key: MainMenu/Canva/OptionsMenu/Buttons/Sound Text (TMP) (1)
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
