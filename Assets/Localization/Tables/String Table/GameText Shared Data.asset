@@ -24,63 +24,63 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1387600375808
-    m_Key: Character_Nickname
+    m_Key: Character_NicknameTitle
     m_Metadata:
       m_Items: []
   - m_Id: 1833266147328
-    m_Key: MainMenu/Canva/HUD/HighScore Text (TMP)
+    m_Key: HUD_HighscoreTitle
     m_Metadata:
       m_Items: []
   - m_Id: 2246660943872
-    m_Key: MainMenu/Canva/Intro/Credit Text (TMP)
+    m_Key: HUD_CreditTitle
     m_Metadata:
       m_Items: []
   - m_Id: 2422226120704
-    m_Key: MainMenu/Canva/StartMenu/Start Game Button/Start Game Text (TMP)
+    m_Key: StartMenu_StartGameTitle
     m_Metadata:
       m_Items: []
   - m_Id: 2754167533568
-    m_Key: MainMenu/Canva/StartMenu/Options Button/Options Text (TMP)
+    m_Key: StartMenu_OptionsTitle
     m_Metadata:
       m_Items: []
   - m_Id: 2767518003200
-    m_Key: MainMenu/Canva/StartMenu/Exit Game Button/Exit Game Text (TMP)
+    m_Key: StartMenu_ExitGameTitle
     m_Metadata:
       m_Items: []
   - m_Id: 3326018940928
-    m_Key: MainMenu/Canva/OptionsMenu/Buttons/Return Button/Back Text (TMP)
+    m_Key: OptionsMenu_ReturnTitle
     m_Metadata:
       m_Items: []
   - m_Id: 3355924328448
-    m_Key: MainMenu/Canva/OptionsMenu/Buttons/Music Text (TMP)
+    m_Key: OptionsMenu_MusicTitle
     m_Metadata:
       m_Items: []
   - m_Id: 3405568110592
-    m_Key: MainMenu/Canva/OptionsMenu/Buttons/Indicator Text (TMP)
+    m_Key: OptionsMenu_IndicatorTitle
     m_Metadata:
       m_Items: []
   - m_Id: 3448601669632
-    m_Key: MainMenu/Canva/OptionsMenu/Buttons/Sound Text (TMP)
+    m_Key: OptionsMenu_SoundTitle
     m_Metadata:
       m_Items: []
   - m_Id: 3466880446464
-    m_Key: MainMenu/Canva/OptionsMenu/Buttons/Fullscreen Text (TMP)
+    m_Key: OptionsMenu_FullscreenTitle
     m_Metadata:
       m_Items: []
   - m_Id: 3963431514112
-    m_Key: MainMenu/Canva/ServiceMenu/Buttons/Return Button/Back Text (TMP)
+    m_Key: ServiceMenu_ReturnTitle
     m_Metadata:
       m_Items: []
   - m_Id: 3982838558720
-    m_Key: MainMenu/Canva/ServiceMenu/Buttons/Pacman Text (TMP)
+    m_Key: ServiceMenu_PacmanTitle
     m_Metadata:
       m_Items: []
   - m_Id: 4001226387456
-    m_Key: MainMenu/Canva/ServiceMenu/Buttons/Extra Text (TMP)
+    m_Key: ServiceMenu_ExtraTitle
     m_Metadata:
       m_Items: []
   - m_Id: 23594795888640
-    m_Key: MainMenu/Canva/OptionsMenu/Buttons/Sound Text (TMP) (1)
+    m_Key: ServiceMenu_LanguageTitle
     m_Metadata:
       m_Items: []
   m_Metadata:
