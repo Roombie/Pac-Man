@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 
 public class BackButtonHandler : MonoBehaviour
 {
-    public Button backButton;
     public AudioClip pressSound;
     public InputActionReference cancelAction;
 
@@ -31,10 +30,7 @@ public class BackButtonHandler : MonoBehaviour
 
     private void OnCancelPressed(InputAction.CallbackContext ctx)
     {
-        if (backButton != null && backButton.gameObject.activeInHierarchy)
-        {
-            AudioManager.Instance?.Play(pressSound, SoundCategory.SFX);
-            backButton.onClick.Invoke();
-        }
+        AudioManager.Instance?.Play(pressSound, SoundCategory.SFX);
+        MenuManager.Instance.Back();
     }
 }
