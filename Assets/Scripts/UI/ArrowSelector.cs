@@ -4,6 +4,8 @@ using UnityEngine.UI;
 
 public class ArrowSelector : MonoBehaviour
 {
+    public static ArrowSelector Instance { get; private set; }
+    
     [System.Serializable]
     public struct ButtonData
     {
@@ -22,6 +24,16 @@ public class ArrowSelector : MonoBehaviour
     private bool isChangingPage = false;
     private bool suppressSoundOnFirstAutoSelection = true;
     public static bool suppressSoundOnNextExternalSelection = false;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
 
     void Start()
     {
