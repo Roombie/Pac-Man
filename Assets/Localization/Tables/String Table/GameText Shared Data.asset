@@ -115,6 +115,10 @@ MonoBehaviour:
     m_Key: None
     m_Metadata:
       m_Items: []
+  - m_Id: 805380169756672
+    m_Key: GameOver_Text
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

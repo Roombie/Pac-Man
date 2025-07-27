@@ -29,7 +29,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
     public SettingType SettingType => settingType;
 
     private ArrowSelector arrowSelector;
-    private Pacman inputActions;
+    private PacmanInputAction inputActions;
     private bool isSelected = false;
     private static OptionSelectorSettingHandler currentlySelecting = null;
     private ISettingsProvider settingsProvider;
@@ -74,7 +74,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
 
     void OnEnable()
     {
-        inputActions ??= new Pacman();
+        inputActions ??= new PacmanInputAction();
         inputActions.UI.Navigate.performed += OnNavigate;
         inputActions.UI.Submit.performed += OnSubmit;
         inputActions.Enable();

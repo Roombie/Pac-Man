@@ -8,7 +8,7 @@ public class AnimationEndInputTrigger : MonoBehaviour
     public UnityEvent onFinalInput;
 
     private Animator animator;
-    private Pacman input;
+    private PacmanInputAction input;
 
     private bool hasJumpedToEnd = false;
     private bool eventTriggered = false;
@@ -16,7 +16,7 @@ public class AnimationEndInputTrigger : MonoBehaviour
     private void Awake()
     {
         animator = GetComponent<Animator>();
-        input = new Pacman();
+        input = new PacmanInputAction();
     }
 
     private void OnEnable()
