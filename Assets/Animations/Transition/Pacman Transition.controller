@@ -9,7 +9,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Close
+    m_ConditionEvent: close
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 9051706800887953852}
@@ -34,13 +34,13 @@ AnimatorController:
   m_Name: Pacman Transition
   serializedVersion: 5
   m_AnimatorParameters:
-  - m_Name: Open
+  - m_Name: open
     m_Type: 9
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: Close
+  - m_Name: close
     m_Type: 9
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -68,7 +68,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: Open
+    m_ConditionEvent: open
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 1219290542361840602}
@@ -106,7 +106,7 @@ AnimatorState:
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
   m_Motion: {fileID: 7400000, guid: 1e4abd1c8e718f34fb77d33d5891dfa7, type: 2}
-  m_Tag: 
+  m_Tag: TransitionOpen
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
@@ -158,7 +158,7 @@ AnimatorState:
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
   m_Motion: {fileID: 7400000, guid: 83521d27be9339b4080c206c63750be8, type: 2}
-  m_Tag: 
+  m_Tag: TransitionClose
   m_SpeedParameter: 
   m_MirrorParameter: 
   m_CycleOffsetParameter: 

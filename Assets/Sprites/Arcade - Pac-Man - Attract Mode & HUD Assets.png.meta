@@ -156,7 +156,7 @@ TextureImporter:
         width: 17
         height: 5
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -165,6 +165,28 @@ TextureImporter:
       bones: []
       spriteID: 78161667311b3ae4d91973827b7b2476
       internalID: 324120198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Arcade - Pac-Man - Attract Mode & HUD Assets_2
+      rect:
+        serializedVersion: 2
+        x: 664
+        y: 89
+        width: 17
+        height: 5
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d7adad795f688b8488950315ca44cf42
+      internalID: 67811208
       vertices: []
       indices: 
       edges: []
@@ -185,6 +207,7 @@ TextureImporter:
     nameFileIdTable:
       Arcade - Pac-Man - Attract Mode & HUD Assets_0: -2975280189840284656
       Arcade - Pac-Man - Attract Mode & HUD Assets_1: 324120198
+      Arcade - Pac-Man - Attract Mode & HUD Assets_2: 67811208
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

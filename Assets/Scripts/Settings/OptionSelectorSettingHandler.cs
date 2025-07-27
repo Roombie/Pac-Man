@@ -13,7 +13,7 @@ public enum NavigationAxis
 
 public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISelectHandler, IDeselectHandler
 {
-    [SettingTypeFilter(SettingType.MusicVolumeKey, SettingType.SoundVolumeKey, SettingType.PacmanLivesKey, SettingType.ExtraKey)]
+    [SettingTypeFilter(SettingType.MusicVolumeKey, SettingType.SoundVolumeKey, SettingType.PacmanLivesKey, SettingType.ExtraKey, SettingType.LanguageKey)]
     public SettingType settingType;
     public TextMeshProUGUI label;
     [SerializeField] private NavigationAxis navigationAxis = NavigationAxis.Horizontal;
@@ -24,6 +24,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
     [SerializeField] private AudioClip confirmSound;
     public string[] options;
     public int currentIndex;
+    public bool applyImmediately = true;
 
     public SettingType SettingType => settingType;
 
@@ -43,6 +44,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
             SettingType.MusicVolumeKey,
             SettingType.SoundVolumeKey,
             SettingType.PacmanLivesKey,
+            SettingType.LanguageKey,
             SettingType.ExtraKey
         };
 
@@ -120,8 +122,8 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
                 break;
 
             case NavigationAxis.Vertical:
-                if (input.y < 0) ChangeOption(1);
-                else if (input.y > 0) ChangeOption(-1);
+                if (input.y < 0) ChangeOption(-1);
+                else if (input.y > 0) ChangeOption(1);
                 break;
         }
     }
@@ -136,7 +138,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
             AudioManager.Instance?.Play(navigateSound, SoundCategory.SFX);
             isSelected = true;
             currentlySelecting = this;
-            UIInteractionState.RegisterActive(this);
+            EventManager<object>.TriggerEvent(EventKey.UIInteractionChanged, true);
             EventSystem.current.SetSelectedGameObject(gameObject);
             EventSystem.current.sendNavigationEvents = false;
             SetArrowVisibility(true);
@@ -147,7 +149,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
             AudioManager.Instance?.Play(confirmSound, SoundCategory.SFX);
             isSelected = false;
             currentlySelecting = null;
-            UIInteractionState.UnregisterActive(this);
+            EventManager<object>.TriggerEvent(EventKey.UIInteractionChanged, false);
             EventSystem.current.sendNavigationEvents = true;
             SetArrowVisibility(false);
             Save();
@@ -199,6 +201,11 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
 
         currentIndex = index;
         label.text = options[currentIndex];
+
+        if (applyImmediately && settingsProvider != null)
+        {
+            settingsProvider.ApplySetting(settingType, currentIndex);
+        }
     }
 
     public void Apply(bool value) { }
@@ -244,7 +251,8 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
     public void OnDeselect(BaseEventData eventData)
     {
         isSelected = false;
-        UIInteractionState.UnregisterActive(this);
+        EventManager<object>.TriggerEvent(EventKey.UIInteractionChanged, false);
+        
         SetArrowVisibility(false);
     }
 }

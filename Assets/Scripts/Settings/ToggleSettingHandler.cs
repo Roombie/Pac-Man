@@ -23,11 +23,23 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
     public SettingType SettingType => settingType;
 
     private System.Action<UnityEngine.Localization.Locale> localeChangedHandler;
-
-    void Start()
+    
+   void Start()
     {
         localeChangedHandler = _ => RefreshUI();
         LocalizationSettings.SelectedLocaleChanged += localeChangedHandler;
+
+        if (toggle != null)
+            toggle.onValueChanged.AddListener(OnToggleChanged);
+
+        StartCoroutine(InitializeAfterLocalization());
+    }
+
+    private System.Collections.IEnumerator InitializeAfterLocalization()
+    {
+        yield return LocalizationSettings.InitializationOperation;
+
+        ApplyFromSaved();
     }
 
     private void OnDestroy()
@@ -71,7 +83,7 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
 
         RefreshUI();
 
-        SettingsApplier.ApplyBoolSetting(settingType, currentValue);
+        // SettingsApplier.ApplyBoolSetting(settingType, currentValue);
     }
 
     public void Apply(int index) { }
@@ -90,15 +102,7 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
     public void RefreshUI()
     {
         if (label == null) return;
-
-        string key = currentValue ? onTextKey : offTextKey;
-        var localizedString = LocalizationSettings.StringDatabase.GetLocalizedStringAsync(key);
-        localizedString.Completed += handle =>
-        {
-            if (handle.Status == UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationStatus.Succeeded)
-                label.text = handle.Result;
-            else
-                label.text = currentValue ? "On" : "Off"; // fallback
-        };
+        string key = toggle.isOn ? onTextKey : offTextKey;
+        label.text = LocalizationSettings.StringDatabase.GetLocalizedString("GameText", key);
     }
 }

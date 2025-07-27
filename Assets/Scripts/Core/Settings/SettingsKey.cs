@@ -6,6 +6,7 @@ public enum SettingType
     SoundVolumeKey,
     ShowIndicatorKey,
     FullscreenKey,
+    LanguageKey,
     PacmanLivesKey,
     ExtraKey
 }
@@ -18,6 +19,7 @@ public static class SettingsKeys
         { SettingType.SoundVolumeKey, SoundVolumeKey },
         { SettingType.ShowIndicatorKey, ShowIndicatorKey },
         { SettingType.FullscreenKey, FullscreenKey },
+        { SettingType.LanguageKey, LanguageKey},
         { SettingType.PacmanLivesKey, PacmanLivesKey },
         { SettingType.ExtraKey, ExtraKey },
     };
@@ -31,6 +33,7 @@ public static class SettingsKeys
     // General
     public const string ShowIndicatorKey = "ShowIndicator";
     public const string FullscreenKey = "Fullscreen";
+    public const string LanguageKey = "LanguageKey";
     public const string PacmanLivesKey = "PacmanLives";
     public const string ExtraKey = "Extra";
 }

@@ -52,7 +52,7 @@ MonoBehaviour:
       type: {class: LocalizedAssetDatabase, ns: UnityEngine.Localization.Settings, asm: Unity.Localization}
       data:
         m_DefaultTableReference:
-          m_TableCollectionName: GameText
+          m_TableCollectionName: GameAsset
         m_CustomTableProvider:
           rid: -2
         m_CustomTablePostprocessor:
@@ -63,7 +63,7 @@ MonoBehaviour:
       type: {class: LocalizedStringDatabase, ns: UnityEngine.Localization.Settings, asm: Unity.Localization}
       data:
         m_DefaultTableReference:
-          m_TableCollectionName: 
+          m_TableCollectionName: GameText
         m_CustomTableProvider:
           rid: -2
         m_CustomTablePostprocessor:

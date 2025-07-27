@@ -82,8 +82,40 @@ MonoBehaviour:
     m_Localized: Extra
     m_Metadata:
       m_Items: []
-  - m_Id: 23594795888640
+  - m_Id: 574449668419584
     m_Localized: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 729854382010368
+    m_Localized: Bonus Pac-Man for {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 730855428157440
+    m_Localized: 1 Player Only
+    m_Metadata:
+      m_Items: []
+  - m_Id: 730884456935424
+    m_Localized: 1 or 2 Players
+    m_Metadata:
+      m_Items: []
+  - m_Id: 731223797100544
+    m_Localized: Push Start Button
+    m_Metadata:
+      m_Items: []
+  - m_Id: 742779477913600
+    m_Localized: None
+    m_Metadata:
+      m_Items: []
+  - m_Id: 742745764098048
+    m_Localized: 10000
+    m_Metadata:
+      m_Items: []
+  - m_Id: 742756203720704
+    m_Localized: 15000
+    m_Metadata:
+      m_Items: []
+  - m_Id: 742770552434688
+    m_Localized: 20000
     m_Metadata:
       m_Items: []
   references:

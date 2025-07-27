@@ -19,11 +19,11 @@ MonoBehaviour:
     m_Items: []
   m_TableData:
   - m_Id: 624585175040
-    m_Localized: Activo
+    m_Localized: Si
     m_Metadata:
       m_Items: []
   - m_Id: 654830301184
-    m_Localized: Inactivo
+    m_Localized: No
     m_Metadata:
       m_Items: []
   - m_Id: 1387600375808
@@ -82,8 +82,40 @@ MonoBehaviour:
     m_Localized: Extra
     m_Metadata:
       m_Items: []
-  - m_Id: 23594795888640
-    m_Localized: Idiom
+  - m_Id: 574449668419584
+    m_Localized: Idioma
+    m_Metadata:
+      m_Items: []
+  - m_Id: 729854382010368
+    m_Localized: Bonus Pac-Man para {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 730855428157440
+    m_Localized: Solo 1 jugador
+    m_Metadata:
+      m_Items: []
+  - m_Id: 730884456935424
+    m_Localized: 1 o 2 jugadores
+    m_Metadata:
+      m_Items: []
+  - m_Id: 731223797100544
+    m_Localized: "Presione bot\xF3n de Start"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 742779477913600
+    m_Localized: Ninguno
+    m_Metadata:
+      m_Items: []
+  - m_Id: 742745764098048
+    m_Localized: 10000
+    m_Metadata:
+      m_Items: []
+  - m_Id: 742756203720704
+    m_Localized: 15000
+    m_Metadata:
+      m_Items: []
+  - m_Id: 742770552434688
+    m_Localized: 20000
     m_Metadata:
       m_Items: []
   references:

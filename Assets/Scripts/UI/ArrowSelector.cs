@@ -80,7 +80,7 @@ public class ArrowSelector : MonoBehaviour
         }
     }
 
-
+    // MOUSE ONLY
     public void PointerEnter(int b)
     {
         // MoveIndicator(b);
@@ -89,6 +89,16 @@ public class ArrowSelector : MonoBehaviour
     public void PointerExit(int b)
     {
         // MoveIndicator(lastSelected);
+    }
+
+    /// <summary>
+    /// Call this method from a UnityEvent to suppress the selection sound
+    /// when a new GameObject is set as the current selected.
+    /// This must be called *before* changing the current selected GameObject.
+    /// </summary>
+    public void SuppressSoundOnNextSelection()
+    {
+        suppressSoundOnNextExternalSelection = true;
     }
 
     public void ButtonSelected(int b)
