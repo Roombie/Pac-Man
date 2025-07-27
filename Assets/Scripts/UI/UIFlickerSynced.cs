@@ -13,11 +13,21 @@ public class UIFlickerSynced : MonoBehaviour
 
     private void OnEnable()
     {
-        currentVisible = !FlickerSyncManager.Instance.GetFlickerState();
+        if (FlickerSyncManager.Instance == null)
+        {
+            Debug.LogWarning("FlickerSyncManager.Instance is not yet initialized.");
+            return;
+        }
+
+        bool visible = FlickerSyncManager.Instance.GetFlickerState();
+        currentVisible = visible;
+        SetAlpha(visible ? 1f : 0f);
     }
 
     private void Update()
     {
+        if (FlickerSyncManager.Instance == null) return;
+
         bool visible = FlickerSyncManager.Instance.GetFlickerState();
         if (visible != currentVisible)
         {

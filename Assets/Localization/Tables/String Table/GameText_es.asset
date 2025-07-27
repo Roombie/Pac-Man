@@ -91,7 +91,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 730855428157440
-    m_Localized: Solo 1 jugador
+    m_Localized: Solo jugador 1
     m_Metadata:
       m_Items: []
   - m_Id: 730884456935424
@@ -103,7 +103,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 742779477913600
-    m_Localized: Ninguno
+    m_Localized: Nada
     m_Metadata:
       m_Items: []
   - m_Id: 742745764098048

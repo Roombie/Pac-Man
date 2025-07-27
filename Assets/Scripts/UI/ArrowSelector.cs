@@ -18,7 +18,7 @@ public class ArrowSelector : MonoBehaviour
     [HideInInspector] public bool isSelectingOption = false;
 
     [HideInInspector] public int lastSelected = -1;
-    bool firstFrame = true;
+    private bool firstFrame = true;
     private bool isChangingPage = false;
     private bool suppressSoundOnFirstAutoSelection = true;
     public static bool suppressSoundOnNextExternalSelection = false;
@@ -55,47 +55,57 @@ public class ArrowSelector : MonoBehaviour
     void LateUpdate()
     {
         if (firstFrame)
-        {
             firstFrame = false;
-        }
+
+        StartCoroutine(VerifyArrowVisibilityEndOfFrame());
+    }
+
+    IEnumerator VerifyArrowVisibilityEndOfFrame()
+    {
+        yield return new WaitForEndOfFrame();
 
         var selected = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
 
-        if (selected == null || isSelectingOption)
+        if (!IsGameObjectActuallySelectable(selected) || isSelectingOption)
         {
             arrowIndicator.gameObject.SetActive(false);
-            return;
+            yield break;
         }
 
-        // If the selected gameobject mathces the last selected, make sure it's active to update
-        if (lastSelected >= 0 && lastSelected < buttons.Length && buttons[lastSelected].button != null)
+        if (lastSelected >= 0 && lastSelected < buttons.Length)
         {
-            if (buttons[lastSelected].button.gameObject == selected)
+            var button = buttons[lastSelected].button;
+            if (button != null && button.gameObject == selected)
             {
                 if (!arrowIndicator.gameObject.activeSelf)
-                {
                     MoveIndicator(lastSelected);
-                }
             }
         }
+    }
+
+    private bool IsGameObjectActuallySelectable(GameObject go)
+    {
+        if (go == null || !go.activeInHierarchy)
+            return false;
+
+        // Check if it's in the visible canvas hierarchy
+        var selectable = go.GetComponent<Selectable>();
+        if (selectable == null || !selectable.IsInteractable())
+            return false;
+
+        return true;
     }
 
     // MOUSE ONLY
     public void PointerEnter(int b)
     {
-        // MoveIndicator(b);
+        // MoveIndicator(b); 
     }
-
     public void PointerExit(int b)
     {
-        // MoveIndicator(lastSelected);
+        // MoveIndicator(b); 
     }
 
-    /// <summary>
-    /// Call this method from a UnityEvent to suppress the selection sound
-    /// when a new GameObject is set as the current selected.
-    /// This must be called *before* changing the current selected GameObject.
-    /// </summary>
     public void SuppressSoundOnNextSelection()
     {
         suppressSoundOnNextExternalSelection = true;
@@ -115,7 +125,6 @@ public class ArrowSelector : MonoBehaviour
 
         Debug.Log($"suppressFirstSound: {suppressSoundOnFirstAutoSelection}");
 
-        // This is to avoid playing the audio when the scene loads, which it's the first time it is automatically selected
         if (suppressSoundOnFirstAutoSelection)
         {
             suppressSoundOnFirstAutoSelection = false;
@@ -155,21 +164,30 @@ public class ArrowSelector : MonoBehaviour
             return;
         }
 
-        // Delay arrow update by one frame to ensure layout is correct
         StartCoroutine(DelayedUpdatePosition(b));
     }
 
     IEnumerator DelayedUpdatePosition(int b)
     {
-        // Wait two frames to ensure resolution and layout are fully updated after screen/border changes
         yield return null;
-        yield return null; // a little robust but whatever it works
+        yield return null;
+        yield return null;
 
-        // Force alyout reconstruction
+        if (b < 0 || b >= buttons.Length || buttons[b].button == null)
+        {
+            arrowIndicator.gameObject.SetActive(false);
+            yield break;
+        }
+
+        if (!buttons[b].button.gameObject.activeInHierarchy)
+        {
+            Debug.LogWarning($"[ArrowSelector] Button {b} is no longer active, skipping arrow update.");
+            arrowIndicator.gameObject.SetActive(false);
+            yield break;
+        }
+
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(buttons[b].button);
-
-        // wait another frame
         yield return null;
 
         Vector3 worldPos = buttons[b].button.TransformPoint((Vector3)buttons[b].arrowOffset);
@@ -183,15 +201,8 @@ public class ArrowSelector : MonoBehaviour
         MoveIndicator(b);
     }
 
-    public void SetChangingPage(bool value)
-    {
-        isChangingPage = value;
-    }
-
-    public void SetSelecting(bool value)
-    {
-        isSelectingOption = value;
-    }
+    public void SetChangingPage(bool value) => isChangingPage = value;
+    public void SetSelecting(bool value) => isSelectingOption = value;
 
     void OnDrawGizmos()
     {
@@ -203,10 +214,7 @@ public class ArrowSelector : MonoBehaviour
             if (rect == null) continue;
             if (showDebugLinesOnlyOnActiveObjects && !rect.gameObject.activeInHierarchy) continue;
 
-            // button base position (local space converted to world)
             Vector3 buttonWorldPos = rect.TransformPoint(Vector3.zero);
-
-            // local space offset position converted to world
             Vector3 offsetWorldPos = rect.TransformPoint(buttons[i].arrowOffset);
 
             Gizmos.color = Color.blue;
