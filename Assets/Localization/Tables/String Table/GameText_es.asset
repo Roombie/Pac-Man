@@ -122,6 +122,22 @@ MonoBehaviour:
     m_Localized: Perdiste
     m_Metadata:
       m_Items: []
+  - m_Id: 1386940996612096
+    m_Localized: Volver
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1386958994370560
+    m_Localized: Opciones
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1386970763587584
+    m_Localized: Salir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1995793543032832
+    m_Localized: "\xA1Listo!"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

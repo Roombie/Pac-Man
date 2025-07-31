@@ -484,7 +484,7 @@ TextureImporter:
         x: 599
         y: 136
         width: 1
-        height: 4
+        height: 16
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -503,10 +503,10 @@ TextureImporter:
       name: Arcade - Pac-Man - General Sprites_17
       rect:
         serializedVersion: 2
-        x: 609
+        x: 601
         y: 136
-        width: 7
-        height: 9
+        width: 15
+        height: 16
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -525,10 +525,10 @@ TextureImporter:
       name: Arcade - Pac-Man - General Sprites_18
       rect:
         serializedVersion: 2
-        x: 621
+        x: 617
         y: 136
-        width: 11
-        height: 9
+        width: 15
+        height: 16
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -547,10 +547,10 @@ TextureImporter:
       name: Arcade - Pac-Man - General Sprites_19
       rect:
         serializedVersion: 2
-        x: 635
+        x: 633
         y: 136
-        width: 13
-        height: 9
+        width: 15
+        height: 16
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -571,8 +571,8 @@ TextureImporter:
         serializedVersion: 2
         x: 657
         y: 136
-        width: 7
-        height: 5
+        width: 13
+        height: 16
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -946,7 +946,7 @@ TextureImporter:
         x: 520
         y: 236
         width: 15
-        height: 8
+        height: 9
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -968,7 +968,7 @@ TextureImporter:
         x: 536
         y: 236
         width: 15
-        height: 6
+        height: 9
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -990,7 +990,7 @@ TextureImporter:
         x: 552
         y: 236
         width: 15
-        height: 5
+        height: 9
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1012,7 +1012,7 @@ TextureImporter:
         x: 568
         y: 235
         width: 15
-        height: 5
+        height: 11
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1034,7 +1034,7 @@ TextureImporter:
         x: 584
         y: 234
         width: 15
-        height: 6
+        height: 12
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1056,7 +1056,7 @@ TextureImporter:
         x: 601
         y: 233
         width: 13
-        height: 7
+        height: 13
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1078,7 +1078,7 @@ TextureImporter:
         x: 619
         y: 233
         width: 9
-        height: 7
+        height: 13
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1100,7 +1100,7 @@ TextureImporter:
         x: 637
         y: 233
         width: 5
-        height: 7
+        height: 13
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1122,7 +1122,7 @@ TextureImporter:
         x: 655
         y: 234
         width: 1
-        height: 6
+        height: 11
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1144,7 +1144,7 @@ TextureImporter:
         x: 666
         y: 232
         width: 11
-        height: 10
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1490,7 +1490,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Arcade - Pac-Man - General Sprites_62
+      name: pellet_Power
       rect:
         serializedVersion: 2
         x: 480
@@ -1512,7 +1512,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Arcade - Pac-Man - General Sprites_64
+      name: pellet_Small
       rect:
         serializedVersion: 2
         x: 504
@@ -1542,7 +1542,7 @@ TextureImporter:
         width: 14
         height: 14
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1564,7 +1564,7 @@ TextureImporter:
         width: 14
         height: 14
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1586,7 +1586,7 @@ TextureImporter:
         width: 14
         height: 14
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1608,7 +1608,7 @@ TextureImporter:
         width: 14
         height: 14
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -1617,6 +1617,50 @@ TextureImporter:
       bones: []
       spriteID: 9078d9b7456075e4fbbbd4c6389e9dff
       internalID: -1266919831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Arcade - Pac-Man - General Sprites_68
+      rect:
+        serializedVersion: 2
+        x: 587
+        y: 219
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 635e8e81cad008e40906fb0dd95492e3
+      internalID: -287270737
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_lifeIcon
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 218
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5157c3787ba7af14cbe09f7e309bf7b3
+      internalID: 1905443625
       vertices: []
       indices: 
       edges: []
@@ -1694,15 +1738,18 @@ TextureImporter:
       Arcade - Pac-Man - General Sprites_6: -1296458367
       Arcade - Pac-Man - General Sprites_60: -1501141204
       Arcade - Pac-Man - General Sprites_61: 868956325
-      Arcade - Pac-Man - General Sprites_62: -546997545
       Arcade - Pac-Man - General Sprites_63: 727556213
-      Arcade - Pac-Man - General Sprites_64: -1766807206
       Arcade - Pac-Man - General Sprites_65: 8156325
       Arcade - Pac-Man - General Sprites_66: 770353464
       Arcade - Pac-Man - General Sprites_67: -1266919831
+      Arcade - Pac-Man - General Sprites_68: -287270737
+      Arcade - Pac-Man - General Sprites_69: 925705772
       Arcade - Pac-Man - General Sprites_7: -868140103
       Arcade - Pac-Man - General Sprites_8: -1890036255
       Arcade - Pac-Man - General Sprites_9: -819307574
+      pacman_lifeIcon: 1905443625
+      pellet_Power: -546997545
+      pellet_Small: -1766807206
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
