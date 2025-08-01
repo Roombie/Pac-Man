@@ -51,6 +51,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f8095fb027d4c243b9fa63db2664b66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pacman: {fileID: 0}
+  menus: {fileID: 0}
+  pauseMenu: {fileID: 0}
+  optionsMenu: {fileID: 0}
+  resumeButton: {fileID: 0}
+  ghostScore200Prefab: {fileID: 4660395184823018145, guid: 754f1665799bfd94d8f4e7b3a5b36f43, type: 3}
+  ghostScore400Prefab: {fileID: 490764208900113918, guid: 60898be00e41e3846a19c1a92b8adb00, type: 3}
+  ghostScore800Prefab: {fileID: 1759425929868520084, guid: 4ef451bbe5a8d2646a75c66f6e2905ca, type: 3}
+  ghostScore1600Prefab: {fileID: 5790173717095235151, guid: 10f1990ddaeedc047aa7abb90f56106b, type: 3}
+  uiManager: {fileID: 7908264411556593840}
+  mazeFlashController: {fileID: 7747503494696074549}
+  lifeIconsController: {fileID: 6878185589549712317}
+  fruitDisplayController: {fileID: 7889104087701544103}
+  bonusItemManager: {fileID: 2203496920614338219}
+  pelletManager: {fileID: 5893468776855778113}
+  coffeeBreakManager: {fileID: 3517510330910360623}
+  maxPlayers: 2
 --- !u!114 &5893468776855778113
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -135,6 +135,46 @@ MonoBehaviour:
     m_Key: Ready_Text
     m_Metadata:
       m_Items: []
+  - m_Id: 2415496937697280
+    m_Key: Round_Text
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2415532224376832
+    m_Key: BestRound_Text
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2474382168256512
+    m_Key: CharacterSelection_Text
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2561809675284480
+    m_Key: P1_Text
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2561822040092672
+    m_Key: P2_Text
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2577423546544128
+    m_Key: Ready?_Text
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2577443045863424
+    m_Key: Ready!_Text
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608120315342848
+    m_Key: Instruction_Select
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608125650497536
+    m_Key: Instruction_Confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608143954440192
+    m_Key: Instruction_Cancel
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

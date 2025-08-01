@@ -1625,10 +1625,10 @@ TextureImporter:
       name: Arcade - Pac-Man - General Sprites_68
       rect:
         serializedVersion: 2
-        x: 587
-        y: 219
-        width: 10
-        height: 11
+        x: 593
+        y: 221
+        width: 8
+        height: 8
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}

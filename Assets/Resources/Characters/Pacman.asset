@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Pacman
   m_EditorClassIdentifier: 
   characterName: Pac-Man
-  animatorController: {fileID: 0}
-  lifeIconSprite: {fileID: 0}
-  playerAnimatorController: {fileID: 0}
+  animatorController: {fileID: 9100000, guid: b12ff84b91c943a4ab961e205faf8c3b, type: 2}
+  lifeIconSprite: {fileID: 1905443625, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+  playerAnimatorController: {fileID: 9100000, guid: b12ff84b91c943a4ab961e205faf8c3b, type: 2}

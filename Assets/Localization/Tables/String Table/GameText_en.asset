@@ -138,6 +138,48 @@ MonoBehaviour:
     m_Localized: Ready!
     m_Metadata:
       m_Items: []
+  - m_Id: 2415496937697280
+    m_Localized: Round
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2415532224376832
+    m_Localized: 'Best
+
+      Round'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2474382168256512
+    m_Localized: Character Selection
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2561809675284480
+    m_Localized: P1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2561822040092672
+    m_Localized: P2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2577423546544128
+    m_Localized: Ready?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2577443045863424
+    m_Localized: Ready!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608120315342848
+    m_Localized: "<sprite name=\"bulletList\">Use \u2190 \u2192 to change character"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608125650497536
+    m_Localized: <sprite name="bulletList">Press {0} to confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608143954440192
+    m_Localized: <sprite name="bulletList">Press {0} to cancel
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

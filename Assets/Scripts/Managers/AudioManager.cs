@@ -12,11 +12,31 @@ public class AudioManager : MonoBehaviour
     public AudioMixerGroup musicMixerGroup;
 
     public int poolSize = 10;
+
+    [Header("Music Clips")]
+    public AudioClip gameMusic;
+    public AudioClip zeroSirenLoop;
+    public AudioClip firstSirenLoop;
+    public AudioClip secondSirenLoop;
+    public AudioClip thirdSirenLoop;
+    public AudioClip frightenedMusic;
+
+    [Header("SFX Clips")]
+    public AudioClip credit;
+    public AudioClip pelletEatenSound1;
+    public AudioClip pelletEatenSound2;
+    public AudioClip fruitEaten;
+    public AudioClip ghostEaten;
+    public AudioClip pacmanDeath;
+    public AudioClip eyes;
+    public AudioClip extend;
+
     private Queue<AudioSource> sfxPool;
     private AudioSource musicSource;
     private readonly List<AudioSource> pausedSources = new();
     private readonly Dictionary<AudioClip, AudioSource> activeSounds = new();
 
+    public AudioClip CurrentMusic { get; private set; }
 
     private void Awake()
     {
@@ -62,7 +82,7 @@ public class AudioManager : MonoBehaviour
     public void SetVolume(SettingType type, float volume)
     {
         string param = type switch
-        {   
+        {
             //  SettingType    =>    AudioMixers Exposed parameters
             SettingType.MusicVolumeKey => "MusicVolume",
             SettingType.SoundVolumeKey => "SoundVolume",
@@ -100,6 +120,9 @@ public class AudioManager : MonoBehaviour
 
         activeSounds[clip] = source;
 
+        if (category == SoundCategory.Music)
+            CurrentMusic = clip;
+
         if (category == SoundCategory.SFX)
             StartCoroutine(ReturnToPoolAfterPlayback(source, clip.length / Mathf.Abs(pitch)));
     }
@@ -123,7 +146,7 @@ public class AudioManager : MonoBehaviour
 
     public void StopCategory(SoundCategory category)
     {
-        // Detener todos los clips registrados en esa categoría
+        // Stop all the clips registered on the selected category
         var toRemove = new List<AudioClip>();
 
         foreach (var (clip, src) in activeSounds)
@@ -140,14 +163,16 @@ public class AudioManager : MonoBehaviour
             activeSounds.Remove(clip);
         }
 
-        // Forzar apagado de musicSource
+        // Force musicSource off
         if (category == SoundCategory.Music && musicSource != null && musicSource.isPlaying)
         {
             musicSource.Stop();
 
-            // También eliminar el clip si sigue registrado
+            // Also delete the registered clip
             if (musicSource.clip != null && activeSounds.ContainsKey(musicSource.clip))
                 activeSounds.Remove(musicSource.clip);
+
+            CurrentMusic = null;
         }
     }
 
@@ -295,6 +320,12 @@ public class AudioManager : MonoBehaviour
     {
         if (source.outputAudioMixerGroup == musicMixerGroup) return SoundCategory.Music;
         return SoundCategory.SFX;
+    }
+    
+    public void PlayPelletEatenSound(bool alternate)
+    {
+        AudioClip clip = alternate ? pelletEatenSound1 : pelletEatenSound2;
+        Play(clip, SoundCategory.SFX);
     }
 }
 

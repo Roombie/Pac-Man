@@ -1,4 +1,6 @@
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 public class GameModeSelector : MonoBehaviour
@@ -10,14 +12,19 @@ public class GameModeSelector : MonoBehaviour
 
     [Header("Input")]
     public InputActionReference pauseAction;
+    public InputActionReference submitAction;
+
+    [Header("Events")]
+    public UnityEvent onSubmitEvent;
 
     private InputAction pause; // cached action
+    private InputAction submit;
     private int currentMode = 1; // 1 = 1P, 2 = 2P
 
     private void OnEnable()
     {
         // Load and apply saved mode
-        currentMode = PlayerPrefs.GetInt("GameMode", 1);
+        currentMode = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 1);
         ApplyMode();
 
         // Cache and enable input
@@ -26,6 +33,13 @@ public class GameModeSelector : MonoBehaviour
             pause = pauseAction.action;
             pause.performed += OnPausePressed;
             pause.Enable();
+        }
+
+        if (submitAction != null)
+        {
+            submit = submitAction.action;
+            submit.performed += OnSubmitPerformed;
+            submit.Enable();
         }
     }
 
@@ -36,6 +50,12 @@ public class GameModeSelector : MonoBehaviour
             pause.performed -= OnPausePressed;
             pause.Disable();
         }
+
+        if (submit != null)
+        {
+            submit.performed -= OnSubmitPerformed;
+            submit.Disable();
+        }
     }
 
     private void OnPausePressed(InputAction.CallbackContext ctx)
@@ -43,10 +63,15 @@ public class GameModeSelector : MonoBehaviour
         ToggleMode();
     }
 
+    private void OnSubmitPerformed(InputAction.CallbackContext ctx)
+    {
+        onSubmitEvent?.Invoke();
+    }
+
     private void ToggleMode()
     {
         currentMode = currentMode == 1 ? 2 : 1;
-        PlayerPrefs.SetInt("GameMode", currentMode);
+        PlayerPrefs.SetInt(SettingsKeys.GameModeKey, currentMode);
         PlayerPrefs.Save();
         ApplyMode();
     }

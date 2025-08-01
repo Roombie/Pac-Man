@@ -6,6 +6,6 @@ public class PowerPellet : Pellet
 
     protected override void Eat()
     {
-        // GameManager.Instance.PowerPelletEaten(this);
+        GameManager.Instance.PowerPelletEaten(this);
     }
 }

@@ -7,7 +7,7 @@ public class Pellet : MonoBehaviour
 
     protected virtual void Eat()
     {
-        // GameManager.Instance.PelletEaten(this);
+        GameManager.Instance.PelletEaten(this);
     }
 
     void OnTriggerEnter2D(Collider2D collision)

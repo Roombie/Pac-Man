@@ -9,7 +9,7 @@ public class SceneTransitionManager : MonoBehaviour
 
     public Animator animator;
 
-    private bool isTransitioning = false;
+    public bool isTransitioning = false;
 
     // Precomputed animator hashes
     // this is better because Unity internally stores all animation state names, parameters, and tags as integer hashes

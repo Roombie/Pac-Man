@@ -48,3 +48,17 @@ MonoBehaviour:
   sfxMixerGroup: {fileID: -2265923611715886288, guid: 80ab0b5e82a11b04fa49977c201de635, type: 2}
   musicMixerGroup: {fileID: -6384717764039421527, guid: 80ab0b5e82a11b04fa49977c201de635, type: 2}
   poolSize: 40
+  gameMusic: {fileID: 8300000, guid: 0371c845cab69774c8888ac144f2ef97, type: 3}
+  zeroSirenLoop: {fileID: 8300000, guid: ad16a168bbe3f5c40a98bab3956bab91, type: 3}
+  firstSirenLoop: {fileID: 8300000, guid: 35f558be6c971e34d915cd3610e2de42, type: 3}
+  secondSirenLoop: {fileID: 8300000, guid: 61633fd6de8c9b74ba6fcd5d977b8ced, type: 3}
+  thirdSirenLoop: {fileID: 8300000, guid: d4238a30016733f4dbe7d20dc23257da, type: 3}
+  frightenedMusic: {fileID: 8300000, guid: fc4fd550b7861c54bb17f006e985c6a7, type: 3}
+  credit: {fileID: 8300000, guid: dd10ed476a0775c49aab41e3519d3645, type: 3}
+  pelletEatenSound1: {fileID: 8300000, guid: a57e0e7187603e4499fa34089fbf2db0, type: 3}
+  pelletEatenSound2: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
+  fruitEaten: {fileID: 8300000, guid: f13db587080ddf84abe48b9acd535216, type: 3}
+  ghostEaten: {fileID: 8300000, guid: 148f919a4b26ee34ea657381c3a8695e, type: 3}
+  pacmanDeath: {fileID: 8300000, guid: 029c4f0e2c23e624691e8f2f44d3af42, type: 3}
+  eyes: {fileID: 8300000, guid: 325fdbf140e3c794c8e3ad03de96d4dd, type: 3}
+  extend: {fileID: 8300000, guid: 35619226cbd0ae34c88d6dbe294a423d, type: 3}

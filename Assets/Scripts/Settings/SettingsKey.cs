@@ -8,7 +8,8 @@ public enum SettingType
     FullscreenKey,
     LanguageKey,
     PacmanLivesKey,
-    ExtraKey
+    ExtraKey,
+    GameModeKey
 }
 
 public static class SettingsKeys
@@ -36,4 +37,5 @@ public static class SettingsKeys
     public const string LanguageKey = "LanguageKey";
     public const string PacmanLivesKey = "PacmanLives";
     public const string ExtraKey = "Extra";
+    public const string GameModeKey = "GameMode";
 }

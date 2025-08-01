@@ -138,6 +138,48 @@ MonoBehaviour:
     m_Localized: "\xA1Listo!"
     m_Metadata:
       m_Items: []
+  - m_Id: 2415496937697280
+    m_Localized: Ronda
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2415532224376832
+    m_Localized: 'Mejor
+
+      Ronda'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2474382168256512
+    m_Localized: "Selecci\xF3n de Personajes"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2561809675284480
+    m_Localized: J1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2561822040092672
+    m_Localized: J2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2577423546544128
+    m_Localized: "\xBFListo?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2577443045863424
+    m_Localized: "\xA1Listo!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608120315342848
+    m_Localized: "<sprite name=\"bulletList\">Usa \u2190 \u2192 para cambiar personaje"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608125650497536
+    m_Localized: <sprite name="bulletList">Presiona {0} para confirmar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2608143954440192
+    m_Localized: <sprite name="bulletList">Presiona {0} para cancelar
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
