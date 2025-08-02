@@ -1622,28 +1622,6 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Arcade - Pac-Man - General Sprites_68
-      rect:
-        serializedVersion: 2
-        x: 593
-        y: 221
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 635e8e81cad008e40906fb0dd95492e3
-      internalID: -287270737
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: pacman_lifeIcon
       rect:
         serializedVersion: 2

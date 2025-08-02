@@ -169,7 +169,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 2608120315342848
-    m_Localized: "<sprite name=\"bulletList\">Usa \u2190 \u2192 para cambiar personaje"
+    m_Localized: "<sprite name=\"bulletList\">Usa {0} para cambiar personaje\r"
     m_Metadata:
       m_Items: []
   - m_Id: 2608125650497536

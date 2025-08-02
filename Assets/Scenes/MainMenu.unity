@@ -3416,8 +3416,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -2.931, y: -149.8}
-  m_SizeDelta: {x: 335.23, y: 58.832}
+  m_AnchoredPosition: {x: -2.931, y: -150.152}
+  m_SizeDelta: {x: 335.23, y: 59.537}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &347706692
 MonoBehaviour:
@@ -3439,9 +3439,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<sprite name=\"bulletList\">Use \u2190 \u2192 to change character\n<sprite
-    name=\"bulletList\">Press Start to confirm\n<sprite name=\"bulletList\">Press
-    Back to cancel\r\n\r"
+  m_text: "<sprite name=\"bulletList\">Use <sprite name=\"leftArrow\"> <sprite name=\"rightArrow\">
+    to change character\n<sprite name=\"bulletList\">Press Start to confirm\n<sprite
+    name=\"bulletList\">Press Back to cancel\r\n\r"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: bed4f9c26b4b7d7469b093c0b9994131, type: 2}
   m_sharedMaterial: {fileID: 3899040833245846193, guid: bed4f9c26b4b7d7469b093c0b9994131, type: 2}
@@ -3460,7 +3460,7 @@ MonoBehaviour:
     bottomLeft: {r: 1, g: 1, b: 1, a: 1}
     bottomRight: {r: 1, g: 1, b: 1, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 11400000, guid: 2fc43be7cdf812047b54556be5b42df3, type: 2}
+  m_spriteAsset: {fileID: 11400000, guid: 840c40dd61646fc4d8d66476ca3712ae, type: 2}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
   m_TextStyleHashCode: -1183493901
@@ -3533,8 +3533,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   instructionText: {fileID: 347706692}
+  leftAction: {fileID: -1680190386980627800, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+  rightAction: {fileID: -1680190386980627800, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   submitAction: {fileID: 392368643174621059, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   cancelAction: {fileID: 7727032971491509709, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+  moveAction: {fileID: -1680190386980627800, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   selectLine:
     m_TableReference:
       m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
