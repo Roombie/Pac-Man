@@ -169,7 +169,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 2608120315342848
-    m_Localized: <sprite name="bulletList">Use {0} to change character
+    m_Localized: <sprite name="bulletList">Use {0} {1} to change character
     m_Metadata:
       m_Items: []
   - m_Id: 2608125650497536

@@ -157,7 +157,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 3
-        y: 28
+        y: 34
         width: 9
         height: 7
       alignment: 0
@@ -179,7 +179,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 20
-        y: 28
+        y: 34
         width: 9
         height: 7
       alignment: 0
@@ -201,7 +201,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 2
-        y: 14
+        y: 20
         width: 12
         height: 12
       alignment: 0
@@ -223,7 +223,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 18
-        y: 14
+        y: 20
         width: 12
         height: 12
       alignment: 0
@@ -245,7 +245,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 35
-        y: 25
+        y: 31
         width: 10
         height: 9
       alignment: 0
@@ -267,7 +267,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 4
-        y: 3
+        y: 9
         width: 8
         height: 8
       alignment: 0
@@ -289,7 +289,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 35
-        y: 14
+        y: 20
         width: 10
         height: 9
       alignment: 0
@@ -311,11 +311,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 35
-        y: 3
+        y: 9
         width: 7
         height: 9
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -324,6 +324,94 @@ TextureImporter:
       bones: []
       spriteID: ac1d82b571b875d49bd3d069ddf6e89f
       internalID: 1171800469
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: e
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 11
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 604216289f838cd47950825f9ef5e954
+      internalID: 1595845701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: q
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 11
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 25a8181e66815224b99bca9e44f11fec
+      internalID: 1057032799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: leftTrigger
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 1
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 801c35ecb4f60da418463789fe82e770
+      internalID: -204952607
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: rightTrigger
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 1
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43c68fb1f64eb4444ba364a06f537ebc
+      internalID: -54729911
       vertices: []
       indices: 
       edges: []
@@ -345,7 +433,7 @@ TextureImporter:
       bulletList: -6562578724970717414
       buttonEast: -6785898972063176230
       buttonSouth: -8487650561584206476
-      inputSchemes_1: 274634407
+      e: 1595845701
       inputSchemes_4: 821632223542213500
       inputSchemes_6: -7657223027000946449
       inputSchemes_7: 4270577428633313406
@@ -354,7 +442,10 @@ TextureImporter:
       leftStick: 1171800469
       leftStick_left: 631613856
       leftStick_right: 404122601
+      leftTrigger: -204952607
       leftarrow: -4471647572117562509
+      q: 274634407
+      rightTrigger: -54729911
       rightarrow: -4306950914284806064
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
