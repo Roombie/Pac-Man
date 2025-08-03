@@ -124,34 +124,12 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Arcade - Pac-Man - Maze Parts_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 368
-        height: 248
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 9707d6825114f3b70800000000000000
-      internalID: 8880888549326286969
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
+    sprites: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: a8c71287ed1b02a47a0fe77b7b557022
     internalID: 0
     vertices: []
     indices: 

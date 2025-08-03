@@ -5,10 +5,15 @@ public class CharacterData : ScriptableObject
 {
     public string characterName;
 
-    [Header("Animator Settings")]
-    public RuntimeAnimatorController animatorController;
+    [Header("Skins")]
+    public CharacterSkin[] skins;
+}
 
-    [Header("Character Configuration")]
+[System.Serializable]
+public class CharacterSkin
+{
+    public string skinName;
+    public Sprite previewSprite;
     public Sprite lifeIconSprite;
-    public RuntimeAnimatorController playerAnimatorController;
+    public RuntimeAnimatorController animatorController;
 }

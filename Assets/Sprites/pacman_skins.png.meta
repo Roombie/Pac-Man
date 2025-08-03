@@ -1,0 +1,2429 @@
+fileFormatVersion: 2
+guid: 2759e92334380f645a7ede83124e4234
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4630082507464210667
+    second: pacman_skins_0
+  - first:
+      213: 2400159056642103004
+    second: pacman_skins_1
+  - first:
+      213: -976303011541115938
+    second: pacman_skins_2
+  - first:
+      213: 8094204377842562234
+    second: pacman_skins_3
+  - first:
+      213: -1093982960728753622
+    second: pacman_skins_4
+  - first:
+      213: 8886972259339515335
+    second: pacman_skins_5
+  - first:
+      213: -7298067178994643432
+    second: pacman_skins_6
+  - first:
+      213: 6126524830315040652
+    second: pacman_skins_7
+  - first:
+      213: -6621590859600547148
+    second: pacman_skins_8
+  - first:
+      213: 6942388428771648046
+    second: pacman_skins_9
+  - first:
+      213: 3478056647565564230
+    second: pacman_skins_10
+  - first:
+      213: -2886769896677514277
+    second: pacman_skins_11
+  - first:
+      213: -5836293619830086822
+    second: pacman_skins_12
+  - first:
+      213: -6058473748631233862
+    second: pacman_skins_13
+  - first:
+      213: -6753507574539845378
+    second: pacman_skins_14
+  - first:
+      213: 7970956938807503114
+    second: pacman_skins_15
+  - first:
+      213: -4607864642315327212
+    second: pacman_skins_16
+  - first:
+      213: 4506096915748160884
+    second: pacman_skins_17
+  - first:
+      213: 6979406107120700386
+    second: pacman_skins_18
+  - first:
+      213: -440709157526198765
+    second: pacman_skins_19
+  - first:
+      213: 8681483665817684528
+    second: pacman_skins_20
+  - first:
+      213: -4545675801519596075
+    second: pacman_skins_21
+  - first:
+      213: -9143005544806791548
+    second: pacman_skins_22
+  - first:
+      213: -5393534710732131305
+    second: pacman_skins_23
+  - first:
+      213: -6786458830267223446
+    second: pacman_skins_24
+  - first:
+      213: -5753453089403580069
+    second: pacman_skins_25
+  - first:
+      213: -7380205442595846662
+    second: pacman_skins_26
+  - first:
+      213: -7199910226711974349
+    second: pacman_skins_27
+  - first:
+      213: -6201023963002246865
+    second: pacman_skins_28
+  - first:
+      213: 2445031001335029710
+    second: pacman_skins_29
+  - first:
+      213: 3288066717588881415
+    second: pacman_skins_30
+  - first:
+      213: -8097940245979458647
+    second: pacman_skins_31
+  - first:
+      213: 4062056035459730066
+    second: pacman_skins_32
+  - first:
+      213: 1791303974189317958
+    second: pacman_skins_33
+  - first:
+      213: -3821298860776578654
+    second: pacman_skins_34
+  - first:
+      213: 7874100688392097258
+    second: pacman_skins_35
+  - first:
+      213: -4487662709856665094
+    second: pacman_skins_36
+  - first:
+      213: 890884302150341155
+    second: pacman_skins_37
+  - first:
+      213: -6519848263787283892
+    second: pacman_skins_38
+  - first:
+      213: 2203093331757777566
+    second: pacman_skins_39
+  - first:
+      213: 6590788288992854875
+    second: pacman_skins_40
+  - first:
+      213: 4716252430400006657
+    second: pacman_skins_41
+  - first:
+      213: -1291651005862271078
+    second: pacman_skins_42
+  - first:
+      213: 6347035178719365273
+    second: pacman_skins_43
+  - first:
+      213: 4973335634193119845
+    second: pacman_skins_44
+  - first:
+      213: -6885873324810292542
+    second: pacman_skins_45
+  - first:
+      213: -2522943283384070556
+    second: pacman_skins_46
+  - first:
+      213: 9193654643558843299
+    second: pacman_skins_47
+  - first:
+      213: -4017074895368439440
+    second: pacman_skins_48
+  - first:
+      213: -4880679666025358073
+    second: pacman_skins_49
+  - first:
+      213: -284827492586293411
+    second: pacman_skins_50
+  - first:
+      213: -5499318699923066196
+    second: pacman_skins_51
+  - first:
+      213: -5450401632073849393
+    second: pacman_skins_52
+  - first:
+      213: 3525895247826825484
+    second: pacman_skins_53
+  - first:
+      213: 8962096500253504541
+    second: pacman_skins_54
+  - first:
+      213: 3338677779023012305
+    second: pacman_skins_55
+  - first:
+      213: 2270191352853694346
+    second: pacman_skins_56
+  - first:
+      213: -1931328361188783168
+    second: pacman_skins_57
+  - first:
+      213: 6931927489713557532
+    second: pacman_skins_58
+  - first:
+      213: -6672326088685454310
+    second: pacman_skins_59
+  - first:
+      213: -4089196746611900806
+    second: pacman_skins_60
+  - first:
+      213: 2422252188721797508
+    second: pacman_skins_61
+  - first:
+      213: -7199327410961510109
+    second: pacman_skins_62
+  - first:
+      213: -2300230645624667817
+    second: pacman_skins_63
+  - first:
+      213: 8279631549120668721
+    second: pacman_skins_64
+  - first:
+      213: 3442643928095115250
+    second: pacman_skins_65
+  - first:
+      213: 4400591669164561581
+    second: pacman_skins_66
+  - first:
+      213: -4930078964171306468
+    second: pacman_skins_67
+  - first:
+      213: -2553830898255415209
+    second: pacman_skins_68
+  - first:
+      213: 5636792427583238028
+    second: pacman_skins_69
+  - first:
+      213: -1067355074636201345
+    second: pacman_skins_70
+  - first:
+      213: -2253787021638564402
+    second: pacman_skins_71
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 8
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: pacman_skins_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 81
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be87722628b514040800000000000000
+      internalID: 4630082507464210667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_1
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 81
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd6d69702f31f4120800000000000000
+      internalID: 2400159056642103004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_2
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 81
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edb92fb65997372f0800000000000000
+      internalID: -976303011541115938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_3
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 83
+        width: 13
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab4b7b82ff3645070800000000000000
+      internalID: 8094204377842562234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_4
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 83
+        width: 15
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2abe6b1b4461d0f0800000000000000
+      internalID: -1093982960728753622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_5
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 83
+        width: 15
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c5bea64f2ed45b70800000000000000
+      internalID: 8886972259339515335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_6
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 83
+        width: 15
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81e4619419e08ba90800000000000000
+      internalID: -7298067178994643432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_7
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 82
+        width: 15
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8fc98a9fd9c50550800000000000000
+      internalID: 6126524830315040652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_8
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 81
+        width: 15
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b2398522326b14a0800000000000000
+      internalID: -6621590859600547148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_9
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 80
+        width: 13
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2267bd5e71585060800000000000000
+      internalID: 6942388428771648046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_10
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 80
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 649d4dae71a844030800000000000000
+      internalID: 3478056647565564230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_11
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 80
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd3ee30e21220f7d0800000000000000
+      internalID: -2886769896677514277
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_12
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 65
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a532621ffd1510fa0800000000000000
+      internalID: -5836293619830086822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_13
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 65
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aba5ecb893afbeba0800000000000000
+      internalID: -6058473748631233862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_14
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 65
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef084af74a8b642a0800000000000000
+      internalID: -6753507574539845378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_15
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 67
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a096e899a178e9e60800000000000000
+      internalID: 7970956938807503114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_16
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 67
+        width: 17
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41966b575839d00c0800000000000000
+      internalID: -4607864642315327212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_17
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 67
+        width: 15
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47507a2454fd88e30800000000000000
+      internalID: 4506096915748160884
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_18
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 67
+        width: 16
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2eb0f1e30e4dbd060800000000000000
+      internalID: 6979406107120700386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_19
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 66
+        width: 15
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 316a3603b5942e9f0800000000000000
+      internalID: -440709157526198765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_20
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 65
+        width: 15
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03a4b68c563da7870800000000000000
+      internalID: 8681483665817684528
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_21
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 64
+        width: 15
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ddd55a41f38ae0c0800000000000000
+      internalID: -4545675801519596075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_22
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 64
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4864d5216e48d1180800000000000000
+      internalID: -9143005544806791548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_23
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 64
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 714721bb1c05625b0800000000000000
+      internalID: -5393534710732131305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_24
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 49
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a62fb1b66a7a1d1a0800000000000000
+      internalID: -6786458830267223446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_25
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 49
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b51d936f5e0a720b0800000000000000
+      internalID: -5753453089403580069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_26
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 49
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af58ba0804e349990800000000000000
+      internalID: -7380205442595846662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_27
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 51
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33e612aabc7c41c90800000000000000
+      internalID: -7199910226711974349
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_28
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 51
+        width: 17
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f29e0916f8981f9a0800000000000000
+      internalID: -6201023963002246865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_29
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 51
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ecf546bcdbe7ee120800000000000000
+      internalID: 2445031001335029710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_30
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 51
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7008bab324f81ad20800000000000000
+      internalID: 3288066717588881415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_31
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 50
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a31e0240465e9f80800000000000000
+      internalID: -8097940245979458647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_32
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 49
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29a0f4b41725f5830800000000000000
+      internalID: 4062056035459730066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_33
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 48
+        width: 15
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64fbc4a497dfbd810800000000000000
+      internalID: 1791303974189317958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_34
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 48
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a1aec6aee408fac0800000000000000
+      internalID: -3821298860776578654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_35
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 48
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aed05497bdc664d60800000000000000
+      internalID: 7874100688392097258
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_36
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 33
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af10a33ca8e98b1c0800000000000000
+      internalID: -4487662709856665094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_37
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 33
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32294ad7d8e0d5c00800000000000000
+      internalID: 890884302150341155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_38
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 33
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4af2873c88d485a0800000000000000
+      internalID: -6519848263787283892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_39
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 35
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e92447676b5f29e10800000000000000
+      internalID: 2203093331757777566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_40
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 35
+        width: 17
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b534933870f277b50800000000000000
+      internalID: 6590788288992854875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_41
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 35
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10aa011099e737140800000000000000
+      internalID: 4716252430400006657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_42
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 35
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a97adcde042231ee0800000000000000
+      internalID: -1291651005862271078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_43
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 34
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 998c974fdd2351850800000000000000
+      internalID: 6347035178719365273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_44
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 33
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56a7fd0d866d40540800000000000000
+      internalID: 4973335634193119845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_45
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 32
+        width: 15
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c2385aa1b67070a0800000000000000
+      internalID: -6885873324810292542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_46
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 32
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46e4f6d6374bcfcd0800000000000000
+      internalID: -2522943283384070556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_47
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 32
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a302f0303c669f70800000000000000
+      internalID: 9193654643558843299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_48
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 17
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 079bc618aab7048c0800000000000000
+      internalID: -4017074895368439440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_49
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 17
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70d1614e3b7544cb0800000000000000
+      internalID: -4880679666025358073
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_50
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 17
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d57f02297e61c0cf0800000000000000
+      internalID: -284827492586293411
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_51
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 19
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca23c6077ce7ea3b0800000000000000
+      internalID: -5499318699923066196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_52
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 19
+        width: 17
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc56705d7984c54b0800000000000000
+      internalID: -5450401632073849393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_53
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 19
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c01b4f10c0f7ee030800000000000000
+      internalID: 3525895247826825484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_54
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 19
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d14b164a843cf5c70800000000000000
+      internalID: 8962096500253504541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_55
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 18
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d1282e30cd555e20800000000000000
+      internalID: 3338677779023012305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_56
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 17
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a870207e107518f10800000000000000
+      internalID: 2270191352853694346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_57
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 16
+        width: 15
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cb84be861b8235e0800000000000000
+      internalID: -1931328361188783168
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_58
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 16
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1054213357233060800000000000000
+      internalID: 6931927489713557532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_59
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 16
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1cf45a16c22763a0800000000000000
+      internalID: -6672326088685454310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_60
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1
+        width: 11
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7eb38579314047c0800000000000000
+      internalID: -4089196746611900806
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_61
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 1
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 489dc2138819d9120800000000000000
+      internalID: 2422252188721797508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_62
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 1
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 32118e70dd9d61c90800000000000000
+      internalID: -7199327410961510109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_63
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 3
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 751031a3a60f310e0800000000000000
+      internalID: -2300230645624667817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_64
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 3
+        width: 17
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 134647cc60927e270800000000000000
+      internalID: 8279631549120668721
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_65
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 3
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f7c346a96ab6cf20800000000000000
+      internalID: 3442643928095115250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_66
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 3
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da4d81aceca021d30800000000000000
+      internalID: 4400591669164561581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_67
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 2
+        width: 17
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1a81f18d47d49bb0800000000000000
+      internalID: -4930078964171306468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_68
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 1
+        width: 17
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 758b11d2458fe8cd0800000000000000
+      internalID: -2553830898255415209
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_69
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 0
+        width: 15
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8fe5be09d8e93e40800000000000000
+      internalID: 5636792427583238028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_70
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 0
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f724917f63eff21f0800000000000000
+      internalID: -1067355074636201345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_71
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 0
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec509d715a0f8b0e0800000000000000
+      internalID: -2253787021638564402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_72
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 80
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f29bce5724256743b3e9511da12b15f
+      internalID: -281545505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_73
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 64
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 33f246f1653d8bb458a61d9187f3f288
+      internalID: 1938936272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_74
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 48
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0f800963d2f0894ab6c2f21c05e8c43
+      internalID: -1336918409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_75
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 32
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 58333103d27013a47bb582c20383d511
+      internalID: -1555737345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_76
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 16
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 92df02482ecc3ed41bc067775cbe6539
+      internalID: 1287217719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_77
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 82
+        width: 1
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f302a221c23f7c84db00195d147b3173
+      internalID: 1482305559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_78
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 66
+        width: 1
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 857561f6ae9883748b92bee7218eee38
+      internalID: 1353365176
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_79
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 50
+        width: 1
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e808d6fc2a6582649a877ae5109c4004
+      internalID: 1668780488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_80
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 34
+        width: 1
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f401f7efec576364eb93e8d8262c2504
+      internalID: -1469970935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_81
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 18
+        width: 1
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 11fda66a9f93adc4aa194284feca1070
+      internalID: 468577289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_82
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 2
+        width: 1
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b2079fae73f3a74e8093c9e130467b7
+      internalID: -1192209234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_83
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 0
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b9a91ac9f3bfe343b710762d3ecb071
+      internalID: 1258233692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_84
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 80
+        width: 3
+        height: 3
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fc5cf9e1370ef8d4a959e0215b465f84
+      internalID: -76943465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_85
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 64
+        width: 3
+        height: 3
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cfd3676326f51f94a9f3847aaa96b318
+      internalID: -347122058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_86
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 48
+        width: 3
+        height: 3
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b88e96e175917447a1a4fbce1c1b53b
+      internalID: 1518056230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_87
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 32
+        width: 3
+        height: 3
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 998d9a239e2e0394ca48ac8a95da9423
+      internalID: 1251879049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_88
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 16
+        width: 3
+        height: 3
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e6a5f8c225ec404eb4370b07536796d
+      internalID: 1293038438
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: pacman_skins_89
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 0
+        width: 3
+        height: 3
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bf21a71e18bca3f4fb2b7522cf0272fb
+      internalID: -1852412359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 2c84c8b805566b641a041b8a25ffa2b6
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      pacman_skins_0: 4630082507464210667
+      pacman_skins_1: 2400159056642103004
+      pacman_skins_10: 3478056647565564230
+      pacman_skins_11: -2886769896677514277
+      pacman_skins_12: -5836293619830086822
+      pacman_skins_13: -6058473748631233862
+      pacman_skins_14: -6753507574539845378
+      pacman_skins_15: 7970956938807503114
+      pacman_skins_16: -4607864642315327212
+      pacman_skins_17: 4506096915748160884
+      pacman_skins_18: 6979406107120700386
+      pacman_skins_19: -440709157526198765
+      pacman_skins_2: -976303011541115938
+      pacman_skins_20: 8681483665817684528
+      pacman_skins_21: -4545675801519596075
+      pacman_skins_22: -9143005544806791548
+      pacman_skins_23: -5393534710732131305
+      pacman_skins_24: -6786458830267223446
+      pacman_skins_25: -5753453089403580069
+      pacman_skins_26: -7380205442595846662
+      pacman_skins_27: -7199910226711974349
+      pacman_skins_28: -6201023963002246865
+      pacman_skins_29: 2445031001335029710
+      pacman_skins_3: 8094204377842562234
+      pacman_skins_30: 3288066717588881415
+      pacman_skins_31: -8097940245979458647
+      pacman_skins_32: 4062056035459730066
+      pacman_skins_33: 1791303974189317958
+      pacman_skins_34: -3821298860776578654
+      pacman_skins_35: 7874100688392097258
+      pacman_skins_36: -4487662709856665094
+      pacman_skins_37: 890884302150341155
+      pacman_skins_38: -6519848263787283892
+      pacman_skins_39: 2203093331757777566
+      pacman_skins_4: -1093982960728753622
+      pacman_skins_40: 6590788288992854875
+      pacman_skins_41: 4716252430400006657
+      pacman_skins_42: -1291651005862271078
+      pacman_skins_43: 6347035178719365273
+      pacman_skins_44: 4973335634193119845
+      pacman_skins_45: -6885873324810292542
+      pacman_skins_46: -2522943283384070556
+      pacman_skins_47: 9193654643558843299
+      pacman_skins_48: -4017074895368439440
+      pacman_skins_49: -4880679666025358073
+      pacman_skins_5: 8886972259339515335
+      pacman_skins_50: -284827492586293411
+      pacman_skins_51: -5499318699923066196
+      pacman_skins_52: -5450401632073849393
+      pacman_skins_53: 3525895247826825484
+      pacman_skins_54: 8962096500253504541
+      pacman_skins_55: 3338677779023012305
+      pacman_skins_56: 2270191352853694346
+      pacman_skins_57: -1931328361188783168
+      pacman_skins_58: 6931927489713557532
+      pacman_skins_59: -6672326088685454310
+      pacman_skins_6: -7298067178994643432
+      pacman_skins_60: -4089196746611900806
+      pacman_skins_61: 2422252188721797508
+      pacman_skins_62: -7199327410961510109
+      pacman_skins_63: -2300230645624667817
+      pacman_skins_64: 8279631549120668721
+      pacman_skins_65: 3442643928095115250
+      pacman_skins_66: 4400591669164561581
+      pacman_skins_67: -4930078964171306468
+      pacman_skins_68: -2553830898255415209
+      pacman_skins_69: 5636792427583238028
+      pacman_skins_7: 6126524830315040652
+      pacman_skins_70: -1067355074636201345
+      pacman_skins_71: -2253787021638564402
+      pacman_skins_72: -281545505
+      pacman_skins_73: 1938936272
+      pacman_skins_74: -1336918409
+      pacman_skins_75: -1555737345
+      pacman_skins_76: 1287217719
+      pacman_skins_77: 1482305559
+      pacman_skins_78: 1353365176
+      pacman_skins_79: 1668780488
+      pacman_skins_8: -6621590859600547148
+      pacman_skins_80: -1469970935
+      pacman_skins_81: 468577289
+      pacman_skins_82: -1192209234
+      pacman_skins_83: 1258233692
+      pacman_skins_84: -76943465
+      pacman_skins_85: -347122058
+      pacman_skins_86: 1518056230
+      pacman_skins_87: 1251879049
+      pacman_skins_88: 1293038438
+      pacman_skins_89: -1852412359
+      pacman_skins_9: 6942388428771648046
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

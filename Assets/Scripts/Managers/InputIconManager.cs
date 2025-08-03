@@ -12,14 +12,14 @@ using UnityEngine.Localization.Settings;
 
 public class InputIconManager : MonoBehaviour
 {
-    [Header("Instructions")]
-    public List<InstructionGroup> instructionGroups = new();
+    [Header("Text")]
+    public List<TextGroup> textGroups = new();
 
     [Header("Icon Images")]
     public List<ActionIcon> icons = new();
 
     [System.Serializable]
-    public class InstructionGroup
+    public class TextGroup
     {
         public TMP_Text targetText;
         public LocalizedString instructionFormat;
@@ -116,7 +116,7 @@ public class InputIconManager : MonoBehaviour
         // the worst part is that I forgot to clear the addressables groups cache
         // and turns out that what was causing one of the sprite icons to not show
         // Note: DON'T FORGET to do a new build every time you change something on the localization tables
-        foreach (var group in instructionGroups)
+        foreach (var group in textGroups)
         {
             if (group.targetText == null || group.instructionFormat.IsEmpty) continue;
 
@@ -226,7 +226,7 @@ public class InputIconManager : MonoBehaviour
 
         List<TMP_SpriteAsset> assetsToSearch = new();
 
-        foreach (var group in instructionGroups)
+        foreach (var group in textGroups)
         {
             if (group.targetText?.spriteAsset != null)
             {

@@ -9,7 +9,8 @@ public enum SettingType
     LanguageKey,
     PacmanLivesKey,
     ExtraKey,
-    GameModeKey
+    GameModeKey,
+    PlayerCountKey
 }
 
 public static class SettingsKeys
@@ -23,6 +24,8 @@ public static class SettingsKeys
         { SettingType.LanguageKey, LanguageKey},
         { SettingType.PacmanLivesKey, PacmanLivesKey },
         { SettingType.ExtraKey, ExtraKey },
+        { SettingType.GameModeKey, GameModeKey },
+        { SettingType.PlayerCountKey, PlayerCountKey }
     };
 
     public static string Get(SettingType type) => keys.TryGetValue(type, out var value) ? value : type.ToString();
@@ -38,4 +41,5 @@ public static class SettingsKeys
     public const string PacmanLivesKey = "PacmanLives";
     public const string ExtraKey = "Extra";
     public const string GameModeKey = "GameMode";
+    public const string PlayerCountKey = "PlayerCount";
 }

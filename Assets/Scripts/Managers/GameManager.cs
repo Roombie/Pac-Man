@@ -81,6 +81,13 @@ public class GameManager : MonoBehaviour
     public static IReadOnlyList<int> ExtraPointValues => extraPointValues;
     private int nextLifeScoreThreshold = 0;
     public event System.Action<int, int, int> OnRoundChanged; 
+    
+    private CharacterSkin[] selectedSkins = new CharacterSkin[2];
+
+    private CharacterSkin GetSelectedSkinForPlayer(int playerIndex)
+    {
+        return selectedSkins[playerIndex - 1];
+    }
 
     private void Awake()
     {
@@ -99,7 +106,7 @@ public class GameManager : MonoBehaviour
             players[i] = new PlayerData();
             players[i].bestRound = PlayerPrefs.GetInt($"BestRound_P{i + 1}", 0);
         }
-        
+
         startingLives = Mathf.Clamp(startingLives, 1, GameConstants.MaxLives);
     }
 
@@ -197,7 +204,8 @@ public class GameManager : MonoBehaviour
         // The lives are being set on SettingsApplier.cs
         // which calls SetLives method on the GameManager and use it as soon as it detects this script on the scene
 
-        Sprite currentLifeSprite = selectedCharacters[currentPlayer - 1].lifeIconSprite;
+        CharacterSkin currentSkin = GetSelectedSkinForPlayer(currentPlayer);
+        Sprite currentLifeSprite = currentSkin.lifeIconSprite;
         lifeIconsController.CreateIcons(currentLifeSprite);
         lifeIconsController.UpdateIcons(players[currentPlayer - 1].lives - 1, currentLifeSprite);
 
@@ -427,7 +435,7 @@ public class GameManager : MonoBehaviour
 
         if (lifeIconsController != null && selectedCharacters[index] != null)
         {
-            Sprite newLifeSprite = selectedCharacters[index].lifeIconSprite;
+            Sprite newLifeSprite = selectedSkins[index].lifeIconSprite;
             lifeIconsController.UpdateIcons(players[index].lives - 1, newLifeSprite);
         }
         else
@@ -533,7 +541,7 @@ public class GameManager : MonoBehaviour
     {
         int lives = players[currentPlayer - 1].lives;
         Debug.Log($"UpdateLifeIconsUI: player {currentPlayer}, lives = {lives}");
-        Sprite currentLifeSprite = selectedCharacters[currentPlayer - 1].lifeIconSprite;
+        Sprite currentLifeSprite = selectedSkins[currentPlayer - 1].lifeIconSprite;
         lifeIconsController.UpdateIcons(players[currentPlayer - 1].lives - 1, currentLifeSprite);
     }
 
@@ -827,7 +835,7 @@ public class GameManager : MonoBehaviour
 
         if (data != null)
         {
-            pacmanAnimator.runtimeAnimatorController = data.playerAnimatorController;
+            pacmanAnimator.runtimeAnimatorController = selectedSkins[currentPlayer - 1].animatorController;
         }
         else
         {
