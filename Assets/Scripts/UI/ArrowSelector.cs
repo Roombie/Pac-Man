@@ -1,3 +1,4 @@
+// ArrowSelector.cs (updated)
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,7 +6,7 @@ using UnityEngine.UI;
 public class ArrowSelector : MonoBehaviour
 {
     public static ArrowSelector Instance { get; private set; }
-    
+
     [System.Serializable]
     public struct ButtonData
     {
@@ -55,7 +56,11 @@ public class ArrowSelector : MonoBehaviour
                     suppressSoundOnFirstAutoSelection = true;
                     MoveIndicator(i);
                     yield return null;
-                    suppressSoundOnFirstAutoSelection = false;
+
+                    if (UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject == buttons[i].button.gameObject)
+                    {
+                        suppressSoundOnFirstAutoSelection = false;
+                    }
                     yield break;
                 }
             }
@@ -100,7 +105,6 @@ public class ArrowSelector : MonoBehaviour
         if (go == null || !go.activeInHierarchy)
             return false;
 
-        // Check if it's in the visible canvas hierarchy
         var selectable = go.GetComponent<Selectable>();
         if (selectable == null || !selectable.IsInteractable())
             return false;
@@ -108,15 +112,8 @@ public class ArrowSelector : MonoBehaviour
         return true;
     }
 
-    // MOUSE ONLY
-    public void PointerEnter(int b)
-    {
-        // MoveIndicator(b); 
-    }
-    public void PointerExit(int b)
-    {
-        // MoveIndicator(b); 
-    }
+    public void PointerEnter(int b) { }
+    public void PointerExit(int b) { }
 
     public void SuppressSoundOnNextSelection()
     {
@@ -125,17 +122,11 @@ public class ArrowSelector : MonoBehaviour
 
     public void ButtonSelected(int b)
     {
+        bool isSameAsBefore = (lastSelected == b);
         lastSelected = b;
         MoveIndicator(b);
 
-        if (suppressSoundOnNextExternalSelection)
-        {
-            suppressSoundOnNextExternalSelection = false;
-            Debug.Log("Selection sound suppressed via static flag");
-            return;
-        }
-
-        Debug.Log($"suppressFirstSound: {suppressSoundOnFirstAutoSelection}");
+        Debug.Log($"suppressFirstSound: {suppressSoundOnFirstAutoSelection}, sameAsBefore: {isSameAsBefore}");
 
         if (suppressSoundOnFirstAutoSelection)
         {
@@ -144,14 +135,21 @@ public class ArrowSelector : MonoBehaviour
             return;
         }
 
+        if (suppressSoundOnNextExternalSelection)
+        {
+            suppressSoundOnNextExternalSelection = false;
+            Debug.Log("Selection sound suppressed via static flag");
+            return;
+        }
+
         if (!isChangingPage && navigateSound != null && AudioManager.Instance != null)
         {
             AudioManager.Instance.Play(navigateSound, SoundCategory.SFX);
-            Debug.Log("Audio plays, you're not changing pages or it's not the first time time scene has loaded");
+            Debug.Log("Navigation sound played");
         }
         else
         {
-            Debug.LogWarning("Either a navigateSound wasn't referenced or the AudioManager isn't on the scene");
+            Debug.LogWarning("Missing navigateSound or AudioManager instance");
         }
     }
 

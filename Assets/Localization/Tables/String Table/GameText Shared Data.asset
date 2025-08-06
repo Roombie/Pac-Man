@@ -147,12 +147,8 @@ MonoBehaviour:
     m_Key: CharacterSelection_Text
     m_Metadata:
       m_Items: []
-  - m_Id: 2561809675284480
-    m_Key: P1_Text
-    m_Metadata:
-      m_Items: []
-  - m_Id: 2561822040092672
-    m_Key: P2_Text
+  - m_Id: 3941674173427712
+    m_Key: Player_label
     m_Metadata:
       m_Items: []
   - m_Id: 2577423546544128

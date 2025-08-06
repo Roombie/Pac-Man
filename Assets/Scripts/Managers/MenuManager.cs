@@ -5,6 +5,8 @@ public class MenuManager : MonoBehaviour
 {
     public static MenuManager Instance;
 
+    public static event System.Action<GameObject, GameObject> OnMenuChanged;
+
     private Stack<GameObject> menuStack = new();
     private bool isInteractionBlocked = false;
 
@@ -13,13 +15,11 @@ public class MenuManager : MonoBehaviour
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        // Register listener for UI interaction changes
         EventManager<bool>.RegisterEvent(EventKey.UIInteractionChanged, OnInteractionBlocked);
     }
 
     private void OnDestroy()
     {
-        // Unregister listener
         EventManager<bool>.UnregisterEvent(EventKey.UIInteractionChanged, OnInteractionBlocked);
     }
 
@@ -36,10 +36,43 @@ public class MenuManager : MonoBehaviour
             return;
         }
 
-        if (menuStack.Count > 0)
+        GameObject previous = menuStack.Count > 0 ? menuStack.Peek() : null;
+
+        // If stack is not on top, delete to reopen
+        if (menuStack.Contains(menu))
         {
-            GameObject current = menuStack.Peek();
-            IMenuPanel currentPanel = current.GetComponent<IMenuPanel>();
+            Debug.Log($"[MenuManager] Menu '{menu.name}' ya estaba en el stack. Removiendo instancias previas para reabrirlo correctamente.");
+            Stack<GameObject> tempStack = new Stack<GameObject>();
+            while (menuStack.Count > 0)
+            {
+                GameObject top = menuStack.Pop();
+                if (top == menu)
+                {
+                    top.GetComponent<IMenuPanel>()?.OnExit();
+                    top.SetActive(false);
+                    break;
+                }
+                else
+                {
+                    tempStack.Push(top);
+                    top.GetComponent<IMenuPanel>()?.OnExit();
+                    top.SetActive(false);
+                }
+            }
+
+            while (tempStack.Count > 0)
+            {
+                menuStack.Push(tempStack.Pop());
+            }
+
+            previous = menuStack.Count > 0 ? menuStack.Peek() : null;
+        }
+
+        // Verificar si el menú actual permite salir
+        // Verify if current menu allows you to exit
+        if (previous != null)
+        {
+            var currentPanel = previous.GetComponent<IMenuPanel>();
             if (currentPanel != null && !currentPanel.CanLeave())
             {
                 Debug.Log("Current menu prevents leaving.");
@@ -47,12 +80,15 @@ public class MenuManager : MonoBehaviour
             }
 
             currentPanel?.OnExit();
-            current.SetActive(false);
+            previous.SetActive(false);
         }
 
         menu.SetActive(true);
         menuStack.Push(menu);
         menu.GetComponent<IMenuPanel>()?.OnEnter();
+
+        OnMenuChanged?.Invoke(menu, previous);
+        DebugStack();
     }
 
     public void Back()
@@ -76,6 +112,9 @@ public class MenuManager : MonoBehaviour
         GameObject previous = menuStack.Peek();
         previous.SetActive(true);
         previous.GetComponent<IMenuPanel>()?.OnEnter();
+
+        OnMenuChanged?.Invoke(previous, current);
+        DebugStack();
     }
 
     public void CloseAll()
@@ -85,6 +124,39 @@ public class MenuManager : MonoBehaviour
             GameObject m = menuStack.Pop();
             m.GetComponent<IMenuPanel>()?.OnExit();
             m.SetActive(false);
+        }
+    }
+
+    public void ResetToMenu(GameObject menu)
+    {
+        while (menuStack.Count > 0)
+        {
+            GameObject m = menuStack.Pop();
+            m.GetComponent<IMenuPanel>()?.OnExit();
+            m.SetActive(false);
+        }
+
+        menu.SetActive(true);
+        menuStack.Push(menu);
+        menu.GetComponent<IMenuPanel>()?.OnEnter();
+
+        OnMenuChanged?.Invoke(menu, null);
+        DebugStack();
+    }
+
+    public bool CanGoBack()
+    {
+        return !isInteractionBlocked && menuStack.Count > 1;
+    }
+
+    public GameObject CurrentMenu => menuStack.Count > 0 ? menuStack.Peek() : null;
+
+    private void DebugStack()
+    {
+        Debug.Log("Menu Stack:");
+        foreach (var m in menuStack)
+        {
+            Debug.Log($" - {m.name} (active={m.activeSelf})");
         }
     }
 }

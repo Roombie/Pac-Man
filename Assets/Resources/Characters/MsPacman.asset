@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbbb57df323a0b3418f9cf7cc49388cb, type: 3}
+  m_Name: MsPacman
+  m_EditorClassIdentifier: 
+  characterName: Ms. Pacman
+  pelletEatenSound1: {fileID: 8300000, guid: 98edbbd328b0c3349884319d4e241bac, type: 3}
+  pelletEatenSound2: {fileID: 8300000, guid: 98edbbd328b0c3349884319d4e241bac, type: 3}
+  deathSound: {fileID: 8300000, guid: ac0afe58d0fb57745be54b4500968b5d, type: 3}
+  skins:
+  - skinName: 0
+    previewSprite: {fileID: 2250730653141506759, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    lifeIconSprite: {fileID: -1804452703, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    skinIcon: {fileID: 6778372328073227817, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
+  - skinName: 1
+    previewSprite: {fileID: 2250730653141506759, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    lifeIconSprite: {fileID: -1804452703, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    skinIcon: {fileID: 6778372328073227817, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
+  - skinName: 2
+    previewSprite: {fileID: 2250730653141506759, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    lifeIconSprite: {fileID: -1804452703, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    skinIcon: {fileID: 6778372328073227817, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
+  - skinName: 3
+    previewSprite: {fileID: 2250730653141506759, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    lifeIconSprite: {fileID: -1804452703, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    skinIcon: {fileID: 6778372328073227817, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
+  - skinName: 4
+    previewSprite: {fileID: 2250730653141506759, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    lifeIconSprite: {fileID: -1804452703, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    skinIcon: {fileID: 6778372328073227817, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
+  - skinName: 5
+    previewSprite: {fileID: 2250730653141506759, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    lifeIconSprite: {fileID: -1804452703, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    skinIcon: {fileID: 6778372328073227817, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
+    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}

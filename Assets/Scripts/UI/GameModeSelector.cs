@@ -8,7 +8,6 @@ public class GameModeSelector : MonoBehaviour
     [Header("References")]
     public GameObject onePlayerModeObject;
     public GameObject twoPlayerModeObject;
-    public AudioClip pressSound;
 
     [Header("Input")]
     public InputActionReference pauseAction;
@@ -27,35 +26,30 @@ public class GameModeSelector : MonoBehaviour
         currentMode = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 1);
         ApplyMode();
 
-        // Cache and enable input
         if (pauseAction != null)
         {
             pause = pauseAction.action;
+            if (!pause.enabled) pause.Enable();
+            pause.performed -= OnPausePressed;
             pause.performed += OnPausePressed;
-            pause.Enable();
         }
 
         if (submitAction != null)
         {
             submit = submitAction.action;
+            if (!submit.enabled) submit.Enable();
+            submit.performed -= OnSubmitPerformed;
             submit.performed += OnSubmitPerformed;
-            submit.Enable();
         }
     }
 
     private void OnDisable()
     {
         if (pause != null)
-        {
             pause.performed -= OnPausePressed;
-            pause.Disable();
-        }
 
         if (submit != null)
-        {
             submit.performed -= OnSubmitPerformed;
-            submit.Disable();
-        }
     }
 
     private void OnPausePressed(InputAction.CallbackContext ctx)
@@ -78,7 +72,7 @@ public class GameModeSelector : MonoBehaviour
 
     private void ApplyMode()
     {
-        AudioManager.Instance.Play(pressSound, SoundCategory.SFX);
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
         onePlayerModeObject?.SetActive(currentMode == 1);
         twoPlayerModeObject?.SetActive(currentMode == 2);
         Debug.Log($"Game Mode: {(currentMode == 1 ? "1P" : "2P")}");

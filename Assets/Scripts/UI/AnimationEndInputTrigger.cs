@@ -48,7 +48,7 @@ public class AnimationEndInputTrigger : MonoBehaviour
             if (!hasJumpedToEnd && state.normalizedTime < 1f)
             {
                 // Jump to last frame
-                animator.Play(animationName, 0, 0.999f); // Just before 1 to allow time for Update to detect end
+                animator.Play(animationName, 0, 0.999f); // Just before 1 to allow time for Update to detect end (It was causing weird issues when I left it at 1f)
                 hasJumpedToEnd = true;
             }
             else if (!eventTriggered && state.normalizedTime >= 1f)

@@ -5,7 +5,6 @@ using UnityEngine.Events;
 
 public class BackButtonHandler : MonoBehaviour
 {
-    public AudioClip pressSound;
     public InputActionReference cancelAction;
     public UnityEvent onCancelEvent;
 
@@ -16,8 +15,12 @@ public class BackButtonHandler : MonoBehaviour
         if (cancelAction != null)
         {
             cancel = cancelAction.action;
+
+            if (!cancel.enabled)
+                cancel.Enable();
+
+            cancel.performed -= OnCancelPressed;
             cancel.performed += OnCancelPressed;
-            cancel.Enable();
         }
     }
 
@@ -26,15 +29,12 @@ public class BackButtonHandler : MonoBehaviour
         if (cancel != null)
         {
             cancel.performed -= OnCancelPressed;
-            cancel.Disable();
         }
     }
 
     private void OnCancelPressed(InputAction.CallbackContext ctx)
     {
+        if (!ctx.performed) return;
         onCancelEvent?.Invoke();
-        AudioManager.Instance?.Play(pressSound, SoundCategory.SFX);
-        ArrowSelector.Instance?.SuppressSoundOnNextSelection();
-        MenuManager.Instance.Back();
     }
 }

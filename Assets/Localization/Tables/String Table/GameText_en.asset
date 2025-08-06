@@ -152,14 +152,6 @@ MonoBehaviour:
     m_Localized: Character Selection
     m_Metadata:
       m_Items: []
-  - m_Id: 2561809675284480
-    m_Localized: P1
-    m_Metadata:
-      m_Items: []
-  - m_Id: 2561822040092672
-    m_Localized: P2
-    m_Metadata:
-      m_Items: []
   - m_Id: 2577423546544128
     m_Localized: Ready?
     m_Metadata:
@@ -178,6 +170,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 2608143954440192
     m_Localized: <sprite name="bulletList">Press {0} to cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3941674173427712
+    m_Localized: P{0}
     m_Metadata:
       m_Items: []
   references:

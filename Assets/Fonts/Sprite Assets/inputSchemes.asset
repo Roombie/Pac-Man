@@ -82,22 +82,22 @@ MonoBehaviour:
     m_Unicode: 65534
     m_GlyphIndex: 9
     m_Scale: 1
-    m_Name: e
+    m_Name: leftArrowKey
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 10
     m_Scale: 1
-    m_Name: leftTrigger
+    m_Name: leftjoystick_left_gamepad
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 11
     m_Scale: 1
-    m_Name: q
+    m_Name: rightArrowKey
   - m_ElementType: 2
     m_Unicode: 65534
     m_GlyphIndex: 12
     m_Scale: 1
-    m_Name: rightTrigger
+    m_Name: leftjoystick_right_gamepad
   m_GlyphTable:
   - m_Index: 0
     m_Metrics:
@@ -267,10 +267,10 @@ MonoBehaviour:
       m_HorizontalBearingY: 4
       m_HorizontalAdvance: 8
     m_GlyphRect:
-      m_X: 14
-      m_Y: 1
-      m_Width: 8
-      m_Height: 8
+      m_X: 15
+      m_Y: 2
+      m_Width: 7
+      m_Height: 7
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
@@ -300,9 +300,9 @@ MonoBehaviour:
       m_HorizontalAdvance: 8
     m_GlyphRect:
       m_X: 23
-      m_Y: 1
-      m_Width: 8
-      m_Height: 8
+      m_Y: 2
+      m_Width: 7
+      m_Height: 7
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0

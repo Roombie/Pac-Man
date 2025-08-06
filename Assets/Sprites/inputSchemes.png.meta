@@ -329,7 +329,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: e
+      name: leftArrow
       rect:
         serializedVersion: 2
         x: 15
@@ -351,7 +351,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: q
+      name: rightArrow
       rect:
         serializedVersion: 2
         x: 23
@@ -373,13 +373,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: leftTrigger
+      name: leftStick_Left
       rect:
         serializedVersion: 2
-        x: 14
-        y: 1
-        width: 8
-        height: 8
+        x: 15
+        y: 2
+        width: 7
+        height: 7
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -395,13 +395,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: rightTrigger
+      name: leftStick_Right
       rect:
         serializedVersion: 2
         x: 23
-        y: 1
-        width: 8
-        height: 8
+        y: 2
+        width: 7
+        height: 7
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -433,19 +433,19 @@ TextureImporter:
       bulletList: -6562578724970717414
       buttonEast: -6785898972063176230
       buttonSouth: -8487650561584206476
-      e: 1595845701
       inputSchemes_4: 821632223542213500
       inputSchemes_6: -7657223027000946449
       inputSchemes_7: 4270577428633313406
       inputSchemes_8: 8015113828800442803
       inputSchemes_9: -5565101068321532973
+      leftArrow: 1595845701
       leftStick: 1171800469
+      leftStick_Left: -204952607
+      leftStick_Right: -54729911
       leftStick_left: 631613856
       leftStick_right: 404122601
-      leftTrigger: -204952607
       leftarrow: -4471647572117562509
-      q: 274634407
-      rightTrigger: -54729911
+      rightArrow: 1057032799
       rightarrow: -4306950914284806064
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
