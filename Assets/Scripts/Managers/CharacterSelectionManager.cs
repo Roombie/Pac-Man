@@ -52,6 +52,7 @@ public class CharacterSelectionManager : MonoBehaviour
 
         foreach (var panel in playerPanels)
         {
+            panel.ResetPanelState();
             panel.gameObject.SetActive(false);
             panel.SetPanelActive(false);
         }
@@ -65,7 +66,6 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             SetupPanelForPlayer(i);
 
-            // Force player i as manually joined if there's no player input
             if (!joinedPlayers.ContainsKey(i))
             {
                 var panel = playerPanels[i];
@@ -73,6 +73,38 @@ public class CharacterSelectionManager : MonoBehaviour
                 panel.SetPanelActive(true);
             }
         }
+
+        RefreshReadinessFromPanelState();
+        CheckAllPlayersSelected();
+        TryFireFinalConfirmation();
+    }
+
+    private void RefreshReadinessFromPanelState()
+    {
+        readyCount = 0;
+
+        var keys = new List<int>(joinedPlayers.Keys);
+
+        foreach (int index in keys)
+        {
+            var panel = joinedPlayers[index].Panel;
+
+            bool hasSelected = panel.HasSelectedCharacter;
+            bool hasConfirmed = panel.HasConfirmedSkin;
+
+            var status = joinedPlayers[index];
+            status.HasSelectedCharacter = hasSelected;
+            status.HasConfirmedSkin = hasConfirmed;
+            status.IsReady = hasSelected && hasConfirmed;
+            joinedPlayers[index] = status;
+
+            if (status.IsReady)
+            {
+                readyCount++;
+            }
+        }
+
+        Debug.Log($"[CharacterSelectionManager] Refreshed readiness. ReadyCount: {readyCount}/{expectedPlayers}");
     }
 
     private void Start()
@@ -194,9 +226,14 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             if (kvp.Value.Panel == panel)
             {
-                var status = kvp.Value;
-                status.IsReady = true;
-                joinedPlayers[kvp.Key] = status;
+                joinedPlayers[kvp.Key] = new PlayerStatus
+                {
+                    HasJoined = true,
+                    IsReady = true,
+                    HasSelectedCharacter = panel.HasSelectedCharacter,
+                    HasConfirmedSkin = panel.HasConfirmedSkin,
+                    Panel = panel
+                };
                 break;
             }
         }
@@ -275,8 +312,12 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             if (!kvp.Value.HasJoined) continue;
             var panel = kvp.Value.Panel;
+
             if (!panel.HasSelectedCharacter || !panel.HasConfirmedSkin)
+            {
+                Debug.LogWarning($"[TryFireFinalConfirmation] Player {kvp.Key} missing selection. HasSelected: {panel.HasSelectedCharacter}, HasConfirmedSkin: {panel.HasConfirmedSkin}");
                 return;
+            }
         }
 
         allConfirmedFired = true;

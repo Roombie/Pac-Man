@@ -253,6 +253,20 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
     }
 
+    public void ResetPanelState()
+    {
+        currentIndex = 0;
+        currentSkinIndex = 0;
+        hasSelectedCharacter = false;
+        hasConfirmedSkin = false;
+        hasConfirmedFinal = false;
+
+        Debug.Log($"[ResetPanelState] Panel {playerIndex + 1}: hasConfirmedFinal = {hasConfirmedFinal}");
+
+        UpdateDisplay();
+        ShowSkinOptions(false);
+    }
+
     public void InitializeSkins()
     {
         var skins = SelectedCharacter.skins;

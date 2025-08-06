@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "CharacterData", menuName = "Game/Characters/Character Data")]
@@ -11,6 +12,11 @@ public class CharacterData : ScriptableObject
 
     [Header("Skins")]
     public CharacterSkin[] skins;
+
+    public CharacterSkin GetSkinByName(string skinName)
+    {
+        return skins.FirstOrDefault(s => s.skinName == skinName);
+    }
 }
 
 [System.Serializable]

@@ -135,6 +135,9 @@ public class GameManager : MonoBehaviour
         string p1Name = PlayerPrefs.GetString("SelectedCharacter_Player1_Name", "");
         string p2Name = PlayerPrefs.GetString("SelectedCharacter_Player2_Name", "");
 
+        string p1Skin = PlayerPrefs.GetString("SelectedCharacter_Player1_Skin", "");
+        string p2Skin = PlayerPrefs.GetString("SelectedCharacter_Player2_Skin", "");
+
         CharacterData[] allCharacters = Resources.LoadAll<CharacterData>("Characters");
 
         foreach (var character in allCharacters)
@@ -144,6 +147,12 @@ public class GameManager : MonoBehaviour
             if (character.characterName == p2Name)
                 selectedCharacters[1] = character;
         }
+
+        if (selectedCharacters[0] != null)
+            selectedSkins[0] = selectedCharacters[0].GetSkinByName(p1Skin);
+
+        if (selectedCharacters[1] != null)
+            selectedSkins[1] = selectedCharacters[1].GetSkinByName(p2Skin);
 
         uiManager.InitializeUI(is2P);
         uiManager.UpdateHighScore(highScore);
@@ -830,8 +839,14 @@ public class GameManager : MonoBehaviour
     {
         CharacterData data = selectedCharacters[currentPlayer - 1];
 
-        if (pacmanAnimator == null)
-            pacmanAnimator = pacman.GetComponent<Animator>();
+        if (data != null && selectedSkins[currentPlayer - 1] != null)
+        {
+            pacmanAnimator.runtimeAnimatorController = selectedSkins[currentPlayer - 1].animatorController;
+        }
+        else
+        {
+            Debug.LogWarning($"[GameManager] CharacterData or Skin is null for player {currentPlayer}");
+        }
 
         if (data != null)
         {
