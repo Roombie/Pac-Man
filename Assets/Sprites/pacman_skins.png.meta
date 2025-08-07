@@ -342,10 +342,10 @@ TextureImporter:
       name: pacman_skins_0
       rect:
         serializedVersion: 2
-        x: 2
-        y: 82
-        width: 13
-        height: 13
+        x: 1
+        y: 81
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -364,10 +364,10 @@ TextureImporter:
       name: pacman_skins_1
       rect:
         serializedVersion: 2
-        x: 18
-        y: 82
-        width: 13
-        height: 13
+        x: 17
+        y: 81
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -386,10 +386,10 @@ TextureImporter:
       name: pacman_skins_2
       rect:
         serializedVersion: 2
-        x: 34
-        y: 82
-        width: 13
-        height: 13
+        x: 33
+        y: 81
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -606,10 +606,10 @@ TextureImporter:
       name: pacman_skins_12
       rect:
         serializedVersion: 2
-        x: 2
-        y: 66
-        width: 13
-        height: 13
+        x: 1
+        y: 65
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -628,10 +628,10 @@ TextureImporter:
       name: pacman_skins_13
       rect:
         serializedVersion: 2
-        x: 18
-        y: 66
-        width: 13
-        height: 13
+        x: 17
+        y: 65
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -650,10 +650,10 @@ TextureImporter:
       name: pacman_skins_14
       rect:
         serializedVersion: 2
-        x: 34
-        y: 66
-        width: 13
-        height: 13
+        x: 33
+        y: 65
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -870,10 +870,10 @@ TextureImporter:
       name: pacman_skins_24
       rect:
         serializedVersion: 2
-        x: 2
-        y: 50
-        width: 13
-        height: 13
+        x: 1
+        y: 49
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -892,10 +892,10 @@ TextureImporter:
       name: pacman_skins_25
       rect:
         serializedVersion: 2
-        x: 18
-        y: 50
-        width: 13
-        height: 13
+        x: 17
+        y: 49
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -914,10 +914,10 @@ TextureImporter:
       name: pacman_skins_26
       rect:
         serializedVersion: 2
-        x: 34
-        y: 50
-        width: 13
-        height: 13
+        x: 33
+        y: 49
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1134,10 +1134,10 @@ TextureImporter:
       name: pacman_skins_36
       rect:
         serializedVersion: 2
-        x: 2
-        y: 34
-        width: 13
-        height: 13
+        x: 1
+        y: 33
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1156,10 +1156,10 @@ TextureImporter:
       name: pacman_skins_37
       rect:
         serializedVersion: 2
-        x: 18
-        y: 34
-        width: 13
-        height: 13
+        x: 17
+        y: 33
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1178,10 +1178,10 @@ TextureImporter:
       name: pacman_skins_38
       rect:
         serializedVersion: 2
-        x: 34
-        y: 34
-        width: 13
-        height: 13
+        x: 33
+        y: 33
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1398,10 +1398,10 @@ TextureImporter:
       name: pacman_skins_48
       rect:
         serializedVersion: 2
-        x: 2
-        y: 18
-        width: 13
-        height: 13
+        x: 1
+        y: 17
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1420,10 +1420,10 @@ TextureImporter:
       name: pacman_skins_49
       rect:
         serializedVersion: 2
-        x: 18
-        y: 18
-        width: 13
-        height: 13
+        x: 17
+        y: 17
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1442,10 +1442,10 @@ TextureImporter:
       name: pacman_skins_50
       rect:
         serializedVersion: 2
-        x: 34
-        y: 18
-        width: 13
-        height: 13
+        x: 33
+        y: 17
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1662,10 +1662,10 @@ TextureImporter:
       name: pacman_skins_60
       rect:
         serializedVersion: 2
-        x: 2
-        y: 2
-        width: 13
-        height: 13
+        x: 1
+        y: 1
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1684,10 +1684,10 @@ TextureImporter:
       name: pacman_skins_61
       rect:
         serializedVersion: 2
-        x: 18
-        y: 2
-        width: 13
-        height: 13
+        x: 17
+        y: 1
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1706,10 +1706,10 @@ TextureImporter:
       name: pacman_skins_62
       rect:
         serializedVersion: 2
-        x: 34
-        y: 2
-        width: 13
-        height: 13
+        x: 33
+        y: 1
+        width: 15
+        height: 15
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}

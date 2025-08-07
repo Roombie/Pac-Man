@@ -9,7 +9,6 @@ public class CharacterData : ScriptableObject
     public AudioClip pelletEatenSound2;
     public AudioClip deathSound;
 
-
     [Header("Skins")]
     public CharacterSkin[] skins;
 
@@ -23,6 +22,7 @@ public class CharacterData : ScriptableObject
 public class CharacterSkin
 {
     public string skinName;
+    public Color arrowIndicatorColor;
     public Sprite previewSprite;
     public Sprite lifeIconSprite;
     public Sprite skinIcon;

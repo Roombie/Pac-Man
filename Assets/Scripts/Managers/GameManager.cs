@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
     public Pacman pacman;
     private SpriteRenderer pacmanSpriteRenderer;
     private Animator pacmanAnimator;
+    private ArrowIndicator pacmanArrowIndicator;
 
     [Header("UI Elements")]
     [SerializeField] private GameObject menus;
@@ -121,6 +122,7 @@ public class GameManager : MonoBehaviour
 
         pacmanAnimator = pacman.GetComponent<Animator>();
         pacmanSpriteRenderer = pacman.GetComponent<SpriteRenderer>();
+        pacmanArrowIndicator = pacman.GetComponent<ArrowIndicator>();
 
         startingLives = Mathf.Clamp(startingLives, 1, GameConstants.MaxLives);
     }
@@ -880,6 +882,12 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log($"Pacman Animator: {skin.animatorController}");
             pacmanAnimator.runtimeAnimatorController = skin.animatorController;
+        }
+
+        // Update arrow indicator's color
+        if (pacmanArrowIndicator != null)
+        {
+            pacmanArrowIndicator.SetColor(skin.arrowIndicatorColor);
         }
     }
 

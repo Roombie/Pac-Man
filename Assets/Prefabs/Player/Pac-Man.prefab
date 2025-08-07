@@ -77,7 +77,7 @@ SpriteRenderer:
   m_SortingLayer: 1
   m_SortingOrder: 0
   m_Sprite: {fileID: -685365436, guid: 385ed8f7dd5f56c4fb1ce2a399c1f37f, type: 3}
-  m_Color: {r: 1, g: 1, b: 0, a: 1}
+  m_Color: {r: 0.95294124, g: 0.95294124, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -210,6 +210,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pivot: {fileID: 7234279419617869599}
   arrow: {fileID: 705958619446952638}
+  spriteRenderer: {fileID: 1510810425750187515}
   distance: 1.25
 --- !u!114 &8450201179379698949
 MonoBehaviour:

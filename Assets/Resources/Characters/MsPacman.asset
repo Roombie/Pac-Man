@@ -18,31 +18,37 @@ MonoBehaviour:
   deathSound: {fileID: 8300000, guid: ac0afe58d0fb57745be54b4500968b5d, type: 3}
   skins:
   - skinName: normal
+    arrowIndicatorColor: {r: 1, g: 1, b: 0, a: 1}
     previewSprite: {fileID: 2250730653141506759, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     lifeIconSprite: {fileID: -1804452703, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     skinIcon: {fileID: 6778372328073227817, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     animatorController: {fileID: 9100000, guid: 094e4a342c56d6140b0696b15c68015c, type: 2}
   - skinName: artwork
+    arrowIndicatorColor: {r: 1, g: 0.41176474, b: 0.7058824, a: 1}
     previewSprite: {fileID: 5444395384198861200, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     lifeIconSprite: {fileID: -1803475576, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     skinIcon: {fileID: -5268545459847218606, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     animatorController: {fileID: 9100000, guid: e7f9161d935f30e47b84ab87991774b4, type: 2}
   - skinName: cyan
+    arrowIndicatorColor: {r: 0, g: 0.9568628, b: 1, a: 1}
     previewSprite: {fileID: -7202404848303727335, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     lifeIconSprite: {fileID: -1051260604, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     skinIcon: {fileID: -1749956786265108562, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     animatorController: {fileID: 9100000, guid: e407b817f0dc3b945b055d04d82cbfa8, type: 2}
   - skinName: orange
+    arrowIndicatorColor: {r: 1, g: 0.7176471, b: 0.31764707, a: 1}
     previewSprite: {fileID: 1877519831413660459, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     lifeIconSprite: {fileID: 1421166248, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     skinIcon: {fileID: -6858171631471849616, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     animatorController: {fileID: 9100000, guid: b9e357735e0c6fd4297abd680613889b, type: 2}
   - skinName: pacmom
+    arrowIndicatorColor: {r: 1, g: 0.7568628, b: 0.8745099, a: 1}
     previewSprite: {fileID: -2043896210094597567, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     lifeIconSprite: {fileID: 2047872953, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     skinIcon: {fileID: 1274023498370441928, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     animatorController: {fileID: 9100000, guid: 4d5ebcd4fbcc1d44ea1dd0ba07a7638e, type: 2}
   - skinName: ghost
+    arrowIndicatorColor: {r: 0.8705883, g: 0.8705883, b: 1, a: 1}
     previewSprite: {fileID: -7061793217678628435, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     lifeIconSprite: {fileID: -1614591206, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     skinIcon: {fileID: 7811625359165879736, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
