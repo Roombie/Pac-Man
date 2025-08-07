@@ -22,28 +22,28 @@ MonoBehaviour:
     lifeIconSprite: {fileID: -1216563214, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
     skinIcon: {fileID: 290411799, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
     animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
-  - skinName: 1
-    previewSprite: {fileID: 2608822728185409657, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    lifeIconSprite: {fileID: -1216563214, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    skinIcon: {fileID: 290411799, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
-  - skinName: 2
-    previewSprite: {fileID: 2608822728185409657, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    lifeIconSprite: {fileID: -1216563214, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    skinIcon: {fileID: 290411799, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
-  - skinName: 3
-    previewSprite: {fileID: 2608822728185409657, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    lifeIconSprite: {fileID: -1216563214, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    skinIcon: {fileID: 290411799, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
-  - skinName: 4
-    previewSprite: {fileID: 2608822728185409657, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    lifeIconSprite: {fileID: -1216563214, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    skinIcon: {fileID: 290411799, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    animatorController: {fileID: 9100000, guid: 3e688e2ab3b15f94e9d033028677817b, type: 2}
+  - skinName: green
+    previewSprite: {fileID: -7148128784331149589, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    lifeIconSprite: {fileID: -141718355, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    skinIcon: {fileID: 1391165003, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    animatorController: {fileID: 9100000, guid: 430b9aa03fd53f247b07f2cdded56cd0, type: 2}
+  - skinName: blue
+    previewSprite: {fileID: -9106778919320641393, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    lifeIconSprite: {fileID: 924246855, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    skinIcon: {fileID: -581217238, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    animatorController: {fileID: 9100000, guid: 45354adf3b337b54980172ec90270ccc, type: 2}
+  - skinName: orange
+    previewSprite: {fileID: 730872742890038302, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    lifeIconSprite: {fileID: 1725037805, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    skinIcon: {fileID: 381570776, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    animatorController: {fileID: 9100000, guid: e02282fbd237dc94da585ed80194bc23, type: 2}
   - skinName: ms. pacman
-    previewSprite: {fileID: 1039249298, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    previewSprite: {fileID: 8560912608209130273, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    lifeIconSprite: {fileID: 311230338, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    skinIcon: {fileID: 1100479077, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
+    animatorController: {fileID: 9100000, guid: 6df92d21bedd30b4e8a7dface5f9b96c, type: 2}
+  - skinName: ghost
+    previewSprite: {fileID: -8732423067919688564, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
     lifeIconSprite: {fileID: -1454397796, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
     skinIcon: {fileID: -1086867820, guid: b5ef055fd6c2ff648b41712b2055eab8, type: 3}
-    animatorController: {fileID: 9100000, guid: 6df92d21bedd30b4e8a7dface5f9b96c, type: 2}
+    animatorController: {fileID: 9100000, guid: 714634352c691754f96474d75e4110d1, type: 2}

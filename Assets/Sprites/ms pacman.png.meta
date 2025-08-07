@@ -886,9 +886,9 @@ TextureImporter:
       name: ms pacman_28
       rect:
         serializedVersion: 2
-        x: 2
+        x: 1
         y: 18
-        width: 14
+        width: 15
         height: 14
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -1062,9 +1062,9 @@ TextureImporter:
       name: ms pacman_36
       rect:
         serializedVersion: 2
-        x: 2
+        x: 1
         y: 2
-        width: 14
+        width: 15
         height: 14
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
