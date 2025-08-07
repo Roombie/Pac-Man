@@ -154,6 +154,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         currentSkinIndex = 0;
         hasSelectedCharacter = false;
         hasConfirmedSkin = false;
+        UpdateSkinConfirmationIndicator();
         ShowSkinOptions(false);
 
         if (gameObject.activeInHierarchy)
@@ -177,6 +178,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         {
             AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
             hasConfirmedSkin = true;
+            UpdateSkinConfirmationIndicator();
             CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
         }
         else if (!hasConfirmedFinal)
@@ -203,6 +205,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         if (hasConfirmedSkin)
         {
             hasConfirmedSkin = false;
+            UpdateSkinConfirmationIndicator();
             AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
             CharacterSelectionManager.Instance?.NotifyPlayerUnready(this);
             CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
@@ -265,6 +268,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         currentSkinIndex = 0;
         hasSelectedCharacter = false;
         hasConfirmedSkin = false;
+        UpdateSkinConfirmationIndicator();
         hasConfirmedFinal = false;
 
         Debug.Log($"[ResetPanelState] Panel {playerIndex + 1}: hasConfirmedFinal = {hasConfirmedFinal}");
@@ -336,6 +340,30 @@ public class CharacterSelectorPanel : MonoBehaviour
         else
         {
             characterImage.color = Color.white;
+        }
+    }
+
+    private void UpdateSkinConfirmationIndicator()
+    {
+        for (int i = 0; i < selectionIndicators.Count; i++)
+        {
+            if (selectionIndicators[i] != null)
+            {
+                var indicator = selectionIndicators[i].GetComponent<SelectorIndicator>();
+                var image = indicator?.GetComponent<Image>();
+
+                if (image != null)
+                {
+                    if (hasConfirmedSkin && i == currentSkinIndex)
+                    {
+                        image.color = Color.yellow;
+                    }
+                    else
+                    {
+                        image.color = Color.white;
+                    }
+                }
+            }
         }
     }
 }
