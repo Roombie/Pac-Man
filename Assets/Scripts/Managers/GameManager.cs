@@ -40,8 +40,7 @@ public class GameManager : MonoBehaviour
 
     public enum GameState { Playing, Paused, Intermission, Transition, GameOver }
     public GameState CurrentGameState { get; private set; }
-
-    [SerializeField] private int maxPlayers = 2;
+    private int totalPlayers;
     private class PlayerData
     {
         public int score = 0;
@@ -54,17 +53,16 @@ public class GameManager : MonoBehaviour
 
     private PlayerData[] players;
 
-    public int CurrentRound => players[currentPlayer - 1].level;
-    public int BestRound => players[currentPlayer - 1].bestRound;
-    public int GetPelletsEatenForCurrentPlayer() => players[currentPlayer - 1].pelletsEaten;
+    public int CurrentRound => players[CurrentIndex].level;
+    public int BestRound => players[CurrentIndex].bestRound;
+    public int GetPelletsEatenForCurrentPlayer() => players[CurrentIndex].pelletsEaten;
 
-    public HashSet<int> GetPelletIDsEatenByCurrentPlayer() => players[currentPlayer - 1].eatenPellets;
+    public HashSet<int> GetPelletIDsEatenByCurrentPlayer() => players[CurrentIndex].eatenPellets;
     public int GetRoundForPlayer(int playerIndex) => players[playerIndex - 1].level;
     public int GetBestRoundForPlayer(int playerIndex) => players[playerIndex - 1].bestRound;
     private int ghostMultiplier = 1;
     private int thresholdIndex = 0;
     private Queue<int> bonusItemThresholds = new Queue<int>(new List<int> { 70, 170 });
-
 
     private bool alternatePelletSound = false;
 
@@ -75,14 +73,15 @@ public class GameManager : MonoBehaviour
     public bool IsTwoPlayerMode { get; private set; }
     private int currentExtraPoints = 0;
     private int currentPlayer = 1;
+    private int CurrentIndex => currentPlayer - 1;
     private int startingLives;
-    private CharacterData[] selectedCharacters = new CharacterData[2];
+    private CharacterData[] selectedCharacters;
+    private CharacterSkin[] selectedSkins;
+    private int[] scores;
     private static readonly int[] extraPointValues = GameConstants.ExtraPoints;
     public static IReadOnlyList<int> ExtraPointValues => extraPointValues;
     private int nextLifeScoreThreshold = 0;
     public event System.Action<int, int, int> OnRoundChanged; 
-    
-    private CharacterSkin[] selectedSkins = new CharacterSkin[2];
 
     private CharacterSkin GetSelectedSkinForPlayer(int playerIndex)
     {
@@ -100,12 +99,28 @@ public class GameManager : MonoBehaviour
             Instance = this;
         }
 
-        players = new PlayerData[maxPlayers];
-        for (int i = 0; i < maxPlayers; i++)
+        // Get the amount of allowed players based on the player count key
+        totalPlayers = Mathf.Clamp(
+            PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1),
+            1,
+            2 // Might need to add something that allows me to dynamically change this value
+        );
+
+        // Initialize player-related arrays dynamically based on totalPlayers
+        players = new PlayerData[totalPlayers];
+        selectedCharacters = new CharacterData[totalPlayers];
+        selectedSkins = new CharacterSkin[totalPlayers];
+        scores = new int[totalPlayers];
+
+        for (int i = 0; i < totalPlayers; i++)
         {
             players[i] = new PlayerData();
             players[i].bestRound = PlayerPrefs.GetInt($"BestRound_P{i + 1}", 0);
+            scores[i] = 0;
         }
+
+        pacmanAnimator = pacman.GetComponent<Animator>();
+        pacmanSpriteRenderer = pacman.GetComponent<SpriteRenderer>();
 
         startingLives = Mathf.Clamp(startingLives, 1, GameConstants.MaxLives);
     }
@@ -129,32 +144,31 @@ public class GameManager : MonoBehaviour
         bool is2P = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 0) == 1;
         IsTwoPlayerMode = is2P;
 
-        string key = is2P ? "HighScoreMultiplayer" : "HighScoreSinglePlayer";
-        highScore = PlayerPrefs.GetInt(key, 0);
-
-        string p1Name = PlayerPrefs.GetString("SelectedCharacter_Player1_Name", "");
-        string p2Name = PlayerPrefs.GetString("SelectedCharacter_Player2_Name", "");
-
-        string p1Skin = PlayerPrefs.GetString("SelectedCharacter_Player1_Skin", "");
-        string p2Skin = PlayerPrefs.GetString("SelectedCharacter_Player2_Skin", "");
+        string highScoreKey = totalPlayers == 2 ? "HighScoreMultiplayer" : "HighScoreSinglePlayer";
+        highScore = PlayerPrefs.GetInt(highScoreKey, 0);
 
         CharacterData[] allCharacters = Resources.LoadAll<CharacterData>("Characters");
 
-        foreach (var character in allCharacters)
+        for (int i = 0; i < totalPlayers; i++)
         {
-            if (character.characterName == p1Name)
-                selectedCharacters[0] = character;
-            if (character.characterName == p2Name)
-                selectedCharacters[1] = character;
+            string charNameKey = $"SelectedCharacter_Player{i + 1}_Name";
+            string skinNameKey = $"SelectedCharacter_Player{i + 1}_Skin";
+
+            string characterName = PlayerPrefs.GetString(charNameKey, "");
+            string skinName = PlayerPrefs.GetString(skinNameKey, "");
+
+            foreach (var character in allCharacters)
+            {
+                if (character.characterName == characterName)
+                {
+                    selectedCharacters[i] = character;
+                    selectedSkins[i] = character.GetSkinByName(skinName);
+                    break;
+                }
+            }
         }
 
-        if (selectedCharacters[0] != null)
-            selectedSkins[0] = selectedCharacters[0].GetSkinByName(p1Skin);
-
-        if (selectedCharacters[1] != null)
-            selectedSkins[1] = selectedCharacters[1].GetSkinByName(p2Skin);
-
-        uiManager.InitializeUI(is2P);
+        uiManager.InitializeUI(totalPlayers);
         uiManager.UpdateHighScore(highScore);
 
         pelletManager.OnAllPelletsCollected += () => StartCoroutine(HandleAllPelletsCollected());
@@ -184,11 +198,10 @@ public class GameManager : MonoBehaviour
 
     private void NewGame()
     {
-        players[currentPlayer - 1].level = 1;
-
+        players[CurrentIndex].level = 1;
         bonusItemThresholds = new Queue<int>(new[] { 70, 170 });
-        
-        for (int i = 0; i < maxPlayers; i++)
+
+        for (int i = 0; i < totalPlayers; i++)
         {
             players[i] = new PlayerData
             {
@@ -202,23 +215,20 @@ public class GameManager : MonoBehaviour
         UpdateBestRound();
         ApplyCharacterDataForCurrentPlayer();
 
-        OnRoundChanged?.Invoke(currentPlayer - 1, CurrentRound, BestRound);
+        OnRoundChanged?.Invoke(CurrentIndex, CurrentRound, BestRound);
 
         ResetState();
 
-        int[] initialScores = new int[maxPlayers];
+        int[] initialScores = new int[totalPlayers];
         uiManager.UpdateScores(initialScores);
         uiManager.StartPlayerFlicker(currentPlayer);
-
-        // The lives are being set on SettingsApplier.cs
-        // which calls SetLives method on the GameManager and use it as soon as it detects this script on the scene
 
         CharacterSkin currentSkin = GetSelectedSkinForPlayer(currentPlayer);
         Sprite currentLifeSprite = currentSkin.lifeIconSprite;
         lifeIconsController.CreateIcons(currentLifeSprite);
-        lifeIconsController.UpdateIcons(players[currentPlayer - 1].lives - 1, currentLifeSprite);
+        lifeIconsController.UpdateIcons(players[CurrentIndex].lives - 1, currentLifeSprite);
 
-        fruitDisplayController.RefreshFruits(players[currentPlayer - 1].level);
+        fruitDisplayController.RefreshFruits(players[CurrentIndex].level);
 
         StartCoroutine(StartSequence());
     }
@@ -235,7 +245,7 @@ public class GameManager : MonoBehaviour
         pacman.gameObject.SetActive(false);
         // It'll always start the first player but whatever
         // Maybe it's easier to just put true on playerOneText and false to playerTwoText, but this is better
-        uiManager.UpdateIntroText(currentPlayer - 1, IsTwoPlayerMode);
+        uiManager.UpdateIntroText(currentPlayer);
         uiManager.ShowReadyText(true);
 
         yield return new WaitForSeconds(StartSequenceDelay);
@@ -267,12 +277,12 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator NewRoundSequence()
     {
-        players[currentPlayer - 1].level++;
+        players[CurrentIndex].level++;
         UpdateBestRound();
-        OnRoundChanged?.Invoke(currentPlayer - 1, CurrentRound, BestRound);
+        OnRoundChanged?.Invoke(CurrentIndex, CurrentRound, BestRound);
 
-        players[currentPlayer - 1].pelletsEaten = 0;
-        players[currentPlayer - 1].eatenPellets.Clear();
+        players[CurrentIndex].pelletsEaten = 0;
+        players[CurrentIndex].eatenPellets.Clear();
         thresholdIndex = 0;
 
         ResetState();
@@ -296,6 +306,8 @@ public class GameManager : MonoBehaviour
         pacman.enabled = true;
         pacman.movement.SetDirection(Vector2.right);
         pacman.UpdateIndicator(Vector2.right);
+
+        bonusItemThresholds = new Queue<int>(new[] { 70, 170 });
 
         StartAllGhosts();
         SetState(GameState.Playing);
@@ -352,7 +364,7 @@ public class GameManager : MonoBehaviour
 
         pelletManager.RestorePelletsForPlayer(GetPelletIDsEatenByCurrentPlayer());
         uiManager.StartPlayerFlicker(currentPlayer);
-        uiManager.UpdateIntroText(currentPlayer - 1, IsTwoPlayerMode);
+        uiManager.UpdateIntroText(currentPlayer);
         uiManager.ShowReadyText(true);
 
         pacman.gameObject.SetActive(true);
@@ -382,17 +394,23 @@ public class GameManager : MonoBehaviour
     public void PelletEaten(Pellet pellet)
     {
         alternatePelletSound = !alternatePelletSound;
-        AudioManager.Instance.PlayPelletEatenSound(alternatePelletSound);
+        PlayPelletEatenSound(alternatePelletSound);
         AddScore(pellet.points);
         pelletManager.PelletEaten(pellet);
-        players[currentPlayer - 1].pelletsEaten++;
-        players[currentPlayer - 1].eatenPellets.Add(pellet.pelletID);
+        players[CurrentIndex].pelletsEaten++;
+        players[CurrentIndex].eatenPellets.Add(pellet.pelletID);
         CheckBonusItemSpawn();
+    }
+
+    public void PlayPelletEatenSound(bool alternate)
+    {
+        AudioClip clip = alternate ? selectedCharacters[CurrentIndex].pelletEatenSound1 : selectedCharacters[CurrentIndex].pelletEatenSound2;
+        AudioManager.Instance.Play(clip, SoundCategory.SFX);
     }
 
     private void CheckBonusItemSpawn()
     {
-        int pellets = players[currentPlayer - 1].pelletsEaten;
+        int pellets = players[CurrentIndex].pelletsEaten;
         if (bonusItemThresholds.Count > 0 && pellets == bonusItemThresholds.Peek())
         {
             bonusItemManager.SpawnBonusItem(CurrentRound);
@@ -422,9 +440,9 @@ public class GameManager : MonoBehaviour
 
         yield return StartCoroutine(PlayMazeFlashSequence());
 
-        if (coffeeBreakManager.HasCoffeeBreakForLevel(players[currentPlayer - 1].level))
+        if (coffeeBreakManager.HasCoffeeBreakForLevel(players[CurrentIndex].level))
         {
-            coffeeBreakManager.StartCoffeeBreak(players[currentPlayer - 1].level);
+            coffeeBreakManager.StartCoffeeBreak(players[CurrentIndex].level);
         }
         else
         {
@@ -437,15 +455,14 @@ public class GameManager : MonoBehaviour
     public void SetLives(int value)
     {
         // Clamp the lives to a maximum of the amount set in MaxLives
-        int index = currentPlayer - 1;
-        players[index].lives = Mathf.Clamp(value, 0, GameConstants.MaxLives);
+        players[CurrentIndex].lives = Mathf.Clamp(value, 0, GameConstants.MaxLives);
         
-        Debug.Log($"[GameManager] SetLives for Player {currentPlayer}: {players[index].lives}");
+        Debug.Log($"[GameManager] SetLives for Player {currentPlayer}: {players[CurrentIndex].lives}");
 
-        if (lifeIconsController != null && selectedCharacters[index] != null)
+        if (lifeIconsController != null && selectedCharacters[CurrentIndex] != null)
         {
-            Sprite newLifeSprite = selectedSkins[index].lifeIconSprite;
-            lifeIconsController.UpdateIcons(players[index].lives - 1, newLifeSprite);
+            Sprite newLifeSprite = selectedSkins[CurrentIndex].lifeIconSprite;
+            lifeIconsController.UpdateIcons(players[CurrentIndex].lives - 1, newLifeSprite);
         }
         else
         {
@@ -455,14 +472,13 @@ public class GameManager : MonoBehaviour
 
     private void UpdateBestRound()
     {
-        int p = currentPlayer - 1;
-        if (players[p].level > players[p].bestRound)
+        if (players[CurrentIndex].level > players[CurrentIndex].bestRound)
         {
-            players[p].bestRound = players[p].level;
-            PlayerPrefs.SetInt($"BestRound_P{currentPlayer}", players[p].bestRound);
+            players[CurrentIndex].bestRound = players[CurrentIndex].level;
+            PlayerPrefs.SetInt($"BestRound_P{currentPlayer}", players[CurrentIndex].bestRound);
             PlayerPrefs.Save();
         }
-        OnRoundChanged?.Invoke(p, players[p].level, players[p].bestRound);
+        OnRoundChanged?.Invoke(CurrentIndex, players[CurrentIndex].level, players[CurrentIndex].bestRound);
     }
     
     public void SetExtraPoints(int index)
@@ -489,13 +505,12 @@ public class GameManager : MonoBehaviour
 
     public void AddScore(int amount)
     {
-        int i = currentPlayer - 1;
-        var player = players[i];
-        
+        var player = players[CurrentIndex];
+
         player.score += amount;
 
-        int[] scores = new int[maxPlayers];
-        for (int j = 0; j < maxPlayers; j++)
+        int[] scores = new int[totalPlayers];
+        for (int j = 0; j < totalPlayers; j++)
             scores[j] = players[j].score;
 
         uiManager.UpdateScores(scores);
@@ -548,10 +563,10 @@ public class GameManager : MonoBehaviour
 
     private void UpdateLifeIconsUI()
     {
-        int lives = players[currentPlayer - 1].lives;
+        int lives = players[CurrentIndex].lives;
         Debug.Log($"UpdateLifeIconsUI: player {currentPlayer}, lives = {lives}");
-        Sprite currentLifeSprite = selectedSkins[currentPlayer - 1].lifeIconSprite;
-        lifeIconsController.UpdateIcons(players[currentPlayer - 1].lives - 1, currentLifeSprite);
+        Sprite currentLifeSprite = selectedSkins[CurrentIndex].lifeIconSprite;
+        lifeIconsController.UpdateIcons(players[CurrentIndex].lives - 1, currentLifeSprite);
     }
 
     public void ShowGhostScore(Vector3 position, int points)
@@ -597,7 +612,7 @@ public class GameManager : MonoBehaviour
 
     public void PacmanEaten()
     {
-        players[currentPlayer - 1].lives--; // Player loses a life
+        players[CurrentIndex].lives--; // Player loses a life
 
         Debug.Log($"Is Player Two mode? {IsTwoPlayerMode}");
 
@@ -609,7 +624,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            if (players[currentPlayer - 1].lives > 0)
+            if (players[CurrentIndex].lives > 0)
             {
                 RestartLevel();
             }
@@ -625,7 +640,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
 
         int other = currentPlayer == 1 ? 2 : 1;
-        bool currentAlive = players[currentPlayer - 1].lives > 0;
+        bool currentAlive = players[CurrentIndex].lives > 0;
         bool otherAlive = players[other - 1].lives > 0;
 
         if (!currentAlive && !otherAlive)
@@ -837,27 +852,36 @@ public class GameManager : MonoBehaviour
 
     private void ApplyCharacterDataForCurrentPlayer()
     {
-        CharacterData data = selectedCharacters[currentPlayer - 1];
-
-        if (data != null && selectedSkins[currentPlayer - 1] != null)
+        if (selectedCharacters == null || selectedSkins == null)
         {
-            pacmanAnimator.runtimeAnimatorController = selectedSkins[currentPlayer - 1].animatorController;
-        }
-        else
-        {
-            Debug.LogWarning($"[GameManager] CharacterData or Skin is null for player {currentPlayer}");
+            Debug.LogWarning("[GameManager] Character data or skins not initialized.");
+            return;
         }
 
-        if (data != null)
+        if (CurrentIndex < 0 || CurrentIndex >= selectedCharacters.Length)
         {
-            pacmanAnimator.runtimeAnimatorController = selectedSkins[currentPlayer - 1].animatorController;
+            Debug.LogWarning("[GameManager] Invalid currentPlayer index.");
+            return;
         }
-        else
+
+        CharacterData character = selectedCharacters[CurrentIndex];
+        CharacterSkin skin = selectedSkins[CurrentIndex];
+
+        if (character == null || skin == null)
         {
-            Debug.LogWarning($"[GameManager] CharacterData is null for player {currentPlayer}");
+            Debug.LogWarning($"[GameManager] Character or skin missing for player {CurrentIndex}.");
+            return;
+        }
+
+        Debug.Log($"[GameManager] Applying character data for player {CurrentIndex}: {character.characterName} / {skin.skinName}");
+
+        // Update animator controller
+        if (pacmanAnimator != null && skin.animatorController != null)
+        {
+            Debug.Log($"Pacman Animator: {skin.animatorController}");
+            pacmanAnimator.runtimeAnimatorController = skin.animatorController;
         }
     }
-
 
     private void SwitchPlayerTurn()
     {
@@ -874,7 +898,7 @@ public class GameManager : MonoBehaviour
         currentPlayer = nextPlayer;
         Debug.Log($"[GameManager] Turn switched. Now it's Player {currentPlayer}");
 
-        OnRoundChanged?.Invoke(currentPlayer - 1, CurrentRound, BestRound);
+        OnRoundChanged?.Invoke(CurrentIndex, CurrentRound, BestRound);
     }
     #endregion
 }

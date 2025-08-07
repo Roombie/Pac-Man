@@ -36,7 +36,7 @@ MonoBehaviour:
     previewSprite: {fileID: 890884302150341155, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     lifeIconSprite: {fileID: 1720432318, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     skinIcon: {fileID: 1251879049, guid: 2759e92334380f645a7ede83124e4234, type: 3}
-    animatorController: {fileID: 9100000, guid: b12ff84b91c943a4ab961e205faf8c3b, type: 2}
+    animatorController: {fileID: 9100000, guid: e407b817f0dc3b945b055d04d82cbfa8, type: 2}
   - skinName: orange
     previewSprite: {fileID: -4880679666025358073, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     lifeIconSprite: {fileID: 1880980711, guid: 2759e92334380f645a7ede83124e4234, type: 3}

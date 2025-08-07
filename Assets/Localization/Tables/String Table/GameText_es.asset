@@ -176,6 +176,10 @@ MonoBehaviour:
     m_Localized: J{0}
     m_Metadata:
       m_Items: []
+  - m_Id: 4684778635620352
+    m_Localized: "Presiona un Bot\xF3n para Unirte"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

@@ -14,15 +14,17 @@ public class UIManager : MonoBehaviour
     [SerializeField] private CanvasGroup[] playerTextGroups;
 
     private Coroutine[] flickerCoroutines;
+    private int currentPlayerCount = 1;
 
     private void Awake()
     {
         flickerCoroutines = new Coroutine[playerTextGroups.Length];
     }
 
-    public void InitializeUI(bool isMultiplayer)
+    public void InitializeUI(int playerCount)
     {
-        SetScorePanelVisible(isMultiplayer);
+        currentPlayerCount = Mathf.Clamp(playerCount, 1, scoreTexts.Length);
+        SetScorePanelVisible(currentPlayerCount);
         HidePlayerIntroText();
         ShowReadyText(false);
         ShowGameOverText(false);
@@ -53,12 +55,13 @@ public class UIManager : MonoBehaviour
             highScoreText.text = score.ToString("D2");
     }
 
-    public void UpdateIntroText(int currentPlayerIndex, bool isMultiplayer)
+    public void UpdateIntroText(int currentPlayerIndex)
     {
         for (int i = 0; i < playerTextGroups.Length; i++)
         {
+            bool shouldShow = (i == currentPlayerIndex) && (i < currentPlayerCount);
             if (playerTextGroups[i] != null)
-                playerTextGroups[i].gameObject.SetActive(isMultiplayer && i == currentPlayerIndex);
+                playerTextGroups[i].gameObject.SetActive(shouldShow);
         }
     }
 
@@ -71,12 +74,12 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void SetScorePanelVisible(bool isMultiplayer)
+    public void SetScorePanelVisible(int playerCount)
     {
-        for (int i = 1; i < scoreTexts.Length; i++)
+        for (int i = 0; i < scoreTexts.Length; i++)
         {
             if (scoreTexts[i] != null)
-                scoreTexts[i].gameObject.SetActive(isMultiplayer);
+                scoreTexts[i].gameObject.SetActive(i < playerCount);
         }
     }
 
@@ -98,8 +101,7 @@ public class UIManager : MonoBehaviour
             flickerCoroutines[playerIndex] = null;
         }
 
-        // This is to make sure it always stays visible when you stop player's flicker effect 
-        if (playerTextGroups[playerIndex] != null) 
+        if (playerTextGroups[playerIndex] != null)
             playerTextGroups[playerIndex].alpha = 1f;
     }
 
