@@ -17,7 +17,7 @@ MonoBehaviour:
   pelletEatenSound2: {fileID: 8300000, guid: 98edbbd328b0c3349884319d4e241bac, type: 3}
   deathSound: {fileID: 8300000, guid: ac0afe58d0fb57745be54b4500968b5d, type: 3}
   skins:
-  - skinName: 0
+  - skinName: normal
     previewSprite: {fileID: 2250730653141506759, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     lifeIconSprite: {fileID: -1804452703, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}
     skinIcon: {fileID: 6778372328073227817, guid: 9666e0a4ba4b02b4abd707c0f1ac674e, type: 3}

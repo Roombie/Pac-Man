@@ -26,12 +26,12 @@ MonoBehaviour:
     previewSprite: {fileID: -6058473748631233862, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     lifeIconSprite: {fileID: -725998173, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     skinIcon: {fileID: -347122058, guid: 2759e92334380f645a7ede83124e4234, type: 3}
-    animatorController: {fileID: 9100000, guid: b12ff84b91c943a4ab961e205faf8c3b, type: 2}
+    animatorController: {fileID: 9100000, guid: 05b20f5776960b04b84a155a496e5b8a, type: 2}
   - skinName: pink
     previewSprite: {fileID: -5753453089403580069, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     lifeIconSprite: {fileID: -1106393292, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     skinIcon: {fileID: 1518056230, guid: 2759e92334380f645a7ede83124e4234, type: 3}
-    animatorController: {fileID: 9100000, guid: b12ff84b91c943a4ab961e205faf8c3b, type: 2}
+    animatorController: {fileID: 9100000, guid: d74d91df31eabe248956d08454d3ea18, type: 2}
   - skinName: cyan
     previewSprite: {fileID: 890884302150341155, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     lifeIconSprite: {fileID: 1720432318, guid: 2759e92334380f645a7ede83124e4234, type: 3}
@@ -41,9 +41,9 @@ MonoBehaviour:
     previewSprite: {fileID: -4880679666025358073, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     lifeIconSprite: {fileID: 1880980711, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     skinIcon: {fileID: 1293038438, guid: 2759e92334380f645a7ede83124e4234, type: 3}
-    animatorController: {fileID: 9100000, guid: b12ff84b91c943a4ab961e205faf8c3b, type: 2}
+    animatorController: {fileID: 9100000, guid: dc16696a5b0af6f469fae8ac2f86edaf, type: 2}
   - skinName: ghost
     previewSprite: {fileID: 2422252188721797508, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     lifeIconSprite: {fileID: 184568724, guid: 2759e92334380f645a7ede83124e4234, type: 3}
     skinIcon: {fileID: -1852412359, guid: 2759e92334380f645a7ede83124e4234, type: 3}
-    animatorController: {fileID: 9100000, guid: b12ff84b91c943a4ab961e205faf8c3b, type: 2}
+    animatorController: {fileID: 9100000, guid: bddef5dd8f4039241b5100cfe9933e53, type: 2}
