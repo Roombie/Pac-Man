@@ -50,6 +50,7 @@ public class CharacterSelectorPanel : MonoBehaviour
     public bool HasSelectedCharacter => hasSelectedCharacter;
     public bool HasConfirmedSkin => hasConfirmedSkin;
     public int PlayerIndex => playerIndex;
+    public bool HasConfirmedFinal() => hasConfirmedFinal;
 
     private static CharacterSelectorPanel activePanel = null;
 
@@ -180,9 +181,14 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
         else if (!hasConfirmedFinal)
         {
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+            Debug.Log($"[ConfirmSelection] Player {playerIndex + 1} final confirmation.");
             hasConfirmedFinal = true;
+            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
             CharacterSelectionManager.Instance?.TryFireFinalConfirmation();
+        }
+        else
+        {
+            Debug.LogWarning($"[ConfirmSelection] Player {playerIndex + 1} already confirmed final. Ignoring duplicate input.");
         }
     }
 

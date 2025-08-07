@@ -53,6 +53,9 @@ public class CharacterSelectionManager : MonoBehaviour
         foreach (var panel in playerPanels)
         {
             panel.ResetPanelState();
+
+            Debug.Log($"[ResetPanels] Panel {panel.name} - hasConfirmedFinal = {panel.HasConfirmedFinal()}");
+
             panel.gameObject.SetActive(false);
             panel.SetPanelActive(false);
         }
@@ -220,7 +223,7 @@ public class CharacterSelectionManager : MonoBehaviour
     public void NotifyPlayerReady(CharacterSelectorPanel panel)
     {
         readyCount++;
-        Debug.Log($"{panel.name} is ready. Total ready: {readyCount}/{expectedPlayers}");
+        Debug.Log($"[NotifyPlayerReady] Player {panel.PlayerIndex + 1} is ready. Total ready: {readyCount}/{expectedPlayers}");
 
         foreach (var kvp in joinedPlayers)
         {
@@ -243,7 +246,7 @@ public class CharacterSelectionManager : MonoBehaviour
 
     public void NotifyPlayerDeselected(CharacterSelectorPanel panel)
     {
-        Debug.Log($"{panel.name} has deselected character.");
+        Debug.Log($"[NotifyPlayerDeselected] Player {panel.PlayerIndex + 1} has deselected character.");
         OnAnyPlayerDeselected?.Invoke();
 
         foreach (var kvp in joinedPlayers)
@@ -266,7 +269,7 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         readyCount = Mathf.Max(readyCount - 1, 0);
         OnAnySkinDeselected?.Invoke();
-        Debug.Log($"{panel.name} is no longer ready. Total ready: {readyCount}/{expectedPlayers}");
+        Debug.Log($"[NotifyPlayerUnready] Player {panel.PlayerIndex + 1} is no longer ready. Total ready: {readyCount}/{expectedPlayers}");
 
         foreach (var kvp in joinedPlayers)
         {
@@ -315,7 +318,7 @@ public class CharacterSelectionManager : MonoBehaviour
 
             if (!panel.HasSelectedCharacter || !panel.HasConfirmedSkin)
             {
-                Debug.LogWarning($"[TryFireFinalConfirmation] Player {kvp.Key} missing selection. HasSelected: {panel.HasSelectedCharacter}, HasConfirmedSkin: {panel.HasConfirmedSkin}");
+                Debug.LogWarning($"[TryFireFinalConfirmation] Player {panel.PlayerIndex + 1} missing selection. HasSelected: {panel.HasSelectedCharacter}, HasConfirmedSkin: {panel.HasConfirmedSkin}");
                 return;
             }
         }
