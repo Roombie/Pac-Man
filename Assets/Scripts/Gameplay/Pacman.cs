@@ -16,11 +16,13 @@ public class Pacman : MonoBehaviour
     public bool isInputLocked = false;
     private bool indicatorVisible = true;
 
+    private SpriteRenderer spriteRenderer;
     public Animator animator;
     private PlayerInput playerInput;
 
     private void Awake()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
         playerInput = GetComponent<PlayerInput>();
         movement = GetComponent<Movement>();
     }
@@ -62,6 +64,15 @@ public class Pacman : MonoBehaviour
         {
             float angle = Mathf.Atan2(movement.direction.y, movement.direction.x);
             transform.rotation = Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
+        }
+
+        if (movement.direction.x < 0)
+        {
+            spriteRenderer.flipY = true;
+        }
+        else if (movement.direction.x > 0)
+        {
+            spriteRenderer.flipY = false;
         }
 
         // If the player collides with an obstacle, their animator speed changes to zero
