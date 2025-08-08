@@ -31,7 +31,7 @@ public class Movement : MonoBehaviour
         direction = initialDirection;
         nextDirection = Vector2.zero;
         transform.position = startingPosition;
-        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.bodyType = RigidbodyType2D.Dynamic;
         enabled = true;
     }
 
@@ -39,7 +39,8 @@ public class Movement : MonoBehaviour
     {
         // Try to move in the next direction while it's queued to make movements
         // more responsive
-        if (nextDirection != Vector2.zero) {
+        if (nextDirection != Vector2.zero)
+        {
             SetDirection(nextDirection);
         }
     }

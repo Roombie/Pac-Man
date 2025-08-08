@@ -159,7 +159,7 @@ public class Pacman : MonoBehaviour
         animator.SetTrigger("death");
 
         yield return new WaitForSeconds(2f);
-        
+
         // GameManager.Instance.PacmanEaten();
     }
 
@@ -169,5 +169,19 @@ public class Pacman : MonoBehaviour
         {
             // GameManager.Instance.TogglePause();
         }
+    }
+    
+    void OnDrawGizmos()
+    {
+        if (movement == null || !movement.enabled) return;
+        
+        Vector2 size = new Vector2(1f, 1.75f);
+        Vector2 direction = this.movement.direction;
+
+        bool isOccupied = movement.Occupied(direction);
+
+        Gizmos.color = isOccupied ? Color.green : Color.red;
+
+        Gizmos.DrawWireCube(transform.position + (Vector3)direction * 1.5f, size);
     }
 }
