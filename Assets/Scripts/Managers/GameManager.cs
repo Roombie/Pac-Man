@@ -200,6 +200,12 @@ public class GameManager : MonoBehaviour
     private void InitializePlayerScores()
     {
         string highScoreKey = IsTwoPlayerMode ? "HighScoreMultiplayer" : "HighScoreSinglePlayer";
+
+        if (!PlayerPrefs.HasKey(highScoreKey))
+        {
+            PlayerPrefs.SetInt(highScoreKey, 0);
+        }
+
         highScore = PlayerPrefs.GetInt(highScoreKey, 0);
     }
 
@@ -521,23 +527,21 @@ public class GameManager : MonoBehaviour
 
         player.score += amount;
 
+        if (player.score > highScore)
+        {
+            highScore = player.score;
+            string highScoreKey = IsTwoPlayerMode ? "HighScoreMultiplayer" : "HighScoreSinglePlayer";
+            PlayerPrefs.SetInt(highScoreKey, highScore);
+            PlayerPrefs.Save();
+            
+            uiManager.UpdateHighScore(highScore);
+        }
+
         int[] scores = new int[totalPlayers];
         for (int j = 0; j < totalPlayers; j++)
             scores[j] = players[j].score;
 
         uiManager.UpdateScores(scores);
-
-        if (player.score > highScore)
-        {
-            highScore = player.score;
-
-            string highScoreKey = IsTwoPlayerMode ? "HighScoreMultiplayer" : "HighScoreSinglePlayer";
-            PlayerPrefs.SetInt(highScoreKey, highScore);
-            PlayerPrefs.Save();
-
-            // Update the high score in the UI
-            uiManager.UpdateHighScore(highScore);  // Ensure UI is updated with the new high score
-        }
 
         int currentScore = player.score;
         while (nextLifeScoreThreshold > 0 && currentScore >= nextLifeScoreThreshold)

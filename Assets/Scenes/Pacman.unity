@@ -22737,7 +22737,6 @@ GameObject:
   - component: {fileID: 1675091033}
   - component: {fileID: 1675091036}
   - component: {fileID: 1675091035}
-  - component: {fileID: 1675091034}
   m_Layer: 5
   m_Name: Highscore Score Text (TMP)
   m_TagString: Untagged
@@ -22764,19 +22763,6 @@ RectTransform:
   m_AnchoredPosition: {x: 36.500008, y: 206}
   m_SizeDelta: {x: 76.1662, y: 12.9}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1675091034
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1675091032}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 367a6aaf0bfbbc847997766bf5cb8f77, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  highscoreText: {fileID: 1675091035}
 --- !u!114 &1675091035
 MonoBehaviour:
   m_ObjectHideFlags: 0
