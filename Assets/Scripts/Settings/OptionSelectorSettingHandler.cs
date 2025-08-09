@@ -13,7 +13,7 @@ public enum NavigationAxis
 
 public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISelectHandler, IDeselectHandler
 {
-    [SettingTypeFilter(SettingType.MusicVolumeKey, SettingType.SoundVolumeKey, SettingType.PacmanLivesKey, SettingType.ExtraKey, SettingType.LanguageKey)]
+    [SettingTypeFilter(SettingType.MusicVolumeKey, SettingType.SoundVolumeKey, SettingType.PacmanLivesKey, SettingType.ExtraLifeThresholdKey, SettingType.LanguageKey)]
     public SettingType settingType;
     public TextMeshProUGUI label;
     [SerializeField] private NavigationAxis navigationAxis = NavigationAxis.Horizontal;
@@ -45,7 +45,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
             SettingType.SoundVolumeKey,
             SettingType.PacmanLivesKey,
             SettingType.LanguageKey,
-            SettingType.ExtraKey
+            SettingType.ExtraLifeThresholdKey
         };
 
         if (!System.Array.Exists(allowed, t => t == settingType))

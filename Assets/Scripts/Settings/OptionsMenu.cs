@@ -43,7 +43,7 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
             SettingType.PacmanLivesKey
                 => Enumerable.Range(1, GameConstants.MaxLives).Select(i => i.ToString()).ToArray(),
 
-            SettingType.ExtraKey
+            SettingType.ExtraLifeThresholdKey
                 => GameConstants.ExtraPoints.Select(p => GetLocalized(p == 0 ? "None" : p.ToString())).ToArray(),
 
             SettingType.LanguageKey
@@ -73,8 +73,8 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
             SettingType.FullscreenKey
                 => PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, Screen.fullScreen ? 1 : 0),
 
-            SettingType.ExtraKey
-                => System.Array.IndexOf(GameConstants.ExtraPoints, PlayerPrefs.GetInt(SettingsKeys.ExtraKey, 0)),
+            SettingType.ExtraLifeThresholdKey
+                => System.Array.IndexOf(GameConstants.ExtraPoints, PlayerPrefs.GetInt(SettingsKeys.ExtraLifeThresholdKey, 0)),
 
             SettingType.LanguageKey
                 => LocalizationSettings.AvailableLocales.Locales
@@ -103,9 +103,9 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
                 PlayerPrefs.SetInt(SettingsKeys.FullscreenKey, isFullscreen ? 1 : 0);
                 break;
 
-            case SettingType.ExtraKey:
+            case SettingType.ExtraLifeThresholdKey:
                 if (index >= 0 && index < GameConstants.ExtraPoints.Length)
-                    PlayerPrefs.SetInt(SettingsKeys.ExtraKey, GameConstants.ExtraPoints[index]);
+                    PlayerPrefs.SetInt(SettingsKeys.ExtraLifeThresholdKey, GameConstants.ExtraPoints[index]);
                 break;
 
             case SettingType.LanguageKey:

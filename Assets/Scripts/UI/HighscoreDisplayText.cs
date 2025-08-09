@@ -17,7 +17,7 @@ public class HighscoreDisplayText : MonoBehaviour
 
     private void UpdateHighscoreText()
     {
-        int highscore = PlayerPrefs.GetInt("Highscore", 0);
+        int highscore = PlayerPrefs.GetInt("HighScoreSinglePlayer", 0);
 
         if (highscore <= 0)
         {
@@ -25,7 +25,7 @@ public class HighscoreDisplayText : MonoBehaviour
         }
         else
         {
-            highscoreText.text = highscore.ToString("N0");
+            highscoreText.text = highscore.ToString("D2");
             highscoreText.gameObject.SetActive(true);
         }
     }

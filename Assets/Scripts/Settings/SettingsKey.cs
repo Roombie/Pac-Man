@@ -8,7 +8,7 @@ public enum SettingType
     FullscreenKey,
     LanguageKey,
     PacmanLivesKey,
-    ExtraKey,
+    ExtraLifeThresholdKey,
     GameModeKey,
     PlayerCountKey
 }
@@ -23,7 +23,7 @@ public static class SettingsKeys
         { SettingType.FullscreenKey, FullscreenKey },
         { SettingType.LanguageKey, LanguageKey},
         { SettingType.PacmanLivesKey, PacmanLivesKey },
-        { SettingType.ExtraKey, ExtraKey },
+        { SettingType.ExtraLifeThresholdKey, ExtraLifeThresholdKey },
         { SettingType.GameModeKey, GameModeKey },
         { SettingType.PlayerCountKey, PlayerCountKey }
     };
@@ -39,7 +39,7 @@ public static class SettingsKeys
     public const string FullscreenKey = "Fullscreen";
     public const string LanguageKey = "LanguageKey";
     public const string PacmanLivesKey = "PacmanLives";
-    public const string ExtraKey = "Extra";
+    public const string ExtraLifeThresholdKey = "Extra";
     public const string GameModeKey = "GameMode";
     public const string PlayerCountKey = "PlayerCount";
 }

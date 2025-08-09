@@ -67,7 +67,7 @@ MonoBehaviour:
   bonusItemManager: {fileID: 2203496920614338219}
   pelletManager: {fileID: 5893468776855778113}
   coffeeBreakManager: {fileID: 3517510330910360623}
-  maxPlayers: 2
+  selectedCharacters: []
 --- !u!114 &5893468776855778113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,10 +180,15 @@ MonoBehaviour:
   readyText: {fileID: 0}
   gameOverText: {fileID: 0}
   highScoreText: {fileID: 0}
+  currentRoundText: {fileID: 0}
+  bestRoundText: {fileID: 0}
+  playerTextGroups:
+  - {fileID: 0}
+  - {fileID: 0}
   scoreTexts:
   - {fileID: 0}
   - {fileID: 0}
-  playerTextGroups:
+  playerScoresTitle:
   - {fileID: 0}
   - {fileID: 0}
 --- !u!114 &7747503494696074549

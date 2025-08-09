@@ -27,7 +27,7 @@ public class ExtraDisplayTextUpdater : MonoBehaviour
 
     public void UpdateBonusText()
     {
-        string rawValue = PlayerPrefs.GetString(SettingsKeys.ExtraKey, "None");
+        string rawValue = PlayerPrefs.GetString(SettingsKeys.ExtraLifeThresholdKey, "None");
 
         if (rawValue == "None")
         {

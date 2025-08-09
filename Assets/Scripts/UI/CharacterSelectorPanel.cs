@@ -70,6 +70,18 @@ public class CharacterSelectorPanel : MonoBehaviour
         if (activePanel != null && activePanel != this) return;
         activePanel = this;
 
+        EnableInputActions();
+        UpdateJoinInstructionState();
+    }
+
+    private void OnDisable()
+    {
+        if (activePanel == this) activePanel = null;
+        DisableInputActions();
+    }
+
+    private void EnableInputActions()
+    {
         if (submitAction != null)
         {
             submit = submitAction.action;
@@ -93,13 +105,10 @@ public class CharacterSelectorPanel : MonoBehaviour
             move.performed -= OnMovePerformed;
             move.performed += OnMovePerformed;
         }
-
-        UpdateJoinInstructionState();
     }
 
-    private void OnDisable()
+    private void DisableInputActions()
     {
-        if (activePanel == this) activePanel = null;
         if (submit != null) submit.performed -= OnSubmitPerformed;
         if (cancel != null) cancel.performed -= OnCancelPerformed;
         if (move != null) move.performed -= OnMovePerformed;
@@ -129,6 +138,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         playerIndex = index;
         playerIndexSet = true;
         ApplyPlayerLabel();
+        Debug.Log($"Player {playerIndex} set: {playerIndexSet}");
     }
 
     private void ApplyPlayerLabel()
@@ -168,30 +178,45 @@ public class CharacterSelectorPanel : MonoBehaviour
     {
         if (!hasSelectedCharacter)
         {
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
-            hasSelectedCharacter = true;
-            ShowSkinOptions(true);
-            InitializeSkins();
-            UpdateSkinHighlight();
+            SelectCharacter();
         }
         else if (!hasConfirmedSkin)
         {
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
-            hasConfirmedSkin = true;
-            UpdateSkinConfirmationIndicator();
-            CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
+            ConfirmSkin();
         }
         else if (!hasConfirmedFinal)
         {
-            Debug.Log($"[ConfirmSelection] Player {playerIndex + 1} final confirmation.");
-            hasConfirmedFinal = true;
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
-            CharacterSelectionManager.Instance?.TryFireFinalConfirmation();
+            ConfirmFinalSelection();
         }
         else
         {
             Debug.LogWarning($"[ConfirmSelection] Player {playerIndex + 1} already confirmed final. Ignoring duplicate input.");
         }
+    }
+
+    private void SelectCharacter()
+    {
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+        hasSelectedCharacter = true;
+        ShowSkinOptions(true);
+        InitializeSkins();
+        UpdateSkinHighlight();
+    }
+
+    private void ConfirmSkin()
+    {
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+        hasConfirmedSkin = true;
+        UpdateSkinConfirmationIndicator();
+        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
+    }
+
+    private void ConfirmFinalSelection()
+    {
+        Debug.Log($"[ConfirmSelection] Player {playerIndex + 1} final confirmation.");
+        hasConfirmedFinal = true;
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+        CharacterSelectionManager.Instance?.TryFireFinalConfirmation();
     }
 
     public void CancelSelection()
@@ -204,22 +229,32 @@ public class CharacterSelectorPanel : MonoBehaviour
 
         if (hasConfirmedSkin)
         {
-            hasConfirmedSkin = false;
-            UpdateSkinConfirmationIndicator();
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
-            CharacterSelectionManager.Instance?.NotifyPlayerUnready(this);
-            CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
+            HandleSkinDeselection();
         }
         else
         {
-            hasSelectedCharacter = false;
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
-            ShowSkinOptions(false);
-            CharacterSelectionManager.Instance?.NotifyPlayerDeselected(this);
-            CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
+            HandleCharacterDeselection();
         }
 
         UpdateDisplay();
+    }
+
+    private void HandleSkinDeselection()
+    {
+        hasConfirmedSkin = false;
+        UpdateSkinConfirmationIndicator();
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+        CharacterSelectionManager.Instance?.NotifyPlayerUnready(this);
+        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
+    }
+
+    private void HandleCharacterDeselection()
+    {
+        hasSelectedCharacter = false;
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+        ShowSkinOptions(false);
+        CharacterSelectionManager.Instance?.NotifyPlayerDeselected(this);
+        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
     }
 
     private void OnSubmitPerformed(InputAction.CallbackContext ctx)

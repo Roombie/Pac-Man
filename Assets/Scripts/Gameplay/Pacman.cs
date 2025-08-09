@@ -8,7 +8,6 @@ public class Pacman : MonoBehaviour
 
     public Movement movement;
     public ArrowIndicator arrowIndicator;
-    public AudioClip pacmanDeath;
 
     private Vector2 lastInputDirection = Vector2.zero;
     private float inputBufferTime = 0f;
@@ -29,7 +28,7 @@ public class Pacman : MonoBehaviour
 
     private void Update()
     {
-        if (isDead || isInputLocked /*|| GameManager.Instance.CurrentGameState != GameManager.GameState.Playing*/) return;
+        if (isDead || isInputLocked || GameManager.Instance.CurrentGameState != GameManager.GameState.Playing) return;
 
         // Get move input direction
         Vector2 inputDirection = playerInput.actions["Move"].ReadValue<Vector2>();
@@ -101,7 +100,13 @@ public class Pacman : MonoBehaviour
 
         if (animator != null)
         {
-            animator.Play("move", 0, 0f);
+            animator.Play("move", 0, 0f); // Reset the animation to the first frame
+        }
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = false;
+            spriteRenderer.flipY = false;
         }
 
         isDead = false;
@@ -155,7 +160,7 @@ public class Pacman : MonoBehaviour
         animator.speed = 1f;
         transform.rotation = Quaternion.identity;
 
-        AudioManager.Instance.Play(pacmanDeath, SoundCategory.SFX);
+        AudioManager.Instance.Play(GameManager.Instance.selectedCharacters[GameManager.Instance.GetCurrentIndex()].deathSound, SoundCategory.SFX);
         animator.SetTrigger("death");
 
         yield return new WaitForSeconds(2f);
@@ -167,20 +172,20 @@ public class Pacman : MonoBehaviour
     {
         if (context.performed)
         {
-            // GameManager.Instance.TogglePause();
+            GameManager.Instance.TogglePause();
         }
     }
     
     void OnDrawGizmos()
     {
         if (movement == null || !movement.enabled) return;
-        
+
         Vector2 size = new Vector2(1f, 1.75f);
         Vector2 direction = this.movement.direction;
 
         bool isOccupied = movement.Occupied(direction);
 
-        Gizmos.color = isOccupied ? Color.green : Color.red;
+        Gizmos.color = isOccupied ? Color.red : Color.green;
 
         Gizmos.DrawWireCube(transform.position + (Vector3)direction * 1.5f, size);
     }

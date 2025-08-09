@@ -12,6 +12,8 @@ public class LifeIconsController : MonoBehaviour
 
     public void CreateIcons(Sprite lifeIconSprite)
     {
+        if (lifeIcons.Count > 0) return;
+
         currentLifeSprite = lifeIconSprite;
         ClearIcons();
         for (int i = 0; i < GameConstants.MaxLives; i++)
@@ -38,9 +40,10 @@ public class LifeIconsController : MonoBehaviour
             }
         }
 
+        // Update the visibility of each life icon based on remaining lives
         for (int i = 0; i < lifeIcons.Count; i++)
         {
-            lifeIcons[i].SetActive(i < livesRemaining);
+            lifeIcons[i].SetActive(i < livesRemaining); // If i < livesRemaining, icon is active, otherwise inactive
         }
     }
 

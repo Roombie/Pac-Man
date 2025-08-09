@@ -8,17 +8,20 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject readyText;
     [SerializeField] private TMP_Text gameOverText;
     [SerializeField] private TMP_Text highScoreText;
+    [SerializeField] private TMP_Text currentRoundText;
+    [SerializeField] private TMP_Text bestRoundText;
 
     [Header("Players")]
+    [SerializeField] private GameObject[] playerTextGroups;
     [SerializeField] private TMP_Text[] scoreTexts;
-    [SerializeField] private CanvasGroup[] playerTextGroups;
+    [SerializeField] private CanvasGroup[] playerScoresTitle;
 
     private Coroutine[] flickerCoroutines;
     private int currentPlayerCount = 1;
 
     private void Awake()
     {
-        flickerCoroutines = new Coroutine[playerTextGroups.Length];
+        flickerCoroutines = new Coroutine[playerScoresTitle.Length];
     }
 
     public void InitializeUI(int playerCount)
@@ -52,7 +55,10 @@ public class UIManager : MonoBehaviour
     public void UpdateHighScore(int score)
     {
         if (highScoreText != null)
+        {
             highScoreText.text = score.ToString("D2");
+            highScoreText.gameObject.SetActive(score > 0);
+        }
     }
 
     public void UpdateIntroText(int currentPlayerIndex)
@@ -63,6 +69,17 @@ public class UIManager : MonoBehaviour
             if (playerTextGroups[i] != null)
                 playerTextGroups[i].gameObject.SetActive(shouldShow);
         }
+    }
+
+    public void UpdateCurrentRound(int currentRound)
+    {
+        currentRoundText.text = currentRound.ToString("D2");
+    }
+
+    public void UpdateBestRound(int bestRound)
+    {
+        // Actualiza el texto o los elementos que muestran la mejor ronda
+        bestRoundText.text = bestRound.ToString("D2");
     }
 
     public void HidePlayerIntroText()
@@ -87,8 +104,11 @@ public class UIManager : MonoBehaviour
     {
         if (!IsValidPlayerIndex(playerIndex)) return;
 
+        if (playerScoresTitle[playerIndex] != null)
+            playerScoresTitle[playerIndex].gameObject.SetActive(true);
+
         StopPlayerFlicker(playerIndex);
-        flickerCoroutines[playerIndex] = StartCoroutine(FadeFlickerLoop(playerTextGroups[playerIndex], interval));
+        flickerCoroutines[playerIndex] = StartCoroutine(FadeFlickerLoop(playerScoresTitle[playerIndex], interval));
     }
 
     public void StopPlayerFlicker(int playerIndex)
@@ -101,8 +121,8 @@ public class UIManager : MonoBehaviour
             flickerCoroutines[playerIndex] = null;
         }
 
-        if (playerTextGroups[playerIndex] != null)
-            playerTextGroups[playerIndex].alpha = 1f;
+        if (playerScoresTitle[playerIndex] != null)
+            playerScoresTitle[playerIndex].alpha = 1f;
     }
 
     private IEnumerator FadeFlickerLoop(CanvasGroup group, float interval)
@@ -121,6 +141,6 @@ public class UIManager : MonoBehaviour
 
     private bool IsValidPlayerIndex(int index)
     {
-        return index >= 0 && index < playerTextGroups.Length;
+        return index >= 0 && index < playerScoresTitle.Length;
     }
 }

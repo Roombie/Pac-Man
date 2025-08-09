@@ -30,13 +30,13 @@ public class CoffeeBreakManager : MonoBehaviour
         if (!coffeeBreakLookup.TryGetValue(round, out CoffeeBreakData coffeeBreak))
         {
             Debug.Log("No coffee break for round: " + round);
-            // GameManager.Instance.StartNextLevel();
+            GameManager.Instance.StartNextLevel();
             return;
         }
 
         Debug.Log($"Starting coffee break for round: {round}");
 
-        // GameManager.Instance.SetState(GameManager.GameState.Intermission);
+        GameManager.Instance.SetState(GameManager.GameState.Intermission);
 
         maze.SetActive(false);
         ui.SetActive(false);
@@ -67,8 +67,8 @@ public class CoffeeBreakManager : MonoBehaviour
         maze.SetActive(true);
         ui.SetActive(true);
 
-        // GameManager.Instance.SetState(GameManager.GameState.Transition);
-        // GameManager.Instance.StartNextLevel();
+        GameManager.Instance.SetState(GameManager.GameState.Transition);
+        GameManager.Instance.StartNextLevel();
     }
 
     public bool HasCoffeeBreakForLevel(int level)
