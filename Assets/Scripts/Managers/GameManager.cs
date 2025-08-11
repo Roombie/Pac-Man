@@ -313,6 +313,7 @@ public class GameManager : MonoBehaviour
         pacman.gameObject.SetActive(true);
         pacman.animator.speed = 0f;
         pacman.enabled = false;
+        pacman.UpdateIndicator(Vector2.right);
 
         yield return new WaitForSeconds(NewRoundDelay);
 
@@ -321,15 +322,15 @@ public class GameManager : MonoBehaviour
         SetState(GameState.Playing);
 
         UpdateSiren(pelletManager.RemainingPelletCount());
+        pelletManager.CachePelletLayout(currentPlayer);
+        
         pacman.animator.speed = 1f;
         pacman.enabled = true;
         pacman.movement.SetDirection(Vector2.right);
-        pacman.UpdateIndicator(Vector2.right);
 
         bonusItemThresholds = new Queue<int>(new[] { 70, 170 });
 
         StartAllGhosts();
-        SetState(GameState.Playing);
     }
 
     public void TogglePause()

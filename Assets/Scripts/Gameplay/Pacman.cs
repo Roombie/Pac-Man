@@ -178,7 +178,7 @@ public class Pacman : MonoBehaviour
             GameManager.Instance.TogglePause();
         }
     }
-    
+
     void OnDrawGizmos()
     {
         if (movement == null || !movement.enabled) return;

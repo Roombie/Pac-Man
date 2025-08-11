@@ -19,6 +19,16 @@ public class SettingsManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        // Set locale immediately to prevent flicker
+        var savedCode = PlayerPrefs.GetString(SettingsKeys.LanguageKey, null);
+        if (!string.IsNullOrEmpty(savedCode))
+        {
+            var list = LocalizationSettings.AvailableLocales.Locales;
+            var saved = list.FirstOrDefault(l => l.Identifier.Code == savedCode);
+            if (saved != null)
+                LocalizationSettings.SelectedLocale = saved; // This should make an immediate assignment, avoiding language flicker
+        }
+
         // Ensure language + settings are applied on every scene load
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
