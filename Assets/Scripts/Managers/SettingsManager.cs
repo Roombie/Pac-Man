@@ -9,34 +9,29 @@ public class SettingsManager : MonoBehaviour
 {
     public static SettingsManager Instance { get; private set; }
 
-    [Header("Startup")]
-    [Tooltip("Temporarily disables all Canvases in the first scene until the saved locale is applied, preventing a one-frame flicker in the wrong language.")]
-    public bool blockUIUntilLocaleApplied = true;
-
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Set locale immediately to prevent flicker
+        // Set saved locale immediately so the very first frame renders in the correct language.
         var savedCode = PlayerPrefs.GetString(SettingsKeys.LanguageKey, null);
         if (!string.IsNullOrEmpty(savedCode))
         {
             var list = LocalizationSettings.AvailableLocales.Locales;
             var saved = list.FirstOrDefault(l => l.Identifier.Code == savedCode);
             if (saved != null)
-                LocalizationSettings.SelectedLocale = saved; // This should make an immediate assignment, avoiding language flicker
+                LocalizationSettings.SelectedLocale = saved;
         }
 
-        // Ensure language + settings are applied on every scene load
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void Start()
     {
-        // Apply language ASAP (prevents flicker), then apply other settings for the initial scene
-        StartCoroutine(BootstrapLocalizationAndSettings());
+        // Ensure localization is fully initialized, then apply scene-level settings once.
+        StartCoroutine(InitializeAndApplySettings());
     }
 
     void OnDestroy()
@@ -47,39 +42,19 @@ public class SettingsManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Re-apply runtime settings whenever a new scene loads (volumes, indicators, fullscreen)
+        // Re-apply runtime settings on each scene load
         ApplyAllFromPrefs();
+        RefreshSettingsUI();
     }
 
-    private IEnumerator BootstrapLocalizationAndSettings()
+    private IEnumerator InitializeAndApplySettings()
     {
-        Canvas[] canvases = null;
-
-        if (blockUIUntilLocaleApplied)
-        {
-            canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
-            foreach (var c in canvases) c.enabled = false;
-        }
-
-        // Wait for localization to be ready
+        // Finish localization bootstrapping (tables/assets ready)
         yield return LocalizationSettings.InitializationOperation;
-
-        // Apply saved language immediately (before UI shows)
-        var savedCode = PlayerPrefs.GetString(SettingsKeys.LanguageKey, null);
-        if (!string.IsNullOrEmpty(savedCode))
-        {
-            var list = LocalizationSettings.AvailableLocales.Locales;
-            var saved = list.FirstOrDefault(l => l.Identifier.Code == savedCode);
-            if (saved != null)
-                LocalizationSettings.SelectedLocale = saved;
-        }
 
         // Apply the rest of the settings (volumes, fullscreen, gameplay flags)
         ApplyAllFromPrefs();
-
-        // Re-enable UI now that the locale is in place
-        if (canvases != null)
-            foreach (var c in canvases) c.enabled = true;
+        RefreshSettingsUI();
     }
 
     /// <summary>Apply all persisted settings into the current scene.</summary>
@@ -148,7 +123,7 @@ public class SettingsManager : MonoBehaviour
 
             case SettingType.LanguageKey:
             {
-                // Persist and apply via coroutine to ensure localization is initialized
+                // Persist and apply immediately; wait for init only if needed.
                 var locales = LocalizationSettings.AvailableLocales;
                 if (index >= 0 && index < locales.Locales.Count)
                 {
@@ -175,12 +150,19 @@ public class SettingsManager : MonoBehaviour
 
     private IEnumerator SetLanguageAsync(Locale locale)
     {
-        // Make sure localization is ready, then set the locale
-        yield return LocalizationSettings.InitializationOperation;
-
+        // Switch immediately so UI updates right away.
         LocalizationSettings.SelectedLocale = locale;
 
-        // After switching language, refresh any options UI present in this scene
+        // If initialization isn't finished yet, wait; then refresh controls.
+        var op = LocalizationSettings.InitializationOperation;
+        if (!op.IsDone)
+            yield return op;
+
+        RefreshSettingsUI();
+    }
+
+    private void RefreshSettingsUI()
+    {
         foreach (var selector in FindObjectsByType<OptionSelectorSettingHandler>(FindObjectsSortMode.None))
             selector.RefreshUI();
         foreach (var toggle in FindObjectsByType<ToggleSettingHandler>(FindObjectsSortMode.None))
