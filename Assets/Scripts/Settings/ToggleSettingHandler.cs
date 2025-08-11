@@ -13,24 +13,28 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
     [Header("UI")]
     public Toggle toggle;
     public TextMeshProUGUI label;
-
-    [Header("Localization Keys")]
-    public string onTextKey = "Toggle_On";
-    public string offTextKey = "Toggle_Off";
+    [SerializeField] private string onTextKey = "Toggle_On";
+    [SerializeField] private string offTextKey = "Toggle_Off";
 
     private bool currentValue;
 
     public SettingType SettingType => settingType;
 
     private System.Action<UnityEngine.Localization.Locale> localeChangedHandler;
-    
-   void Start()
+
+    private ISettingsProvider settingsProvider;
+
+    void Start()
     {
         localeChangedHandler = _ => RefreshUI();
         LocalizationSettings.SelectedLocaleChanged += localeChangedHandler;
 
         if (toggle != null)
             toggle.onValueChanged.AddListener(OnToggleChanged);
+
+        settingsProvider = FindFirstObjectByType<OptionsMenu>();
+        if (settingsProvider == null)
+            Debug.LogError($"[{nameof(ToggleSettingHandler)}] No ISettingsProvider found in scene.");
 
         StartCoroutine(InitializeAfterLocalization());
     }
@@ -40,6 +44,7 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
         yield return LocalizationSettings.InitializationOperation;
 
         ApplyFromSaved();
+        RefreshUI();
     }
 
     private void OnDestroy()
@@ -52,23 +57,26 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
 
     private void OnToggleChanged(bool value)
     {
+        // Update local/UI state
         Apply(value);
         Save();
 
+        settingsProvider?.ApplySetting(settingType, value ? 1 : 0);
+
         if (toggleSound != null && AudioManager.Instance != null)
-        {
             AudioManager.Instance.Play(toggleSound, SoundCategory.SFX);
-        }
         else
-        {
             Debug.LogWarning("Either a toggleSound wasn't referenced or the AudioManager isn't on the scene");
-        }
     }
 
+    // Programmatic toggle (e.g., bound to a button)
     public void Toggle()
     {
         Apply(!currentValue);
         Save();
+
+        // Apply to game immediately
+        settingsProvider?.ApplySetting(settingType, currentValue ? 1 : 0);
 
         if (toggle != null)
             toggle.isOn = currentValue;
@@ -82,15 +90,18 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
             toggle.SetIsOnWithoutNotify(currentValue);
 
         RefreshUI();
-
-        // SettingsApplier.ApplyBoolSetting(settingType, currentValue);
     }
 
-    public void Apply(int index) { }
+    public void Apply(int index) { /* not used by toggles */ }
 
     public void ApplyFromSaved()
     {
-        currentValue = PlayerPrefs.GetInt(SettingsKeys.Get(settingType), 0) == 1;
+        int def = (settingType == SettingType.FullscreenKey) ? (Screen.fullScreen ? 1 : 0) : 1;
+        currentValue = PlayerPrefs.GetInt(SettingsKeys.Get(settingType), def) == 1;
+
+        if (toggle != null)
+            toggle.SetIsOnWithoutNotify(currentValue);
+
         Apply(currentValue);
     }
 
@@ -102,7 +113,7 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
     public void RefreshUI()
     {
         if (label == null) return;
-        string key = toggle.isOn ? onTextKey : offTextKey;
+        string key = (toggle != null && toggle.isOn) ? onTextKey : offTextKey;
         label.text = LocalizationSettings.StringDatabase.GetLocalizedString("GameText", key);
     }
 }

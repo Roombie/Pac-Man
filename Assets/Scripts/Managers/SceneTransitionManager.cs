@@ -53,6 +53,8 @@ public class SceneTransitionManager : MonoBehaviour
         // Trigger the "close" animation
         animator.SetTrigger(CloseTrigger);
 
+        AudioManager.Instance.StopCategory(SoundCategory.Music);
+
         // Wait until the state with tag "TransitionClose" is active
         yield return null;
         AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
@@ -79,11 +81,16 @@ public class SceneTransitionManager : MonoBehaviour
             yield return null;
         }
 
+        AudioManager.Instance.StopAll();
+
         // Activate the scene
         asyncLoad.allowSceneActivation = true;
 
         // Wait a frame to ensure the scene is initialized
         yield return null;
+
+        if (Time.timeScale == 0) // If it's paused
+            Time.timeScale = 1; // unpause it
 
         // Trigger the "open" animation
         animator.SetTrigger(OpenTrigger);

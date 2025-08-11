@@ -9,10 +9,12 @@ public class ArrowIndicator : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private float distance = 1.25f;
+    
+    private Vector2 lastDir = Vector2.right;
 
     private void Awake()
     {
-        if (spriteRenderer == null) 
+        if (spriteRenderer == null)
         {
             Debug.LogError("SpriteRenderer not found on ArrowIndicator!");
         }
@@ -22,12 +24,13 @@ public class ArrowIndicator : MonoBehaviour
     {
         if (arrow == null) return;
 
-        Vector3 normalizedDir = direction.normalized;
-        Vector3 indicatorPos = normalizedDir * distance;
+        Vector2 dir = (direction == Vector2.zero) ? lastDir : direction.normalized;
+        lastDir = dir;
 
+        Vector3 indicatorPos = (Vector3)dir * distance;
         arrow.localPosition = indicatorPos;
 
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         arrow.localRotation = Quaternion.Euler(0, 0, angle);
 
         if (!arrow.gameObject.activeSelf)
@@ -37,7 +40,6 @@ public class ArrowIndicator : MonoBehaviour
     public void ResetIndicator()
     {
         if (arrow == null) return;
-
         arrow.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
         arrow.gameObject.SetActive(false);
 

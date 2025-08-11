@@ -13,25 +13,20 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
 
     private IEnumerator InitializeAfterLocalizationReady()
     {
+        // Ensure localization system is ready (so language option labels are correct)
         yield return LocalizationSettings.InitializationOperation;
 
-        string savedLang = PlayerPrefs.GetString(SettingsKeys.LanguageKey, null);
-        if (!string.IsNullOrEmpty(savedLang))
-        {
-            var locale = LocalizationSettings.AvailableLocales.Locales
-                .FirstOrDefault(l => l.Identifier.Code == savedLang);
-            if (locale != null)
-                LocalizationSettings.SelectedLocale = locale;
-        }
-
+        // Give UI a frame to spawn (if this is an options scene)
         yield return new WaitForEndOfFrame();
 
+        // Refresh any handlers present in this scene
         foreach (var selector in FindObjectsByType<OptionSelectorSettingHandler>(FindObjectsSortMode.None))
             selector.RefreshUI();
-
         foreach (var toggle in FindObjectsByType<ToggleSettingHandler>(FindObjectsSortMode.None))
             toggle.RefreshUI();
     }
+
+    // -------- ISettingsProvider --------
 
     public string[] GetOptions(SettingType type)
     {
@@ -78,68 +73,37 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
 
             SettingType.LanguageKey
                 => LocalizationSettings.AvailableLocales.Locales
-                    .FindIndex(locale => locale.Identifier.Code == LocalizationSettings.SelectedLocale.Identifier.Code),
+                    .FindIndex(locale => locale.Identifier.Code ==
+                        (PlayerPrefs.GetString(SettingsKeys.LanguageKey,
+                            LocalizationSettings.SelectedLocale.Identifier.Code))),
+
+            SettingType.ShowIndicatorKey
+                => PlayerPrefs.GetInt(SettingsKeys.ShowIndicatorKey, 1),
 
             _ => 0
         };
     }
 
+    // Convenience overload for toggles
+    public void ApplySetting(SettingType type, bool on) => ApplySetting(type, on ? 1 : 0);
+
     public void ApplySetting(SettingType type, int index)
     {
-        switch (type)
-        {
-            case SettingType.MusicVolumeKey:
-            case SettingType.SoundVolumeKey:
-                SetAndSaveVolume(type, index / 10f);
-                break;
-
-            case SettingType.PacmanLivesKey:
-                PlayerPrefs.SetInt(SettingsKeys.PacmanLivesKey, index + 1);
-                break;
-
-            case SettingType.FullscreenKey:
-                bool isFullscreen = index == 1;
-                Screen.fullScreen = isFullscreen;
-                PlayerPrefs.SetInt(SettingsKeys.FullscreenKey, isFullscreen ? 1 : 0);
-                break;
-
-            case SettingType.ExtraLifeThresholdKey:
-                if (index >= 0 && index < GameConstants.ExtraPoints.Length)
-                    PlayerPrefs.SetInt(SettingsKeys.ExtraLifeThresholdKey, GameConstants.ExtraPoints[index]);
-                break;
-
-            case SettingType.LanguageKey:
-                if (index >= 0 && index < LocalizationSettings.AvailableLocales.Locales.Count)
-                {
-                    var selectedLocale = LocalizationSettings.AvailableLocales.Locales[index];
-                    PlayerPrefs.SetString(SettingsKeys.LanguageKey, selectedLocale.Identifier.Code);
-                    StartCoroutine(SetLanguageAsync(selectedLocale));
-                }
-                break;
-        }
+        // Delegate everything to the global manager (including Language)
+        SettingsManager.Apply(type, index);
     }
 
     public void SaveSetting(SettingType type, int index)
     {
-        ApplySetting(type, index);
+        ApplySetting(type, index); // manager persists where needed
         PlayerPrefs.Save();
     }
 
-    private void SetAndSaveVolume(SettingType type, float value)
-    {
-        PlayerPrefs.SetFloat(SettingsKeys.Get(type), value);
-        AudioManager.Instance?.SetVolume(type, value);
-    }
+    // -------- Helpers --------
 
     private string GetLocalized(string key)
     {
         var localized = LocalizationSettings.StringDatabase.GetLocalizedString("GameText", key);
         return string.IsNullOrEmpty(localized) ? key : localized;
-    }
-
-    private IEnumerator SetLanguageAsync(Locale locale)
-    {
-        LocalizationSettings.SelectedLocale = locale;
-        yield return null;
     }
 }

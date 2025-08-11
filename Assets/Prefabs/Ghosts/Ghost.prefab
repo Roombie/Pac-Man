@@ -98,7 +98,7 @@ Animator:
   m_GameObject: {fileID: 406121738378801342}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: bef35ae01d14be2418c873358a2f38a9, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -202,6 +202,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4586098485928568596}
   - component: {fileID: 4092809288570748153}
+  - component: {fileID: 6803679749651820648}
   m_Layer: 6
   m_Name: White
   m_TagString: Untagged
@@ -279,6 +280,23 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &6803679749651820648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4671879606381133001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1fa20a3f2b76d049bb87168358a793c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sprites:
+  - {fileID: -1636797939, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+  - {fileID: -7192136, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+  framerate: 0.25
+  loop: 1
 --- !u!1 &5467106861094070257
 GameObject:
   m_ObjectHideFlags: 0
@@ -289,6 +307,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3622831978741290730}
   - component: {fileID: 5054545328746106472}
+  - component: {fileID: 4356915088538598083}
   m_Layer: 6
   m_Name: Fright
   m_TagString: Untagged
@@ -366,6 +385,23 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &4356915088538598083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5467106861094070257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1fa20a3f2b76d049bb87168358a793c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sprites:
+  - {fileID: 125702033, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+  - {fileID: 1360807811, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+  framerate: 0.25
+  loop: 1
 --- !u!1 &7075192717053300214
 GameObject:
   m_ObjectHideFlags: 0

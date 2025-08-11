@@ -175,7 +175,6 @@ MonoBehaviour:
   isDead: 0
   movement: {fileID: 4690221747086396266}
   arrowIndicator: {fileID: 4467727290036966160}
-  pacmanDeath: {fileID: 8300000, guid: 82ab2678ae7a6cc4e836d5eef8dbb7f9, type: 3}
   isInputLocked: 0
   animator: {fileID: 7592953297200847592}
 --- !u!114 &4690221747086396266
@@ -320,7 +319,7 @@ CircleCollider2D:
   m_Material: {fileID: 6200000, guid: e25cb296a7a3d6f4cb02bc935c6dd600, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0

@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 public class Pacman : MonoBehaviour
 {
@@ -11,7 +12,7 @@ public class Pacman : MonoBehaviour
 
     private Vector2 lastInputDirection = Vector2.zero;
     private float inputBufferTime = 0f;
-    private float bufferDuration = 0.15f;
+    private float bufferDuration = 0.18f;
     public bool isInputLocked = false;
     private bool indicatorVisible = true;
 
@@ -119,19 +120,21 @@ public class Pacman : MonoBehaviour
     {
         indicatorVisible = value;
 
-        if (arrowIndicator != null)
+        if (arrowIndicator == null) return;
+
+        if (value)
         {
-            if (value)
-            {
-                if (movement.direction != Vector2.zero)
-                    arrowIndicator.UpdateIndicator(movement.direction);
-                else
-                    arrowIndicator.ResetIndicator();
-            }
-            else
-            {
-                arrowIndicator.ResetIndicator();
-            }
+            // prefer the actual movement direction, else last input, else face right
+            Vector2 dir =
+                (movement != null && movement.direction != Vector2.zero) ? movement.direction :
+                (lastInputDirection != Vector2.zero) ? lastInputDirection :
+                Vector2.right;
+
+            arrowIndicator.UpdateIndicator(dir);
+        }
+        else
+        {
+            arrowIndicator.ResetIndicator();
         }
     }
 
@@ -145,9 +148,9 @@ public class Pacman : MonoBehaviour
     {
         isDead = true;
 
-        // GameManager.Instance.StopAllGhosts();
+        GameManager.Instance.StopAllGhosts();
 
-        AudioManager.Instance.PauseAll();
+        AudioManager.Instance.StopAll();
         movement.rb.constraints = RigidbodyConstraints2D.FreezeAll;
         movement.enabled = false;
         animator.speed = 0f;
@@ -165,12 +168,12 @@ public class Pacman : MonoBehaviour
 
         yield return new WaitForSeconds(2f);
 
-        // GameManager.Instance.PacmanEaten();
+        GameManager.Instance.PacmanEaten();
     }
 
     public void OnPause(InputAction.CallbackContext context)
     {
-        if (context.performed)
+        if (context.performed && (GameManager.Instance.CurrentGameState == GameManager.GameState.Playing || GameManager.Instance.CurrentGameState == GameManager.GameState.Paused))
         {
             GameManager.Instance.TogglePause();
         }

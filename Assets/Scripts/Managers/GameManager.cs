@@ -130,6 +130,8 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        SetState(GameState.Transition);
+        
         bool is2P = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 0) == 1;
         IsTwoPlayerMode = is2P;
 
@@ -146,7 +148,6 @@ public class GameManager : MonoBehaviour
         NewGame();
 
         Debug.Log($"[GameManager] Game mode is {(IsTwoPlayerMode ? "2P" : "1P")} ");
-        SetState(GameState.Playing);
     }
 
     #region Game Flow
@@ -269,19 +270,22 @@ public class GameManager : MonoBehaviour
         pacman.gameObject.SetActive(true);
         pacman.enabled = false;
         pacman.animator.speed = 0f;
+        pacman.UpdateIndicator(Vector2.right);
 
         UpdateLifeIconsUI();
 
         yield return new WaitForSeconds(StartSequenceDelay);
 
         uiManager.ShowReadyText(false);
+
+        SetState(GameState.Playing);
+
         UpdateSiren(pelletManager.RemainingPelletCount());
         pelletManager.CachePelletLayout(currentPlayer);
 
         pacman.animator.speed = 1f;
         pacman.enabled = true;
         pacman.movement.SetDirection(Vector2.right);
-        pacman.UpdateIndicator(Vector2.right);
 
         StartAllGhosts();
         //ghostBehaviorManager.ResetBehaviorCycle();
@@ -314,6 +318,8 @@ public class GameManager : MonoBehaviour
 
         uiManager.ShowReadyText(false);
 
+        SetState(GameState.Playing);
+
         UpdateSiren(pelletManager.RemainingPelletCount());
         pacman.animator.speed = 1f;
         pacman.enabled = true;
@@ -334,6 +340,7 @@ public class GameManager : MonoBehaviour
         }
         else if (CurrentGameState == GameState.Paused)
         {
+            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
             ResumeGame();
         }
     }
@@ -445,7 +452,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator HandleAllPelletsCollected()
     {
-        AudioManager.Instance.PauseAll();
+        AudioManager.Instance.StopAll();
 
         yield return StartCoroutine(PlayMazeFlashSequence());
 
