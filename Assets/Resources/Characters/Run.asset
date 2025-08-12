@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbbb57df323a0b3418f9cf7cc49388cb, type: 3}
+  m_Name: Run
+  m_EditorClassIdentifier: 
+  characterName: Run
+  pelletEatenSound1: {fileID: 8300000, guid: a57e0e7187603e4499fa34089fbf2db0, type: 3}
+  pelletEatenSound2: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
+  deathSound: {fileID: 8300000, guid: 029c4f0e2c23e624691e8f2f44d3af42, type: 3}
+  skins:
+  - skinName: normal
+    arrowIndicatorColor: {r: 0.29411766, g: 0.29411766, b: 0.29411766, a: 1}
+    previewSprite: {fileID: 7439426567979852956, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    lifeIconSprite: {fileID: -5822559823783948592, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    skinIcon: {fileID: -4997308686002322044, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    animatorController: {fileID: 9100000, guid: 08a854b595720c34eb41619fe4eafba7, type: 2}
+  - skinName: bloody red
+    arrowIndicatorColor: {r: 0.54509807, g: 0, b: 0, a: 1}
+    previewSprite: {fileID: -5877058464083753606, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    lifeIconSprite: {fileID: -6854862752865071187, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    skinIcon: {fileID: -4766322925986528201, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    animatorController: {fileID: 9100000, guid: a43db96d30a734d4aa77644da6ce1e16, type: 2}
+  - skinName: ghostly cyan
+    arrowIndicatorColor: {r: 0, g: 0.8078432, b: 0.8196079, a: 1}
+    previewSprite: {fileID: 9202457461379119610, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    lifeIconSprite: {fileID: -7229719848496543997, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    skinIcon: {fileID: 7513681151204646855, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    animatorController: {fileID: 9100000, guid: 1f68c7953926b374b86b1df9ed6a0ee8, type: 2}
+  - skinName: static white
+    arrowIndicatorColor: {r: 0.9725491, g: 0.9725491, b: 1, a: 1}
+    previewSprite: {fileID: -2047127467, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    lifeIconSprite: {fileID: 715813459, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    skinIcon: {fileID: -1140829756, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    animatorController: {fileID: 9100000, guid: e4da1ae38e1735e4c9f486970e2811d0, type: 2}
+  - skinName: purple void
+    arrowIndicatorColor: {r: 0.33333334, g: 0.10196079, b: 0.54509807, a: 1}
+    previewSprite: {fileID: 826309780, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    lifeIconSprite: {fileID: 1054772605, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    skinIcon: {fileID: 1785381650, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    animatorController: {fileID: 9100000, guid: c6fb802652841c24b90691014a98c451, type: 2}
+  - skinName: toxic green
+    arrowIndicatorColor: {r: 0.22352943, g: 1, b: 0.078431375, a: 1}
+    previewSprite: {fileID: -1936644504, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    lifeIconSprite: {fileID: 469322027, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    skinIcon: {fileID: 1288031931, guid: 70d4cc699d263a64497f4a86d08ef805, type: 3}
+    animatorController: {fileID: 9100000, guid: d66b5b6eaabfe3043ba33f9392a18907, type: 2}

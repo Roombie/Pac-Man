@@ -2462,6 +2462,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5f9e6fa47039b334f8303f76e7a65fc5, type: 2}
   - {fileID: 11400000, guid: cc38bbdf0312a954a888145b9241e514, type: 2}
   - {fileID: 11400000, guid: 4c3ed42a4e2265e4c98f3d1a38fab241, type: 2}
+  - {fileID: 11400000, guid: b23c2cf587dc7b84aa09d049782a283b, type: 2}
   globalPlayerStyles:
   - backgroundColor: {r: 1, g: 0, b: 0, a: 1}
     playerTextColor: {r: 1, g: 0, b: 0, a: 1}

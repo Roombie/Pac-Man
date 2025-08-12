@@ -1643,6 +1643,94 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Arcade - Pac-Man - General Sprites_62
+      rect:
+        serializedVersion: 2
+        x: 585
+        y: 206
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d1a47460c6fda3147ba03d84cbdb0f76
+      internalID: -1382634798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Arcade - Pac-Man - General Sprites_64
+      rect:
+        serializedVersion: 2
+        x: 617
+        y: 206
+        width: 14
+        height: 15
+      alignment: 9
+      pivot: {x: 0.5, y: 0.4666}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 459d35e40413b8643bf53d9639bd173f
+      internalID: 1282927560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Arcade - Pac-Man - General Sprites_68
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 206
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4c06db6fa3337ce4ca4ab36a8da18a86
+      internalID: -287270737
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Arcade - Pac-Man - General Sprites_69
+      rect:
+        serializedVersion: 2
+        x: 633
+        y: 206
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a18eb686d94a3484585727b340cb99ce
+      internalID: 925705772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -1716,7 +1804,9 @@ TextureImporter:
       Arcade - Pac-Man - General Sprites_6: -1296458367
       Arcade - Pac-Man - General Sprites_60: -1501141204
       Arcade - Pac-Man - General Sprites_61: 868956325
+      Arcade - Pac-Man - General Sprites_62: -1382634798
       Arcade - Pac-Man - General Sprites_63: 727556213
+      Arcade - Pac-Man - General Sprites_64: 1282927560
       Arcade - Pac-Man - General Sprites_65: 8156325
       Arcade - Pac-Man - General Sprites_66: 770353464
       Arcade - Pac-Man - General Sprites_67: -1266919831
