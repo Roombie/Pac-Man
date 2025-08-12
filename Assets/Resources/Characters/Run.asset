@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Run
   m_EditorClassIdentifier: 
   characterName: Run
-  pelletEatenSound1: {fileID: 8300000, guid: a57e0e7187603e4499fa34089fbf2db0, type: 3}
-  pelletEatenSound2: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
-  deathSound: {fileID: 8300000, guid: 029c4f0e2c23e624691e8f2f44d3af42, type: 3}
+  pelletEatenSound1: {fileID: 8300000, guid: 5ab131a38a1bb854ab43582d57edc332, type: 3}
+  pelletEatenSound2: {fileID: 8300000, guid: 26f436362538c104eb4e9110a9458768, type: 3}
+  deathSound: {fileID: 8300000, guid: c09910fdd0b202345877698000e4e325, type: 3}
   skins:
   - skinName: normal
     arrowIndicatorColor: {r: 0.29411766, g: 0.29411766, b: 0.29411766, a: 1}

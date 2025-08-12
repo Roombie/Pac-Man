@@ -455,6 +455,9 @@ public class GameManager : MonoBehaviour
     {
         AudioManager.Instance.StopAll();
 
+        if (coffeeBreakManager.HasCoffeeBreakForLevel(CurrentPlayerData.level))
+            SetState(GameState.Intermission);
+
         yield return StartCoroutine(PlayMazeFlashSequence());
 
         if (coffeeBreakManager.HasCoffeeBreakForLevel(CurrentPlayerData.level))
@@ -860,6 +863,8 @@ public class GameManager : MonoBehaviour
     {
         if (CurrentGameState != GameState.Playing)
             return;
+        
+        if (pelletsRemaining <= 0) return;
 
         // Do not play siren if in frightened mode
         /*if (AnyGhostFrightened())
