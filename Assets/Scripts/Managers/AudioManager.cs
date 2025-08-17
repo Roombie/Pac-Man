@@ -264,6 +264,9 @@ public class AudioManager : MonoBehaviour
             if (!sfxPool.Contains(source) && source != musicSource)
                 sfxPool.Enqueue(source);
         }
+        // keep state consistent for music
+        if (musicSource != null) musicSource.clip = null;
+        CurrentMusic = null;
     }
 
     private IEnumerator ReturnToPoolAfterPlayback(AudioSource source, float delay)

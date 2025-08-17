@@ -67,7 +67,7 @@ public class CoffeeBreakManager : MonoBehaviour
         maze.SetActive(true);
         ui.SetActive(true);
 
-        GameManager.Instance.SetState(GameManager.GameState.Transition);
+        GameManager.Instance.SetState(GameManager.GameState.Intro);
         GameManager.Instance.StartNextLevel();
     }
 

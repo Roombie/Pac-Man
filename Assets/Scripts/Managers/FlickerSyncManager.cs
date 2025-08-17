@@ -4,7 +4,7 @@ public class FlickerSyncManager : MonoBehaviour
 {
     public static FlickerSyncManager Instance { get; private set; }
 
-    public float flickerInterval = 0.1f;
+    public float flickerInterval = 0.25f;
 
     private void Awake()
     {

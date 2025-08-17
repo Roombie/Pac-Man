@@ -7,6 +7,7 @@ public class PelletManager : MonoBehaviour
     [SerializeField] private Transform pelletsParent; // The object that contains the pellets in the hierarchy
     private readonly List<Pellet> allPellets = new();
     private Dictionary<int, HashSet<Vector2>> pelletStatesPerPlayer = new();
+    public event System.Action OnPelletConsumedGlobal;
 
     private int remainingPellets;
 
@@ -74,8 +75,9 @@ public class PelletManager : MonoBehaviour
     public void PelletEaten(Pellet pellet)
     {
         remainingPellets--;
-
         pellet.gameObject.SetActive(false);
+
+        OnPelletConsumedGlobal?.Invoke(); 
 
         if (remainingPellets <= 0)
         {
@@ -106,6 +108,16 @@ public class PelletManager : MonoBehaviour
         Debug.Log($"[PelletManager] Reset for turn. Pellets visible: {remainingPellets}");
     }
 
+    [ContextMenu("DEV/Eat All Pellets")]
+    public void EatAllPelletes()
+    {
+        // Eat only the pellets that are currently active to avoid double-counting
+        foreach (var pellet in allPellets)
+        {
+            if (pellet && pellet.gameObject.activeSelf)
+                PelletEaten(pellet);
+        }
+    }
 
     public bool HasRemainingPellets()
     {

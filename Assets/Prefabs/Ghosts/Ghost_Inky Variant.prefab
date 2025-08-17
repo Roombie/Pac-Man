@@ -16,10 +16,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ghost_Inky Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 3718778801018091632, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: flashInterval
+      value: 0.4
+      objectReference: {fileID: 0}
     - target: {fileID: 4075316508669221649, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: bef35ae01d14be2418c873358a2f38a9, type: 2}
+    - target: {fileID: 6007269523664781191, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: initialDirection.y
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6368014658890702140, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2
@@ -60,10 +68,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6465194683156975210, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: ghostType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6921662381185705033, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 6200000, guid: e25cb296a7a3d6f4cb02bc935c6dd600, type: 2}
+    - target: {fileID: 6921662381185705033, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: m_Constraints
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 6921662381185705033, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_SleepingMode
       value: 0
@@ -72,11 +88,34 @@ PrefabInstance:
       propertyPath: m_CollisionDetection
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: upEyes
+      value: 
+      objectReference: {fileID: -827398702, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: downEyes
+      value: 
+      objectReference: {fileID: -2079706475, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: leftEyes
+      value: 
+      objectReference: {fileID: 97025998, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: rightEyes
+      value: 
+      objectReference: {fileID: 576093033, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: eyesRenderer
+      value: 
+      objectReference: {fileID: 2335071001548187725}
     - target: {fileID: 8116846737151291312, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Color.r
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 6883016487423491841, guid: 1855884bb736be542a66a632047a1995, type: 3}
+    - {fileID: 2727292459076215859, guid: 1855884bb736be542a66a632047a1995, type: 3}
+    - {fileID: 187565768491132636, guid: 1855884bb736be542a66a632047a1995, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -125,3 +164,8 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
+--- !u!212 &2335071001548187725 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 1466197436971015820, guid: 1855884bb736be542a66a632047a1995, type: 3}
+  m_PrefabInstance: {fileID: 3764776710594541249}
+  m_PrefabAsset: {fileID: 0}

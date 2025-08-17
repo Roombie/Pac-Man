@@ -16,30 +16,21 @@ public class GameManager : MonoBehaviour
     private Animator pacmanAnimator;
     private ArrowIndicator pacmanArrowIndicator;
 
-    [Header("UI Elements")]
-    [SerializeField] private GameObject menus;
-    [SerializeField] private GameObject pauseMenu;
-    [SerializeField] private GameObject optionsMenu;
-    [SerializeField] private GameObject resumeButton;
-
-    [Header("Ghost Score Prefabs")]
-    public GameObject ghostScore200Prefab;
-    public GameObject ghostScore400Prefab;
-    public GameObject ghostScore800Prefab;
-    public GameObject ghostScore1600Prefab;
     private int[] ghostComboPoints = { 200, 400, 800, 1600 };
 
     [Header("Controllers")]
+    public GlobalGhostModeController globalGhostModeController;
     [SerializeField] private UIManager uiManager;
-    // [SerializeField] private GhostBehaviorManager ghostBehaviorManager;
     [SerializeField] private MazeFlashController mazeFlashController;
     [SerializeField] private LifeIconsController lifeIconsController;
     [SerializeField] private FruitDisplayController fruitDisplayController;
     [SerializeField] private BonusItemManager bonusItemManager;
     [SerializeField] private PelletManager pelletManager;
     [SerializeField] private CoffeeBreakManager coffeeBreakManager;
+    [SerializeField] private ScorePopupManager scorePopupManager;
+    [SerializeField] private PauseUIController pauseUI;
 
-    public enum GameState { Playing, Paused, Intermission, Transition, GameOver }
+    public enum GameState { Intro, Playing, Paused, LevelClear, Intermission, GameOver }
     public GameState CurrentGameState { get; private set; }
     private int totalPlayers;
     private class PlayerData
@@ -105,13 +96,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Get the amount of allowed players based on the player count key
-        totalPlayers = Mathf.Clamp(
-            PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1),
-            1,
-            2 // Might need to add something that allows me to dynamically change this value
-        );
-
-        InitializePlayerScores();
+        totalPlayers = Mathf.Clamp(PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1), 1, 2);
         
         pacmanAnimator = pacman.GetComponent<Animator>();
         pacmanSpriteRenderer = pacman.GetComponent<SpriteRenderer>();
@@ -130,11 +115,11 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        SetState(GameState.Transition);
+        SetState(GameState.Intro);
         
-        bool is2P = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 0) == 1;
-        IsTwoPlayerMode = is2P;
+        IsTwoPlayerMode = totalPlayers > 1;
 
+        InitializePlayerScores();
         InitializePlayers();
 
         int extraPointsIndex = PlayerPrefs.GetInt(SettingsKeys.ExtraLifeThresholdKey, 0); // 10000
@@ -250,10 +235,8 @@ public class GameManager : MonoBehaviour
     {
         AudioManager.Instance.Play(AudioManager.Instance.gameMusic, SoundCategory.Music);
 
-        /*foreach (Ghost ghost in ghostBehaviorManager.ghosts)
-        {
-            ghost.gameObject.SetActive(false);
-        }*/
+        globalGhostModeController.PauseAllGhostAnimations();
+        globalGhostModeController.DeactivateAllGhosts();
 
         pacman.gameObject.SetActive(false);
         // It'll always start the first player but whatever
@@ -265,7 +248,7 @@ public class GameManager : MonoBehaviour
 
         uiManager.HidePlayerIntroText();
 
-        ActivateAllGhosts();
+        globalGhostModeController.ActivateAllGhosts();
 
         pacman.gameObject.SetActive(true);
         pacman.enabled = false;
@@ -287,13 +270,13 @@ public class GameManager : MonoBehaviour
         pacman.enabled = true;
         pacman.movement.SetDirection(Vector2.right);
 
-        StartAllGhosts();
-        //ghostBehaviorManager.ResetBehaviorCycle();
+        globalGhostModeController.StartAllGhosts(enableColliders: true, pushHomeUp: true);
     }
 
     private IEnumerator NewRoundSequence()
     {
         CurrentPlayerData.level++;
+        globalGhostModeController.ActivateAllGhosts();
         UpdateBestRound();
         UpdateRoundsUI();
         OnRoundChanged?.Invoke(CurrentIndex, CurrentRound, BestRound);
@@ -303,7 +286,7 @@ public class GameManager : MonoBehaviour
         thresholdIndex = 0;
 
         ResetState();
-        StopAllGhosts();
+        globalGhostModeController.StopAllGhosts();
         fruitDisplayController.RefreshFruits(CurrentRound);
 
         uiManager.ShowGameOverText(false);
@@ -330,7 +313,7 @@ public class GameManager : MonoBehaviour
 
         bonusItemThresholds = new Queue<int>(new[] { 70, 170 });
 
-        StartAllGhosts();
+        globalGhostModeController.StartAllGhosts(enableColliders: true, pushHomeUp: true);
     }
 
     public void TogglePause()
@@ -349,7 +332,7 @@ public class GameManager : MonoBehaviour
     private void PauseGame()
     {
         Time.timeScale = 0f;
-        MenuManager.Instance.OpenMenu(pauseMenu);
+        pauseUI.ShowPause();
         SetState(GameState.Paused);
         Debug.Log("Game Paused");
     }
@@ -357,8 +340,8 @@ public class GameManager : MonoBehaviour
     private void ResumeGame()
     {
         Time.timeScale = 1f;
+        pauseUI.HidePause();
         SetState(GameState.Playing);
-        MenuManager.Instance.CloseAll();
         Debug.Log("Game Resumed");
     }
 
@@ -374,8 +357,10 @@ public class GameManager : MonoBehaviour
         ResetActorsState();
 
         if (IsTwoPlayerMode)
+        {
             fruitDisplayController.RefreshFruits(CurrentRound);
             ApplyCharacterDataForCurrentPlayer();
+        }
         
         UpdateRoundsUI();
 
@@ -400,10 +385,11 @@ public class GameManager : MonoBehaviour
         pacman.movement.SetDirection(Vector2.right);
         pacman.UpdateIndicator(Vector2.right);
 
-        AudioManager.Instance.ResumeAll();
+        SetState(GameState.Playing);
 
-        StartAllGhosts();
+        globalGhostModeController.StartAllGhosts(enableColliders: true, pushHomeUp: true);
         UpdateSiren(pelletManager.RemainingPelletCount());
+        pelletManager.CachePelletLayout(currentPlayer);
     }
     #endregion
 
@@ -446,6 +432,8 @@ public class GameManager : MonoBehaviour
         bool flashCompleted = false;
         mazeFlashController.StartFlash(() => flashCompleted = true);
 
+        globalGhostModeController.DeactivateAllGhosts();
+
         yield return new WaitUntil(() => flashCompleted);
 
         yield return new WaitForSeconds(0.25f);
@@ -453,7 +441,9 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator HandleAllPelletsCollected()
     {
+        SetState(GameState.LevelClear);
         AudioManager.Instance.StopAll();
+        globalGhostModeController.StopAllGhosts();
 
         if (coffeeBreakManager.HasCoffeeBreakForLevel(CurrentPlayerData.level))
             SetState(GameState.Intermission);
@@ -596,29 +586,8 @@ public class GameManager : MonoBehaviour
         int lives = CurrentPlayerData.lives;
         Debug.Log($"UpdateLifeIconsUI: player {currentPlayer}, lives = {lives}");
         Sprite currentLifeSprite = selectedSkins[CurrentIndex].lifeIconSprite;
-        lifeIconsController.UpdateIcons(CurrentPlayerData.lives - 1, currentLifeSprite);
-    }
-
-    public void ShowGhostScore(Vector3 position, int points)
-    {
-        GameObject prefab = GetGhostScorePrefab(points);
-
-        if (prefab != null)
-        {
-            Instantiate(prefab, position, Quaternion.identity);
-        }
-    }
-
-    private GameObject GetGhostScorePrefab(int points)
-    {
-        switch (points)
-        {
-            case 200: return ghostScore200Prefab;
-            case 400: return ghostScore400Prefab;
-            case 800: return ghostScore800Prefab;
-            case 1600: return ghostScore1600Prefab;
-            default: return null;
-        }
+        // if your UI shows "extra lives" (not the current life), subtract 1 but clamp to 0
+        lifeIconsController.UpdateIcons(Mathf.Max(0, lives - 1), currentLifeSprite);
     }
     #endregion
 
@@ -709,29 +678,25 @@ public class GameManager : MonoBehaviour
         return nextPlayer;
     }
 
-    /*public void GhostEaten(Ghost ghost)
+    public void GhostEaten(Ghost ghost)
     {
         StartCoroutine(GhostEatenSequence(ghost));
-    }*/
+    }
 
-    /*private IEnumerator GhostEatenSequence(Ghost ghost)
+    private IEnumerator GhostEatenSequence(Ghost ghost)
     {
         // Freeze Pacman and all ghosts
         pacman.isInputLocked = true;
         pacman.movement.enabled = false;
-
-        foreach (Ghost g in ghostBehaviorManager.ghosts)
-        {
-            g.movement.enabled = false;
-        }
+        pacman.animator.speed = 0f;
+        globalGhostModeController.StopAllGhosts();
 
         // Show points
         int comboIndex = Mathf.Clamp(ghostMultiplier - 1, 0, ghostComboPoints.Length - 1);
         int points = ghostComboPoints[comboIndex];
-
         AddScore(points);
-        ShowGhostScore(ghost.transform.position, points);
-        AudioManager.Instance.Play(ghostEaten, SoundCategory.SFX);
+        scorePopupManager.ShowGhostScore(ghost.transform.position, points);
+        AudioManager.Instance.Play(AudioManager.Instance.ghostEaten, SoundCategory.SFX);
 
         ghostMultiplier++;
 
@@ -740,53 +705,14 @@ public class GameManager : MonoBehaviour
 
         // The eaten ghost activates the enter home behavior
         // which set eyes mode, adjust their speed and go home to regenerate
-        ghost.EnterHome();
+        ghost.SetMode(Ghost.Mode.Eaten);
 
         // Unfreeze Pacman and the other ghosts
         pacman.movement.enabled = true;
         pacman.isInputLocked = false;
+        pacman.animator.speed = 1f;
 
-        foreach (Ghost g in ghostBehaviorManager.ghosts)
-        {
-            // Only unfreeze the ones that weren't eaten
-            if (!g.IsEaten)
-            {
-                g.movement.enabled = true;
-            }
-            else
-            {
-                // For other ghosts that are eaten, disable their movement while they are transitioning to home
-                g.movement.enabled = false;
-            }
-        }
-    }*/
-
-    private void ActivateAllGhosts()
-    {
-        /*foreach (Ghost ghost in ghostBehaviorManager.ghosts)
-        {
-            ghost.gameObject.SetActive(true);
-            ghost.ResetState();  // Reset the state of each ghost
-        }*/
-    }
-
-    private void StartAllGhosts()
-    {
-        /*foreach (Ghost ghost in ghostBehaviorManager.ghosts)
-        {
-            ghost.enabled = true;
-            ghost.movement.enabled = true;
-            ghost.GetComponent<CircleCollider2D>().enabled = true;
-        }*/
-    }
-
-    public void StopAllGhosts()
-    {
-        /*foreach (Ghost ghost in ghostBehaviorManager.ghosts)
-        {
-            ghost.movement.SetDirection(Vector2.zero);
-            ghost.movement.enabled = false;
-        }*/
+        globalGhostModeController.StartAllGhosts();
     }
 
     private void GameOver()
@@ -801,18 +727,14 @@ public class GameManager : MonoBehaviour
     private IEnumerator GameOverSequence()
     {
         yield return new WaitForSeconds(3f);
-        ReturnToMainMenu();
+        ExitLevel();
     }
 
-    public void ReturnToMainMenu(bool playSound = false)
+    public void ExitLevel()
     {
         if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.isTransitioning)
             return;
 
-        if (playSound)
-        {
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
-        }    
         SceneTransitionManager.Instance.LoadScene("MainMenu");
     }
 
@@ -823,15 +745,7 @@ public class GameManager : MonoBehaviour
 
         ghostMultiplier = 1;
 
-        /*foreach (Ghost ghost in ghostBehaviorManager.ghosts)
-        {
-            // Only apply frightened state to ghosts that are not already eaten or in Home
-            if (ghost.IsEaten || ghost.IsInHome)
-                continue;
-
-            // Apply frightened mode for the full duration
-            ghost.EnterFrightened(pellet.duration);
-        }*/
+        globalGhostModeController.TriggerFrightened(pellet.duration);
 
         PelletEaten(pellet);  // Continue with regular pellet eating logic
 
@@ -866,10 +780,6 @@ public class GameManager : MonoBehaviour
         
         if (pelletsRemaining <= 0) return;
 
-        // Do not play siren if in frightened mode
-        /*if (AnyGhostFrightened())
-            return;*/
-
         if (pelletsRemaining > 170)
         {
             if (AudioManager.Instance.CurrentMusic != AudioManager.Instance.firstSirenLoop)
@@ -892,17 +802,6 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-
-    /*private bool AnyGhostFrightened()
-    {
-        foreach (Ghost ghost in ghostBehaviorManager.ghosts)
-        {
-            if (ghost.ghostFrightened.enabled)
-                return true;
-        }
-
-        return false;
-    }*/
 
     private void ApplyCharacterDataForCurrentPlayer()
     {

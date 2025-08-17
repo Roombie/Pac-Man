@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7742251364429566302}
   - component: {fileID: 8893803764556369579}
+  - component: {fileID: 409079033118078462}
   - component: {fileID: 5893468776855778113}
   - component: {fileID: 6878185589549712317}
   - component: {fileID: 2203496920614338219}
@@ -17,6 +18,8 @@ GameObject:
   - component: {fileID: 3517510330910360623}
   - component: {fileID: 7908264411556593840}
   - component: {fileID: 7747503494696074549}
+  - component: {fileID: 8601527251409674083}
+  - component: {fileID: 3164118511359414081}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: GameController
@@ -52,14 +55,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pacman: {fileID: 0}
-  menus: {fileID: 0}
-  pauseMenu: {fileID: 0}
-  optionsMenu: {fileID: 0}
-  resumeButton: {fileID: 0}
-  ghostScore200Prefab: {fileID: 4660395184823018145, guid: 754f1665799bfd94d8f4e7b3a5b36f43, type: 3}
-  ghostScore400Prefab: {fileID: 490764208900113918, guid: 60898be00e41e3846a19c1a92b8adb00, type: 3}
-  ghostScore800Prefab: {fileID: 1759425929868520084, guid: 4ef451bbe5a8d2646a75c66f6e2905ca, type: 3}
-  ghostScore1600Prefab: {fileID: 5790173717095235151, guid: 10f1990ddaeedc047aa7abb90f56106b, type: 3}
   uiManager: {fileID: 7908264411556593840}
   mazeFlashController: {fileID: 7747503494696074549}
   lifeIconsController: {fileID: 6878185589549712317}
@@ -67,7 +62,30 @@ MonoBehaviour:
   bonusItemManager: {fileID: 2203496920614338219}
   pelletManager: {fileID: 5893468776855778113}
   coffeeBreakManager: {fileID: 3517510330910360623}
+  scorePopupManager: {fileID: 8601527251409674083}
+  pauseUI: {fileID: 3164118511359414081}
+  globalGhostModeController: {fileID: 409079033118078462}
   selectedCharacters: []
+--- !u!114 &409079033118078462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5758386320045993450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5504df360c0e8c4499d9daabc14f7ddb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ghosts:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  phases: []
+  matrix: {fileID: 11400000, guid: 7b0d1b7dfb82e054793b54d70c97450d, type: 2}
+  currentLevel: 1
 --- !u!114 &5893468776855778113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,3 +226,32 @@ MonoBehaviour:
   mazeWhite: {fileID: 0}
   mazeFlashCount: 4
   mazeFlashInterval: 0.2
+--- !u!114 &8601527251409674083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5758386320045993450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfa5f8603ec1788479c968ac0610562d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefab200: {fileID: 4660395184823018145, guid: 754f1665799bfd94d8f4e7b3a5b36f43, type: 3}
+  prefab400: {fileID: 490764208900113918, guid: 60898be00e41e3846a19c1a92b8adb00, type: 3}
+  prefab800: {fileID: 1759425929868520084, guid: 4ef451bbe5a8d2646a75c66f6e2905ca, type: 3}
+  prefab1600: {fileID: 5790173717095235151, guid: 10f1990ddaeedc047aa7abb90f56106b, type: 3}
+--- !u!114 &3164118511359414081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5758386320045993450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efa0a226df40eea45bb9e5ddb79fd653, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pauseMenu: {fileID: 0}

@@ -5,6 +5,7 @@ public class Movement : MonoBehaviour
 {
     public float speed = 8f;
     public float speedMultiplier = 1f;
+    public float envMultiplier = 1f;
     public Vector2 initialDirection;
     public LayerMask obstacleLayer;
 
@@ -47,9 +48,9 @@ public class Movement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        // isBlocked = Occupied(direction);
         Vector2 position = rb.position;
         Vector2 translation = speed * speedMultiplier * Time.fixedDeltaTime * direction;
-
         rb.MovePosition(position + translation);
     }
 
@@ -75,4 +76,10 @@ public class Movement : MonoBehaviour
         RaycastHit2D hit = Physics2D.BoxCast(transform.position, Vector2.one * 0.75f, 0f, direction, 1.5f, obstacleLayer);
         return hit.collider != null;
     }
+
+    /// <summary>Sets the “base” multiplier (modes/elroy). Does not touch env multiplier.</summary>
+    public void SetBaseSpeedMultiplier(float m) => speedMultiplier = Mathf.Max(0f, m);
+
+    /// <summary>Sets the environment multiplier (slow zones). Does not touch base multiplier.</summary>
+    public void SetEnvSpeedMultiplier(float m) => envMultiplier = Mathf.Max(0f, m);
 }

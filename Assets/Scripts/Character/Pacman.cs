@@ -76,7 +76,7 @@ public class Pacman : MonoBehaviour
         }
 
         // If the player collides with an obstacle, their animator speed changes to zero
-        animator.speed = movement.isBlocked ? 0f : 1f; // is it blocked? animations stops | is it not block? animation keeps playing 
+        // animator.speed = movement.isBlocked ? 0f : 1f; // is it blocked? animations stops | is it not block? animation keeps playing 
     }
 
     public void UpdateIndicator(Vector2 direction)
@@ -148,7 +148,7 @@ public class Pacman : MonoBehaviour
     {
         isDead = true;
 
-        GameManager.Instance.StopAllGhosts();
+        GameManager.Instance.globalGhostModeController.StopAllGhosts();
 
         AudioManager.Instance.StopAll();
         movement.rb.constraints = RigidbodyConstraints2D.FreezeAll;
@@ -162,6 +162,12 @@ public class Pacman : MonoBehaviour
 
         animator.speed = 1f;
         transform.rotation = Quaternion.identity;
+        
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = false;
+            spriteRenderer.flipY = false;
+        }
 
         AudioManager.Instance.Play(GameManager.Instance.selectedCharacters[GameManager.Instance.GetCurrentIndex()].deathSound, SoundCategory.SFX);
         animator.SetTrigger("death");
