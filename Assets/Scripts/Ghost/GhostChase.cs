@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Ghost))]
 public class GhostChase : MonoBehaviour
 {
-    private Ghost g;
+    private Ghost ghost;
     private Movement move;
     private Movement pacMove;
 
@@ -16,28 +16,29 @@ public class GhostChase : MonoBehaviour
 
     void Awake()
     {
-        g    = GetComponent<Ghost>();
-        move = g.movement ?? GetComponent<Movement>();
-        if (g.pacman) pacMove = g.pacman.GetComponent<Movement>();
+        ghost = GetComponent<Ghost>();
+        move = ghost.movement ?? GetComponent<Movement>();
+        if (ghost.pacman) pacMove = ghost.pacman.GetComponent<Movement>();
     }
 
     void Update()
     {
-        if (!g || !g.pacman || !move) return;
-        if (g.CurrentMode != Ghost.Mode.Chase) return;
+        if (!ghost || !ghost.pacman || !move) return;
+        if (ghost.CurrentMode != Ghost.Mode.Chase) return;
         
         Vector3 target = GetChaseTarget();
         Vector2 dir    = ChooseDirectionToward(target);
         move.SetDirection(dir);
     }
 
-    // --- Targeting per ghost type (arcade rules) ---
+    // Targeting per ghost type (arcade rules)
+    // https://pacman.holenet.info
     Vector3 GetChaseTarget()
     {
-        Vector3 pacPos = g.pacman.transform.position;
+        Vector3 pacPos = ghost.pacman.transform.position;
         Vector2 pdir   = (pacMove && pacMove.direction != Vector2.zero) ? pacMove.direction : Vector2.right;
 
-        switch (g.Type)
+        switch (ghost.Type)
         {
             case GhostType.Blinky:
                 // Directly target Pac-Man
@@ -52,9 +53,9 @@ public class GhostChase : MonoBehaviour
                 // Take the point 2 tiles ahead of Pac-Man (with up bug),
                 // then vector from Blinky to that point, doubled.
                 Vector3 twoAhead = pacPos + (Vector3)AheadWithUpBug(pdir, 2);
-                Vector3 blinkyPos = (g.blinky && g.blinky.movement)
-                    ? (Vector3)g.blinky.movement.rb.position
-                    : g.transform.position; // fallback
+                Vector3 blinkyPos = (ghost.blinky && ghost.blinky.movement)
+                    ? (Vector3)ghost.blinky.movement.rb.position
+                    : ghost.transform.position; // fallback
                 Vector3 v = twoAhead - blinkyPos;
                 return blinkyPos + v * 2f;
             }
@@ -128,9 +129,9 @@ public class GhostChase : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
-        if (!g || !g.pacman) return;
+        if (!ghost || !ghost.pacman) return;
         Gizmos.color = Color.yellow;
-        Vector3 target = Application.isPlaying ? GetChaseTarget() : g.pacman.transform.position;
+        Vector3 target = Application.isPlaying ? GetChaseTarget() : ghost.pacman.transform.position;
         Gizmos.DrawLine(transform.position, target);
         Gizmos.DrawWireSphere(target, 0.15f);
     }

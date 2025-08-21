@@ -102,7 +102,7 @@ PrefabInstance:
       objectReference: {fileID: 6200000, guid: e25cb296a7a3d6f4cb02bc935c6dd600, type: 2}
     - target: {fileID: 6921662381185705033, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Constraints
-      value: 0
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6921662381185705033, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_SleepingMode

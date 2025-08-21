@@ -216,6 +216,7 @@ public class GameManager : MonoBehaviour
     {
         bonusItemThresholds = new Queue<int>(new[] { 70, 170 });
 
+        bonusItemManager.DespawnBonusItem(true);
         UpdateRoundsUI();
         UpdateBestRound();
         ApplyCharacterDataForCurrentPlayer();
@@ -242,7 +243,6 @@ public class GameManager : MonoBehaviour
     {
         AudioManager.Instance.Play(AudioManager.Instance.gameMusic, SoundCategory.Music);
 
-        globalGhostModeController.PauseAllGhostAnimations();
         globalGhostModeController.DeactivateAllGhosts();
 
         pacman.gameObject.SetActive(false);
@@ -255,6 +255,7 @@ public class GameManager : MonoBehaviour
         uiManager.HidePlayerIntroText();
 
         globalGhostModeController.ActivateAllGhosts();
+        globalGhostModeController.StopAllGhosts();
 
         pacman.gameObject.SetActive(true);
         pacman.enabled = false;
@@ -278,10 +279,12 @@ public class GameManager : MonoBehaviour
 
         globalGhostModeController.StartAllGhosts();
         globalGhostModeController.SetHouseReleaseEnabled(true);
+        
     }
 
     private IEnumerator NewRoundSequence()
     {
+        bonusItemManager.DespawnBonusItem(true);
         CurrentPlayerData.level++;
         globalGhostModeController.ActivateAllGhosts();
         UpdateBestRound();
@@ -292,7 +295,6 @@ public class GameManager : MonoBehaviour
         CurrentPlayerData.eatenPellets.Clear();
         thresholdIndex = 0;
 
-        ResetState();
         globalGhostModeController.StopAllGhosts();
         fruitDisplayController.RefreshFruits(CurrentRound);
 
@@ -362,8 +364,10 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator RestartLevelSequence()
     {
-        yield return new WaitForSeconds(1f);
+        bonusItemManager.DespawnBonusItem(true);
 
+        yield return new WaitForSeconds(1f);
+    
         ResetActorsState();
 
         if (IsTwoPlayerMode)
@@ -615,7 +619,6 @@ public class GameManager : MonoBehaviour
             _savedTimeScale = Time.timeScale;
             Time.timeScale = 0f;
             globalGhostModeController?.SetTimersFrozen(true); // pauses frightened/phase + flicker
-            // Optionally pause audio: AudioListener.pause = true;
         }
     }
 
@@ -626,7 +629,7 @@ public class GameManager : MonoBehaviour
         // Pause timers/flicker but keep world time running
         globalGhostModeController?.SetTimersFrozen(true);
 
-        // Stop Pac-Man movement/anim
+        // Stop Pac-Man movement and animations
         if (pacman) {
             if (pacman.movement && pacman.movement.enabled) { pacman.movement.enabled = false; list.Add(pacman.movement); }
             var anim = pacman.GetComponentInChildren<Animator>();
@@ -822,7 +825,6 @@ public class GameManager : MonoBehaviour
 
         PopFreeze(); 
         globalGhostModeController.SetTimersFrozen(false);
-        // globalGhostModeController.StartAllGhosts();
         globalGhostModeController.ApplyModeSpeed(ghost, Ghost.Mode.Eaten);
     }
 

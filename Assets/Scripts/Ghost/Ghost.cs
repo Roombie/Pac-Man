@@ -25,6 +25,7 @@ public class Ghost : MonoBehaviour
     [SerializeField] private GhostHome home;
     [SerializeField] private GhostEaten eaten;
 
+    private GhostEyes eyes;
     private GhostVisuals visuals;
 
     [Header("Elroy (Blinky only)")]
@@ -50,13 +51,14 @@ public class Ghost : MonoBehaviour
     {
         if (!movement) movement = GetComponent<Movement>();
         if (!pacman) pacman = FindAnyObjectByType<Pacman>();
-        visuals = GetComponent<GhostVisuals>();
+        if (!eyes) eyes = GetComponent<GhostEyes>(); 
+        if (!visuals) visuals = GetComponent<GhostVisuals>();
 
-        if (!scatter)    scatter    = GetComponent<GhostScatter>();
-        if (!chase)      chase      = GetComponent<GhostChase>();
+        if (!scatter) scatter = GetComponent<GhostScatter>();
+        if (!chase) chase = GetComponent<GhostChase>();
         if (!frightened) frightened = GetComponent<GhostFrightened>();
-        if (!home)       home       = GetComponent<GhostHome>();
-        if (!eaten)      eaten      = GetComponent<GhostEaten>();
+        if (!home) home = GetComponent<GhostHome>();
+        if (!eaten) eaten = GetComponent<GhostEaten>();
 
         startingPosition = transform.position;
 
@@ -100,6 +102,22 @@ public class Ghost : MonoBehaviour
         ApplyElroySpeed((stage == 0) ? 1f : speedMult);
     }
 
+    public void ResetEyesFacingForMode(Mode mode)
+    {
+        if (!eyes) eyes = GetComponent<GhostEyes>();
+        if (!eyes) return;
+
+        // Pick a sensible initial facing per mode
+        Vector2 initDir = Vector2.left; // outside ghosts default left
+
+        if (mode == Mode.Home)
+            initDir = (Type == GhostType.Pinky) ? Vector2.down : Vector2.up;  // arcade intro bounce
+        else if (mode == Mode.Eaten)
+            initDir = Vector2.up;  // heading toward the door by default
+
+        eyes.ResetEyes(initDir);
+    }
+
     public void ResetStateTo(Mode mode)
     {
         transform.position = startingPosition;
@@ -112,8 +130,9 @@ public class Ghost : MonoBehaviour
             if (baseNormalSpeed < 0f) baseNormalSpeed = movement.speed;
         }
 
-        homeModeFlipCount = 0;     // NEW: clear flips on reset
+        homeModeFlipCount = 0;
         SetMode(mode);
+        ResetEyesFacingForMode(mode);
     }
 
     private int pacmanLayer = -1;
@@ -150,11 +169,11 @@ public class Ghost : MonoBehaviour
 
     private void EnableOnly(Mode mode)
     {
-        if (scatter)    scatter.enabled    = mode == Mode.Scatter;
-        if (chase)      chase.enabled      = mode == Mode.Chase;
+        if (scatter) scatter.enabled= mode == Mode.Scatter;
+        if (chase) chase.enabled = mode == Mode.Chase;
         if (frightened) frightened.enabled = mode == Mode.Frightened;
-        if (home)       home.enabled       = mode == Mode.Home;
-        if (eaten)      eaten.enabled      = mode == Mode.Eaten;
+        if (home) home.enabled = mode == Mode.Home;
+        if (eaten) eaten.enabled = mode == Mode.Eaten;
     }
 
     private void ApplyElroySpeed(float mult)

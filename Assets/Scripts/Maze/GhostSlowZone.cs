@@ -13,13 +13,34 @@ public class GhostSlowZone : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         var ghost = other.GetComponent<Ghost>();
-        if (ghost && (ghost.CurrentMode != Ghost.Mode.Frightened || ghost.CurrentMode != Ghost.Mode.Eaten) && Affects(ghost.Type))
+        if (!ghost) return;
+
+        if (Affects(ghost.Type) &&
+            ghost.CurrentMode != Ghost.Mode.Frightened &&
+            ghost.CurrentMode != Ghost.Mode.Eaten)
+        {
             ghost.movement?.SetEnvSpeedMultiplier(slowMultiplier);
+        }
+    }
+
+    // If ghost mode change inside the slow zone like on Frightened or eat a ghost inside
+    void OnTriggerStay2D(Collider2D other)
+    {
+        var ghost = other.GetComponent<Ghost>();
+        if (!ghost) return;
+
+        bool shouldAffect =
+            Affects(ghost.Type) &&
+            ghost.CurrentMode != Ghost.Mode.Frightened &&
+            ghost.CurrentMode != Ghost.Mode.Eaten;
+
+        ghost.movement?.SetEnvSpeedMultiplier(shouldAffect ? slowMultiplier : 1f);
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
         var ghost = other.GetComponent<Ghost>();
+        if (!ghost) return;
         if (ghost && Affects(ghost.Type))
             ghost.movement?.SetEnvSpeedMultiplier(1f);
     }

@@ -9,9 +9,9 @@ public class GhostHome : MonoBehaviour
     [SerializeField] private Transform outsideDoor;  // point just OUTSIDE the door
 
     [Header("Timing")]
-    [SerializeField] private float launchDelaySeconds = 4f;   // counts only after movement is enabled
+    [SerializeField] private float launchDelaySeconds;   // counts only after movement is enabled
     [SerializeField] private float alignStepDuration = 0.20f; // per axis (Y then X)
-    [SerializeField] private float doorStepDuration  = 0.40f; // inside→outside
+    [SerializeField] private float doorStepDuration = 0.40f; // inside→outside
 
     [Header("Home speed")]
     [Tooltip("Base speed multiplier while the ghost is in Home (pacing).")]
@@ -31,12 +31,16 @@ public class GhostHome : MonoBehaviour
 
     private int obstacleLayer;
 
+    private Coroutine exitCo;
+    private bool cancelExit;
+    private bool pauseExit;
+
     private void Awake()
     {
         ghost = GetComponent<Ghost>();
-        move  = ghost.movement ?? GetComponent<Movement>();
-        obstacleLayer = LayerMask.NameToLayer("Obstacle");
+        move = ghost.movement ?? GetComponent<Movement>();
         eyes = GetComponent<GhostEyes>();
+        obstacleLayer = LayerMask.NameToLayer("Obstacle");
     }
 
     private void OnEnable()
@@ -69,6 +73,8 @@ public class GhostHome : MonoBehaviour
             move.ClearObstacleMask();           // restore normal pre-checks
             move.SetBaseSpeedMultiplier(1f);    // clear home speed on disable (safety)
         }
+        if (eyes) eyes.ClearOverrideFacing();
+        StopExitNow();
         pacingApplied = false;
     }
 
@@ -84,6 +90,8 @@ public class GhostHome : MonoBehaviour
 
         // Wait for gameplay start
         if (!move.enabled) return;
+
+        if (pauseExit) return;
 
         if (!pacingApplied)
         {
@@ -114,24 +122,21 @@ public class GhostHome : MonoBehaviour
     {
         var rb2d = move ? move.rb : null;
         Vector2 curr = rb2d ? rb2d.position : (Vector2)transform.position;
-        float dist = Vector2.Distance(curr, (Vector2)target);
+        float dist  = Vector2.Distance(curr, (Vector2)target);
         float speed = (duration <= 0f) ? Mathf.Infinity : dist / duration;
         const float eps2 = 0.00004f;
 
         while (true)
         {
+            // if paused, just wait here (no progress)
+            while (pauseExit) yield return null;
+
+            // (optional) support cancel if you already have StopExitNow()
+            if (cancelExit) yield break;
+
             curr = rb2d ? rb2d.position : (Vector2)transform.position;
             Vector2 diff = ((Vector2)target - curr);
             if (diff.sqrMagnitude <= eps2) break;
-
-            // make the eyes “move”: face the dominant axis toward the target
-            if (eyes)
-            {
-                Vector2 dir = (Mathf.Abs(diff.x) >= Mathf.Abs(diff.y))
-                            ? new Vector2(Mathf.Sign(diff.x), 0f)
-                            : new Vector2(0f, Mathf.Sign(diff.y));
-                eyes.LookAt(dir);  // updates the sprite instantly
-            }
 
             Vector3 next = Vector3.MoveTowards(curr, target, speed * Time.deltaTime);
             if (rb2d) rb2d.MovePosition(next); else transform.position = next;
@@ -173,11 +178,13 @@ public class GhostHome : MonoBehaviour
             move.SetBaseSpeedMultiplier(1f);
             move.SetDirection(Vector2.up, true);
             ghost.SetMode(Ghost.Mode.Scatter);
+            if (eyes) eyes.ClearOverrideFacing();
             enabled = false;
             return;
         }
 
-        StartCoroutine(ExitRoutine());
+        cancelExit = false;
+        exitCo = StartCoroutine(ExitRoutine());
     }
 
     private IEnumerator ExitRoutine()
@@ -185,26 +192,21 @@ public class GhostHome : MonoBehaviour
         // pause physics & movement
         if (move.rb)
         {
-    #if UNITY_2023_1_OR_NEWER
             move.rb.linearVelocity = Vector2.zero;
-    #else
-            move.rb.velocity = Vector2.zero;
-    #endif
             move.rb.bodyType = RigidbodyType2D.Kinematic;
         }
         move.enabled = false;
 
-        // 1) Align Y
-        Vector3 now = transform.position;
-        Vector3 yAligned = new Vector3(now.x, insideDoor.position.y, now.z);
-        yield return MoveToExact(yAligned, alignStepDuration);
+        if (cancelExit) yield break;
+        yield return MoveToExact(new Vector3(transform.position.x, insideDoor.position.y, 0f), alignStepDuration);
 
-        // 2) Align X
-        Vector3 xAligned = new Vector3(insideDoor.position.x, insideDoor.position.y, now.z);
-        yield return MoveToExact(xAligned, alignStepDuration);
+        if (cancelExit) yield break;
+        yield return MoveToExact(new Vector3(insideDoor.position.x, insideDoor.position.y, 0f), alignStepDuration);
 
-        // 3) Inside -> Outside
+        if (cancelExit) yield break;
         yield return MoveToExact(outsideDoor.position, doorStepDuration);
+
+        if (cancelExit) yield break;
 
         // outside: resume normal play
         ghost.SetMode(Ghost.Mode.Scatter);
@@ -216,20 +218,31 @@ public class GhostHome : MonoBehaviour
         if (move.Occupied(dir)) dir = -dir;
         move.SetDirection(dir, true);
 
+        if (eyes) eyes.ClearOverrideFacing();
         enabled = false;
     }
 
-    private IEnumerator LerpTo(Vector3 target, float duration)
+    public void StopExitNow()
     {
-        Vector3 start = transform.position;
-        float t = 0f;
-        float dur = Mathf.Max(0.0001f, duration);
-        while (t < dur)
+        cancelExit = true;
+
+        if (exitCo != null) { StopCoroutine(exitCo); exitCo = null; }
+
+        exiting = false;
+        queuedExit = false;
+
+        // restore Home bounce only if we're actually in Home
+        if (ghost && ghost.CurrentMode == Ghost.Mode.Home && move)
         {
-            transform.position = Vector3.Lerp(start, target, t / dur);
-            t += Time.deltaTime;
-            yield return null;
+            if (move.rb) move.rb.bodyType = RigidbodyType2D.Dynamic;
+            move.enabled = true;
+            var initial = (ghost.Type == GhostType.Pinky) ? Vector2.down : Vector2.up;
+            move.SetDirection(initial, true);
         }
-        transform.position = target;
+
+        var eyes = GetComponent<GhostEyes>();
+        if (eyes) eyes.ClearOverrideFacing();
     }
+    
+    public void SetExitPaused(bool v) => pauseExit = v;
 }

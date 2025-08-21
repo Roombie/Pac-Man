@@ -15,20 +15,22 @@ public class GhostScatter : MonoBehaviour
     [Tooltip("If true, Blinky (Elroy) will chase Pac-Man even during Scatter.")]
     [SerializeField] private bool elroyChasesDuringScatter = true;
 
-    private Ghost g;
+    private Ghost ghost;
     private Movement move;
 
     private Node[] allNodes;
     private Node lastDecisionNode;
+    private CircleCollider2D circleCollider2D;
 
     // Arcade tie-break order: Up, Left, Down, Right
     private static readonly Vector2[] TIE = { Vector2.up, Vector2.left, Vector2.down, Vector2.right };
 
     void Awake()
     {
-        g    = GetComponent<Ghost>();
-        move = g.movement ?? GetComponent<Movement>();
+        ghost = GetComponent<Ghost>();
+        move = ghost.movement ?? GetComponent<Movement>();
 
+        circleCollider2D = GetComponent<CircleCollider2D>();
 #if UNITY_2023_1_OR_NEWER
         allNodes = Object.FindObjectsByType<Node>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 #else
@@ -41,17 +43,18 @@ public class GhostScatter : MonoBehaviour
         lastDecisionNode = null;
 
         // If we spawn into Scatter, choose an initial heading IMMEDIATELY (even if movement is disabled).
-        if (g && g.CurrentMode == Ghost.Mode.Scatter)
+        if (ghost && ghost.CurrentMode == Ghost.Mode.Scatter)
         {
             var n = ClosestNodeWithin(commitRadius);
-            if (n) DecideAtNode(n, forceTurn:true);  // <<< force the first pick so there's no stall
+            if (n) DecideAtNode(n, forceTurn: true);  // <<< force the first pick so there's no stall
         }
+        circleCollider2D.enabled = true;
     }
 
     void Update()
     {
-        if (!g || !move) return;
-        if (g.CurrentMode != Ghost.Mode.Scatter) return;
+        if (!ghost || !move) return;
+        if (ghost.CurrentMode != Ghost.Mode.Scatter) return;
 
         // Only decide at nodes
         var n = ClosestNodeWithin(commitRadius);
@@ -69,8 +72,8 @@ public class GhostScatter : MonoBehaviour
 
         // Corner target; Blinky (Elroy) can chase Pac-Man if desired
         Vector3 targetPos =
-            (elroyChasesDuringScatter && g.Type == GhostType.Blinky && g.IsElroy && g.pacman)
-            ? g.pacman.transform.position
+            (elroyChasesDuringScatter && ghost.Type == GhostType.Blinky && ghost.IsElroy && ghost.pacman)
+            ? ghost.pacman.transform.position
             : (cornerNode ? cornerNode.transform.position : transform.position);
 
         Vector2 current = move.direction;

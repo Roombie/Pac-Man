@@ -88,7 +88,7 @@ public class GlobalGhostModeController : MonoBehaviour
 
             var hx = matrix.GetHouseExitForLevel(currentLevel);
             exitPinky = hx.pinky;
-            exitInky  = hx.inky;
+            exitInky = hx.inky;
             exitClyde = hx.clyde;
             exitNoDotSeconds = hx.noDotSeconds;
 
@@ -101,7 +101,7 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             ResetSchedule(phases);
             exitPinky = 0;
-            exitInky  = (currentLevel <= 1) ? 30 : 0;
+            exitInky = (currentLevel <= 1) ? 30 : 0;
             exitClyde = (currentLevel == 1) ? 60 : (currentLevel == 2 ? 50 : 0);
             exitNoDotSeconds = (currentLevel <= 4) ? 4f : 3f;
         }
@@ -119,7 +119,7 @@ public class GlobalGhostModeController : MonoBehaviour
 
         float m =
             (mode == Ghost.Mode.Frightened) ? frightenedMult :
-            (mode == Ghost.Mode.Eaten)      ? eatenMult      :
+            (mode == Ghost.Mode.Eaten) ? eatenMult :
                                               scatterChaseMult;
 
         g.movement.SetBaseSpeedMultiplier(m);
@@ -158,7 +158,7 @@ public class GlobalGhostModeController : MonoBehaviour
         });
 
         if (frozen) PauseAllGhostAnimations();
-        else        ResumeAllGhostAnimations();
+        else ResumeAllGhostAnimations();
     }
 
     public void TriggerFrightened(float? duration = null)
@@ -184,7 +184,7 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             if (!g) return;
             if (g.CurrentMode == Ghost.Mode.Eaten) return; // eyes unaffected
-            if (g.CurrentMode == Ghost.Mode.Home)  return; // Home ghosts will adopt on exit
+            if (g.CurrentMode == Ghost.Mode.Home) return; // Home ghosts will adopt on exit
 
             // Force/refresh mode & speed
             g.SetMode(Ghost.Mode.Frightened);
@@ -266,34 +266,41 @@ public class GlobalGhostModeController : MonoBehaviour
             if (!g.gameObject.activeSelf)
                 g.gameObject.SetActive(true);
 
+            // Enable movement component
             if (g.movement)
             {
                 g.movement.enabled = true;
-
-                if (g.movement.direction == Vector2.zero && g.movement.nextDirection != Vector2.zero)
-                    g.movement.SetDirection(g.movement.nextDirection);
             }
 
-            ResumeAllGhostAnimations();
+            // Enable colliders BEFORE we do any Occupied(...) checks
+            var cols = g.GetComponents<CircleCollider2D>();
+            for (int i = 0; i < cols.Length; i++) cols[i].enabled = true;
 
+            // If we paused with direction==0 and left a nextDirection, consume it immediately
+            if (g.movement && g.movement.direction == Vector2.zero && g.movement.nextDirection != Vector2.zero)
+            {
+                g.movement.SetDirection(g.movement.nextDirection);
+            }
+
+            // Apply current global phase to non-Home, non-Eyes ghosts
+            ResumeAllGhostAnimations();
             if (!isFrightenedActive && g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten)
             {
                 g.SetMode(currentPhaseMode);
                 ApplyModeSpeed(g, currentPhaseMode);
             }
 
+            // If still no heading, pick one now
             if (g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten && g.movement)
             {
                 if (g.movement.direction == Vector2.zero)
                 {
-                    var startDir = (g.Type == GhostType.Blinky) ? Vector2.left : Vector2.left; // tweak per ghost if you want
+                    // Prefer LEFT, but if blocked, go RIGHT. This avoids a brief stall at game start.
+                    var startDir = Vector2.left;
                     if (g.movement.Occupied(startDir)) startDir = -startDir;
                     g.movement.SetDirection(startDir, forced: true);
                 }
             }
-
-            var cols = g.GetComponents<CircleCollider2D>();
-                for (int i = 0; i < cols.Length; i++) cols[i].enabled = true;
         });
     }
 

@@ -11,11 +11,15 @@ public class GhostEyes : MonoBehaviour
     [Header("Elroy eyes")]
     public Sprite rightEyesElroy, leftEyesElroy, upEyesElroy, downEyesElroy;
 
-    Ghost ghost;
-    Movement mover;
-    Vector2 lastDir = Vector2.right;
-    Facing lastFacing = Facing.Right;
-    bool lastUsingElroy = false;
+    private Ghost    ghost;
+    private Movement mover;
+
+    private Vector2 lastDir = Vector2.right;
+    private Facing  lastFacing = Facing.Right;
+    private bool    lastUsingElroy = false;
+
+    private bool overrideActive;
+    private Vector2 overrideDir = Vector2.right;
 
     void Awake()
     {
@@ -26,12 +30,16 @@ public class GhostEyes : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!mover || !eyesRenderer || !eyesRenderer.enabled) return;
+        if (!eyesRenderer || !eyesRenderer.enabled) return;
 
-        Vector2 dir = mover.direction;
+        // Use override if active; otherwise follow Movement
+        Vector2 dir = overrideActive
+                        ? overrideDir
+                        : (mover ? mover.direction : Vector2.zero);
+
         if (dir == Vector2.zero) dir = lastDir;
 
-        var facing = MajorFacing(dir);
+        var facing   = MajorFacing(dir);
         bool useElroy = ShouldUseElroySprites();
 
         if (facing != lastFacing || useElroy != lastUsingElroy)
@@ -44,7 +52,26 @@ public class GhostEyes : MonoBehaviour
         lastDir = dir;
     }
 
-    // --- public helpers for reset/teleport/etc. ---
+    /// <summary>Force the eye facing (e.g., during GhostHome ExitRoutine).</summary>
+    public void SetOverrideFacing(Vector2 dir)
+    {
+        overrideActive = true;
+        overrideDir = Snap4(dir);
+        // apply immediately
+        var f = MajorFacing(overrideDir);
+        eyesRenderer.sprite = SelectSprite(f, ShouldUseElroySprites());
+        lastFacing = f;
+        lastDir = overrideDir;
+        lastUsingElroy = ShouldUseElroySprites();
+    }
+
+    /// <summary>Return control back to Movement-driven facing.</summary>
+    public void ClearOverrideFacing()
+    {
+        overrideActive = false;
+    }
+
+    /// <summary>Directly set facing once (no persistent override).</summary>
     public void LookAt(Vector2 dir)
     {
         if (!eyesRenderer) return;
@@ -57,16 +84,11 @@ public class GhostEyes : MonoBehaviour
         lastUsingElroy = ShouldUseElroySprites();
     }
 
-    public void ResetEyes(Vector2 initialDir)
-    {
-        // call from Ghost.ResetState()
-        LookAt(initialDir);
-    }
+    public void ResetEyes(Vector2 initialDir) => LookAt(initialDir);
 
-    // --- internals ---
     enum Facing { Right, Left, Up, Down }
 
-    Facing MajorFacing(Vector2 d)
+    private Facing MajorFacing(Vector2 d)
     {
         if (Mathf.Abs(d.x) >= Mathf.Abs(d.y))
             return d.x >= 0f ? Facing.Right : Facing.Left;
@@ -74,14 +96,21 @@ public class GhostEyes : MonoBehaviour
             return d.y >= 0f ? Facing.Up : Facing.Down;
     }
 
-    bool ShouldUseElroySprites()
+    private Vector2 Snap4(Vector2 d)
     {
-        // Elroy visuals only make sense when the body is visible.
-        if (ghost.CurrentMode == Ghost.Mode.Eaten) return false;
-        return ghost.IsElroy;
+        if (Mathf.Abs(d.x) >= Mathf.Abs(d.y))
+            return new Vector2(Mathf.Sign(d.x), 0f);
+        return new Vector2(0f, Mathf.Sign(d.y));
     }
 
-    Sprite SelectSprite(Facing f, bool elroy)
+    private bool ShouldUseElroySprites()
+    {
+        // Eyes use normal sprites while Eaten; Elroy variant only when body is visible.
+        if (ghost && ghost.CurrentMode == Ghost.Mode.Eaten) return false;
+        return ghost && ghost.IsElroy;
+    }
+
+    private Sprite SelectSprite(Facing f, bool elroy)
     {
         if (elroy)
         {
