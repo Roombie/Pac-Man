@@ -43,12 +43,12 @@ public class MazeFlashController : MonoBehaviour
             mazeBlue.SetActive(false);
             mazeWhite.SetActive(true);
 
-            yield return new WaitForSeconds(mazeFlashInterval);
+            yield return new WaitForSecondsRealtime(mazeFlashInterval);
 
             mazeBlue.SetActive(true);
             mazeWhite.SetActive(false);
 
-            yield return new WaitForSeconds(mazeFlashInterval);
+            yield return new WaitForSecondsRealtime(mazeFlashInterval);
         }
 
         // Ensure the maze ends up in the "Blue" state

@@ -1,155 +1,113 @@
-#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
-using System.Linq;
-using System.Collections.Generic;
 
 [CustomEditor(typeof(GhostModeScheduleMatrix))]
 public class GhostModeScheduleMatrixEditor : Editor
 {
-    const float W_LABEL = 120, W_LEVEL = 48, W_CELL = 40, W_FRGT = 45;
-    static bool showLegend;
+    // Column widths
+    const float W_LVL = 52f, W_FR = 54f, W_PC = 34f, W_ND = 58f;
 
-    // Column headers with tooltips
-    static readonly GUIContent H_LEVELS   = new GUIContent("Levels",
-        "Auto label derived from Level: [Level … next-1]. The last row is Level+.");
-    static readonly GUIContent H_LEVELCOL = new GUIContent("Level",
-        "First level this row applies to (inclusive). Next row’s Level − 1 is the end of this band.");
+    // Labels + tooltips
+    static readonly GUIContent LC_TITLE  = new GUIContent("Ghost Mode Schedule Matrix");
+    static readonly GUIContent LC_HELP   = new GUIContent("Show Help");
+    static readonly GUIContent LC_FROM   = new GUIContent("From",  "Level this row starts at (inclusive). The row with the greatest 'From' ≤ current level is used.");
+    static readonly GUIContent LC_PHASES = new GUIContent("Phases","Ordered list of phases for this level band.\nExample: Scatter(7), Chase(20), Scatter(7), Chase(20), Scatter(5), Chase(0)\nTip: Use duration 0 for a final infinite CHASE.");
+    static readonly GUIContent LC_FRGT   = new GUIContent("Frgt",  "Frightened duration (seconds) for this band.");
+    static readonly GUIContent LC_P      = new GUIContent("P",     "Pinky personal dot limit. 0 = leaves immediately.");
+    static readonly GUIContent LC_I      = new GUIContent("I",     "Inky personal dot limit. (Arcade: 30 on L1, 0 on L2+)");
+    static readonly GUIContent LC_C      = new GUIContent("C",     "Clyde personal dot limit. (Arcade: 60 on L1, 50 on L2, 0 on L3+)");
+    static readonly GUIContent LC_NODOT  = new GUIContent("NoDot", "If Pac-Man eats NO dots for this many seconds, the preferred in-pen ghost is forced to leave.\nArcade: 4s on L1–4, 3s on L5+.");
 
-    static readonly GUIContent H_S1   = new GUIContent("S1", "Scatter phase 1 (seconds). ≤ 0 = skip.");
-    static readonly GUIContent H_C1   = new GUIContent("C1", "Chase phase 1 (seconds). ≤ 0 = infinite (final Chase).");
-    static readonly GUIContent H_S2   = new GUIContent("S2", "Scatter phase 2 (seconds). ≤ 0 = skip.");
-    static readonly GUIContent H_C2   = new GUIContent("C2", "Chase phase 2 (seconds). ≤ 0 = infinite (final Chase).");
-    static readonly GUIContent H_S3   = new GUIContent("S3", "Scatter phase 3 (seconds). ≤ 0 = skip.");
-    static readonly GUIContent H_C3   = new GUIContent("C3", "Chase phase 3 (seconds). ≤ 0 = infinite (final Chase).");
-    static readonly GUIContent H_S4   = new GUIContent("S4", "Scatter phase 4 (seconds). ≤ 0 = skip.");
-    static readonly GUIContent H_C4   = new GUIContent("C4", "Chase phase 4 (seconds). ≤ 0 = infinite (final Chase).");
-    static readonly GUIContent H_FRGT = new GUIContent("Frgt",
-        "Frightened duration (seconds) when a power pellet is eaten. The Scatter/Chase schedule keeps running underneath.");
+    bool showHelp;
 
     public override void OnInspectorGUI()
     {
-        var so = (GhostModeScheduleMatrix)target;
-        if (so.rows == null) so.rows = new List<GhostModeScheduleMatrix.Row>();
+        serializedObject.Update();
 
-        // Legend
-        EditorGUILayout.HelpBox(
-            "• Levels: Auto label from the Level value (e.g., “Level 1”, “Levels 2–4”, “Level 5+”).\n" +
-            "• Level: First level (inclusive) this row applies to. Next row’s Level − 1 is the last level in the band.\n" +
-            "• S# (Scatter): Duration of each Scatter phase (seconds). ≤ 0 means the phase is skipped.\n" +
-            "• C# (Chase): Duration of each Chase phase (seconds). ≤ 0 means the Chase is infinite (final phase).\n" +
-            "• Frgt: Frightened (blue) time (seconds). Schedule continues underneath; no reversal when Frightened ends.",
-            MessageType.Info);
+        var rowsProp = serializedObject.FindProperty("rows");
+        if (rowsProp == null) { DrawDefaultInspector(); return; }
 
-        // Utilities
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            if (GUILayout.Button("Sort by Level", GUILayout.Height(22)))
-            {
-                so.rows.Sort((a, b) => a.fromLevel.CompareTo(b.fromLevel));
-                GUI.changed = true;
-            }
-            if (GUILayout.Button("Make Level Unique", GUILayout.Height(22)))
-            {
-                MakeUnique(so.rows);
-                GUI.changed = true;
-            }
-            if (GUILayout.Button("Renumber 1..", GUILayout.Height(22)))
-            {
-                RenumberSequential(so.rows, 1);
-                GUI.changed = true;
-            }
-        }
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField(LC_TITLE, EditorStyles.boldLabel);
 
-        // Warn about duplicates
-        var dupes = so.rows.GroupBy(r => r.fromLevel).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
-        if (dupes.Count > 0)
+        // Help panel toggle
+        showHelp = EditorGUILayout.Foldout(showHelp, LC_HELP, true);
+        if (showHelp)
         {
             EditorGUILayout.HelpBox(
-                $"Duplicate Level values: {string.Join(", ", dupes)}. Labels may be ambiguous.",
-                MessageType.Warning);
+                "HOW IT WORKS\n" +
+                "• Rows define per-level-band behavior. The game selects the row with the greatest 'From' ≤ current level.\n" +
+                "• Phases run IN ORDER. Use multiple Scatter/Chase entries (e.g., Scatter1, Chase1, Scatter2...). " +
+                "Set the LAST Chase duration to 0 for an infinite chase to level end.\n" +
+                "• Frgt is frightened (blue) duration in seconds for this band.\n" +
+                "• House Exit: personal dot limits + NoDot timer control leaving the pen:\n" +
+                "    – Only one personal counter is active at a time (preference: Pinky → Inky → Clyde).\n" +
+                "    – When that counter reaches its limit, that ghost leaves; then the next one becomes preferred.\n" +
+                "    – If Pac-Man stalls (eats no dots) for NoDot seconds, the preferred in-pen ghost is forced to leave.\n" +
+                "Tip: Typical arcade values → L1: P=0, I=30, C=60, NoDot=4 • L2: P=0, I=0, C=50, NoDot=4 • L3–4: P=0, I=0, C=0, NoDot=4 • L5+: P=0, I=0, C=0, NoDot=3.",
+                MessageType.Info
+            );
         }
 
-        // Always render sorted
-        so.rows.Sort((a, b) => a.fromLevel.CompareTo(b.fromLevel));
+        EditorGUILayout.Space(4);
 
-        // Header
-        using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+        // Header row
+        using (new EditorGUILayout.HorizontalScope())
         {
-            GUILayout.Label(H_LEVELS,   GUILayout.Width(W_LABEL));
-            GUILayout.Label(H_LEVELCOL, GUILayout.Width(W_LEVEL));
-            GUILayout.Label(H_S1,       GUILayout.Width(W_CELL));
-            GUILayout.Label(H_C1,       GUILayout.Width(W_CELL));
-            GUILayout.Label(H_S2,       GUILayout.Width(W_CELL));
-            GUILayout.Label(H_C2,       GUILayout.Width(W_CELL));
-            GUILayout.Label(H_S3,       GUILayout.Width(W_CELL));
-            GUILayout.Label(H_C3,       GUILayout.Width(W_CELL));
-            GUILayout.Label(H_S4,       GUILayout.Width(W_CELL));
-            GUILayout.Label(H_C4,       GUILayout.Width(W_CELL));
-            GUILayout.Label(H_FRGT,     GUILayout.Width(W_FRGT));
+            GUILayout.Label(LC_FROM,   GUILayout.Width(W_LVL));
+            GUILayout.Label(LC_PHASES, GUILayout.ExpandWidth(true));
+            GUILayout.Label(LC_FRGT,   GUILayout.Width(W_FR));
+            GUILayout.Label(LC_P,      GUILayout.Width(W_PC));
+            GUILayout.Label(LC_I,      GUILayout.Width(W_PC));
+            GUILayout.Label(LC_C,      GUILayout.Width(W_PC));
+            GUILayout.Label(LC_NODOT,  GUILayout.Width(W_ND));
         }
 
-        // Rows
-        for (int i = 0; i < so.rows.Count; i++)
+        EditorGUILayout.Space(2);
+
+        // Each data row
+        for (int i = 0; i < rowsProp.arraySize; i++)
         {
-            var r = so.rows[i];
+            var row = rowsProp.GetArrayElementAtIndex(i);
+            var fromLevel   = row.FindPropertyRelative("fromLevel");
+            var phases      = row.FindPropertyRelative("phases");
+            var frightened  = row.FindPropertyRelative("frightened");
+            var pinkyDot    = row.FindPropertyRelative("pinkyDotLimit");
+            var inkyDot     = row.FindPropertyRelative("inkyDotLimit");
+            var clydeDot    = row.FindPropertyRelative("clydeDotLimit");
+            var noDotRel    = row.FindPropertyRelative("noDotRelease");
+
             using (new EditorGUILayout.HorizontalScope())
             {
-                GUILayout.Label(AutoLabelFor(so, i), GUILayout.Width(W_LABEL));
-                r.fromLevel  = EditorGUILayout.IntField(r.fromLevel, GUILayout.Width(W_LEVEL));
-                r.s1         = EditorGUILayout.FloatField(r.s1,   GUILayout.Width(W_CELL));
-                r.c1         = EditorGUILayout.FloatField(r.c1,   GUILayout.Width(W_CELL));
-                r.s2         = EditorGUILayout.FloatField(r.s2,   GUILayout.Width(W_CELL));
-                r.c2         = EditorGUILayout.FloatField(r.c2,   GUILayout.Width(W_CELL));
-                r.s3         = EditorGUILayout.FloatField(r.s3,   GUILayout.Width(W_CELL));
-                r.c3         = EditorGUILayout.FloatField(r.c3,   GUILayout.Width(W_CELL));
-                r.s4         = EditorGUILayout.FloatField(r.s4,   GUILayout.Width(W_CELL));
-                r.c4         = EditorGUILayout.FloatField(r.c4,   GUILayout.Width(W_CELL));
-                r.frightened = EditorGUILayout.FloatField(r.frightened, GUILayout.Width(W_FRGT));
+                fromLevel.intValue = EditorGUILayout.IntField(fromLevel.intValue, GUILayout.Width(W_LVL));
 
-                if (GUILayout.Button("−", GUILayout.Width(24)))
-                {
-                    so.rows.RemoveAt(i);
-                    GUI.changed = true;
-                    break;
-                }
+                // Phases as a labeled array (tooltip on label)
+                EditorGUILayout.PropertyField(phases, LC_PHASES, true, GUILayout.ExpandWidth(true));
+
+                frightened.floatValue = EditorGUILayout.FloatField(frightened.floatValue, GUILayout.Width(W_FR));
+                pinkyDot.intValue     = EditorGUILayout.IntField(pinkyDot.intValue,       GUILayout.Width(W_PC));
+                inkyDot.intValue      = EditorGUILayout.IntField(inkyDot.intValue,        GUILayout.Width(W_PC));
+                clydeDot.intValue     = EditorGUILayout.IntField(clydeDot.intValue,       GUILayout.Width(W_PC));
+                noDotRel.floatValue   = EditorGUILayout.FloatField(noDotRel.floatValue,   GUILayout.Width(W_ND));
+            }
+
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField(GUIContent.none, GUI.skin.horizontalSlider);
+        }
+
+        // Add/Remove controls
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button(new GUIContent("Add Row", "Add a new band (levels ≥ 'From').")))
+                rowsProp.InsertArrayElementAtIndex(rowsProp.arraySize);
+
+            using (new EditorGUI.DisabledScope(rowsProp.arraySize == 0))
+            {
+                if (GUILayout.Button(new GUIContent("Remove Last", "Remove the last row.")))
+                    rowsProp.DeleteArrayElementAtIndex(rowsProp.arraySize - 1);
             }
         }
 
-        if (GUILayout.Button("+ Add Row", GUILayout.Height(22)))
-        {
-            so.rows.Add(new GhostModeScheduleMatrix.Row { fromLevel = NextLevel(so.rows) });
-            GUI.changed = true;
-        }
-
-        if (GUI.changed) EditorUtility.SetDirty(so);
-    }
-
-    private static int NextLevel(List<GhostModeScheduleMatrix.Row> rows) =>
-        rows.Count == 0 ? 1 : Mathf.Max(1, rows.Max(r => r.fromLevel) + 1);
-
-    private static string AutoLabelFor(GhostModeScheduleMatrix m, int i)
-    {
-        int start = Mathf.Max(1, m.rows[i].fromLevel);
-        int end   = (i + 1 < m.rows.Count) ? Mathf.Max(start, m.rows[i + 1].fromLevel - 1) : int.MaxValue;
-        return end == int.MaxValue ? $"Level {start}+" :
-               (start == end ? $"Level {start}" : $"Levels {start}–{end}");
-    }
-
-    private static void MakeUnique(List<GhostModeScheduleMatrix.Row> rows)
-    {
-        rows.Sort((a, b) => a.fromLevel.CompareTo(b.fromLevel));
-        for (int i = 1; i < rows.Count; i++)
-            if (rows[i].fromLevel <= rows[i - 1].fromLevel)
-                rows[i].fromLevel = rows[i - 1].fromLevel + 1;
-    }
-
-    private static void RenumberSequential(List<GhostModeScheduleMatrix.Row> rows, int startAt)
-    {
-        rows.Sort((a, b) => a.fromLevel.CompareTo(b.fromLevel));
-        int cur = Mathf.Max(1, startAt);
-        for (int i = 0; i < rows.Count; i++)
-            rows[i].fromLevel = cur++;
+        serializedObject.ApplyModifiedProperties();
     }
 }
-#endif

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class Ghost : MonoBehaviour
 {
@@ -14,18 +15,26 @@ public class Ghost : MonoBehaviour
     // Only used by Inky
     public Ghost blinky;
 
-    public enum Mode { Home, Scatter, Chase, Frightened, Eaten }
-    [SerializeField] private Mode currentMode = Mode.Home;
-    public Mode CurrentMode => currentMode;
+    public enum Mode { Scatter, Chase, Frightened, Home, Eaten }
+    public Mode CurrentMode { get; private set; } = Mode.Scatter;
+
+    [Header("Per-mode behaviours (assign in Inspector)")]
+    [SerializeField] private GhostScatter scatter;
+    [SerializeField] private GhostChase chase;
+    [SerializeField] private GhostFrightened frightened;
+    [SerializeField] private GhostHome home;
+    [SerializeField] private GhostEaten eaten;
+
+    private GhostVisuals visuals;
 
     [Header("Elroy (Blinky only)")]
-    [SerializeField] private float elroy1Multiplier = 1.08f;
-    [SerializeField] private float elroy2Multiplier = 1.16f;
-    [SerializeField, Tooltip("0=Off, 1=Elroy1, 2=Elroy2")]
-    private int elroyStage = 0; // serialized for debugging in Inspector
+    [SerializeField, Range(0, 2)] private int elroyStage = 0;
+    public int ElroyStage => (Type == GhostType.Blinky) ? elroyStage : 0;
+    public bool IsElroy => Type == GhostType.Blinky && elroyStage > 0;
 
-    public bool IsElroyActive => (ghostType == GhostType.Blinky) && elroyStage > 0;
-    public int ElroyStage => elroyStage;
+    private float baseNormalSpeed = -1f;
+    private float pendingElroySpeedMult = 1f;
+    private int homeModeFlipCount = 0;
 
 #if UNITY_EDITOR
     void OnValidate()
@@ -34,88 +43,141 @@ public class Ghost : MonoBehaviour
         if (!movement) movement = GetComponent<Movement>();
         if (!pacman) pacman = FindAnyObjectByType<Pacman>();
         elroyStage = Mathf.Clamp(elroyStage, 0, 2);
-        RecomputeSpeed(); // keep Inspector edits consistent
     }
 #endif
 
-    void Awake()
+    private void Awake()
     {
         if (!movement) movement = GetComponent<Movement>();
         if (!pacman) pacman = FindAnyObjectByType<Pacman>();
+        visuals = GetComponent<GhostVisuals>();
+
+        if (!scatter)    scatter    = GetComponent<GhostScatter>();
+        if (!chase)      chase      = GetComponent<GhostChase>();
+        if (!frightened) frightened = GetComponent<GhostFrightened>();
+        if (!home)       home       = GetComponent<GhostHome>();
+        if (!eaten)      eaten      = GetComponent<GhostEaten>();
+
         startingPosition = transform.position;
-        RecomputeSpeed();
+
+        if (movement) baseNormalSpeed = movement.speed;
+
+        EnableOnly(CurrentMode);
     }
 
-    public void SetMode(Mode mode)
+    private void OnEnable() => EnableOnly(CurrentMode);
+
+    public void SetMode(Mode newMode)
     {
-        currentMode = mode;
-        RecomputeSpeed(); // handles speed adjustments
+        if (CurrentMode == newMode) return;
 
-        bool enableCols = mode != Mode.Eaten; // enable colliders only if the mode isn't eaten
-        foreach (var c in GetComponents<CircleCollider2D>())
-            c.enabled = enableCols;
-    }
+        CurrentMode = newMode;
+        EnableOnly(newMode);
 
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.layer != LayerMask.NameToLayer("Pacman")) return;
-
-        // Only react during active play
-        var gm = GameManager.Instance;
-        if (!gm || gm.CurrentGameState != GameManager.GameState.Playing) return;
-
-        // If we're frightened, Pac-Man should eat US (set Eaten; scoring handled elsewhere)
-        if (currentMode == Mode.Frightened)
+        // refresh base speed on Scatter/Chase re-entry
+        if (movement && (newMode == Mode.Scatter || newMode == Mode.Chase))
         {
-            SetMode(Mode.Eaten);
+            if (elroyStage == 0) baseNormalSpeed = movement.speed;
+            else if (pendingElroySpeedMult > 0f) ApplyElroySpeed(pendingElroySpeedMult);
+        }
+    }
+
+    /// <summary>Elroy 0/1/2; speedMult is relative to level's normal speed.</summary>
+    public void SetElroyStage(int stage, float speedMult)
+    {
+        if (Type != GhostType.Blinky || movement == null) return;
+
+        stage = Mathf.Clamp(stage, 0, 2);
+        elroyStage = stage;
+
+        // defer application in these modes
+        if (CurrentMode == Mode.Frightened || CurrentMode == Mode.Eaten || CurrentMode == Mode.Home)
+        {
+            pendingElroySpeedMult = (stage == 0) ? 1f : speedMult;
             return;
         }
 
-        // If we're already eyes/home, ignore
-        if (currentMode == Mode.Eaten || currentMode == Mode.Home) return;
-
-        // Otherwise we are dangerous: Pac-Man starts it's losing animation and then lose a life
-        gm.pacman.Death();
+        ApplyElroySpeed((stage == 0) ? 1f : speedMult);
     }
 
-    public void SetElroyStage(int stage)
-    {
-        int clamped = Mathf.Clamp(stage, 0, 2);
-        if (clamped == elroyStage) return;
-        elroyStage = clamped;
-        RecomputeSpeed();
-    }
-
-    private void RecomputeSpeed()
-    {
-        if (!movement) return;
-
-        float baseMul = (currentMode == Mode.Frightened) ? 0.5f : 1f;
-
-        float elroyMul = 1f;
-        if (ghostType == GhostType.Blinky)
-            elroyMul = (elroyStage == 2) ? elroy2Multiplier :
-                    (elroyStage == 1) ? elroy1Multiplier : 1f;
-
-        movement.SetBaseSpeedMultiplier(baseMul * elroyMul);
-    }
-
-    /// <summary>
-    /// Reset this ghost to its spawn and freeze movement, then set the given mode.
-    /// </summary>
     public void ResetStateTo(Mode mode)
     {
-        // Position back to spawn
         transform.position = startingPosition;
 
-        // Freeze movement
         if (movement)
         {
             movement.enabled = false;
-            movement.SetDirection(Vector2.zero);
+            movement.SetDirection(Vector2.zero, true);
+
+            if (baseNormalSpeed < 0f) baseNormalSpeed = movement.speed;
         }
 
-        // Set visible/logic mode
+        homeModeFlipCount = 0;     // NEW: clear flips on reset
         SetMode(mode);
+    }
+
+    private int pacmanLayer = -1;
+    private bool IsPacmanObject(GameObject go)
+    {
+        if (!go) return false;
+        if (pacmanLayer == -1) pacmanLayer = LayerMask.NameToLayer("Pacman");
+        return go.layer == pacmanLayer || go.GetComponent<Pacman>() != null || go.CompareTag("Player");
+    }
+
+    private void HandlePacmanContact()
+    {
+        if (CurrentMode == Mode.Eaten) return;
+
+        if (CurrentMode == Mode.Frightened)
+        {
+            if (GameManager.Instance != null) GameManager.Instance.GhostEaten(this);
+        }
+        else
+        {
+            if (GameManager.Instance != null) GameManager.Instance.pacman.Death();
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (IsPacmanObject(other.gameObject)) HandlePacmanContact();
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (IsPacmanObject(collision.gameObject)) HandlePacmanContact();
+    }
+
+    private void EnableOnly(Mode mode)
+    {
+        if (scatter)    scatter.enabled    = mode == Mode.Scatter;
+        if (chase)      chase.enabled      = mode == Mode.Chase;
+        if (frightened) frightened.enabled = mode == Mode.Frightened;
+        if (home)       home.enabled       = mode == Mode.Home;
+        if (eaten)      eaten.enabled      = mode == Mode.Eaten;
+    }
+
+    private void ApplyElroySpeed(float mult)
+    {
+        if (movement == null) return;
+
+        if (baseNormalSpeed < 0.0001f) baseNormalSpeed = movement.speed;
+
+        movement.speed = baseNormalSpeed * Mathf.Max(0.01f, mult);
+        pendingElroySpeedMult = mult;
+    }
+
+    /// <summary>Called by the controller when a Scatter↔Chase flip occurs.</summary>
+    public void NotifyModeFlipWhileHome()
+    {
+        if (CurrentMode == Mode.Home) homeModeFlipCount++;
+    }
+
+    /// <summary>Returns true if any flip occurred while in Home, then clears the counter.</summary>
+    public bool ConsumeExitShouldGoRight()
+    {
+        bool right = homeModeFlipCount > 0;
+        homeModeFlipCount = 0;
+        return right;
     }
 }

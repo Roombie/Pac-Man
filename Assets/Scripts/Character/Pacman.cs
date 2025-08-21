@@ -35,7 +35,6 @@ public class Pacman : MonoBehaviour
         Vector2 inputDirection = playerInput.actions["Move"].ReadValue<Vector2>();
 
         // Filter out diagonal input: prioritize horizontal or vertical based on which is greater
-        // I'll save this line for future projects because it took me a while to find it and I know it'll forget in the future lol
         if (inputDirection != Vector2.zero)
         {
             // Prioritize horizontal or vertical input
@@ -50,13 +49,13 @@ public class Pacman : MonoBehaviour
                 lastInputDirection = inputDirection;
             }
 
-            movement.SetDirection(inputDirection);
+            TrySetDirection(inputDirection);   // ⬅️ use the safe “force reverse” helper
 
             UpdateIndicator(inputDirection);
         }
         else if (Time.time <= inputBufferTime)
         {
-            movement.SetDirection(lastInputDirection);
+            TrySetDirection(lastInputDirection); // ⬅️ apply buffered input with same logic
         }
 
         // If there's input, rotate depending on the input
@@ -75,8 +74,20 @@ public class Pacman : MonoBehaviour
             spriteRenderer.flipY = false;
         }
 
-        // If the player collides with an obstacle, their animator speed changes to zero
-        // animator.speed = movement.isBlocked ? 0f : 1f; // is it blocked? animations stops | is it not block? animation keeps playing 
+        // animator.speed = movement.isBlocked ? 0f : 1f;
+    }
+
+    /// <summary>
+    /// For Pac-Man only: allow instant reverse if that tile isn’t blocked.
+    /// Otherwise, fall back to normal SetDirection (queues until intersection).
+    /// </summary>
+    private void TrySetDirection(Vector2 dir)
+    {
+        bool wantsReverse = (dir == -movement.direction);
+        if (wantsReverse && !movement.Occupied(dir))
+            movement.SetDirection(dir, forced: true);  // safe instant reverse
+        else
+            movement.SetDirection(dir);                // queue or turn normally
     }
 
     public void UpdateIndicator(Vector2 direction)
@@ -101,7 +112,7 @@ public class Pacman : MonoBehaviour
 
         if (animator != null)
         {
-            animator.Play("move", 0, 0f); // Reset the animation to the first frame
+            animator.Play("move", 0, 0f);
         }
 
         if (spriteRenderer != null)
@@ -162,7 +173,7 @@ public class Pacman : MonoBehaviour
 
         animator.speed = 1f;
         transform.rotation = Quaternion.identity;
-        
+
         if (spriteRenderer != null)
         {
             spriteRenderer.flipX = false;

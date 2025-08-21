@@ -8,14 +8,42 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: bounceSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: bounceTopYOffset
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: launchDelaySeconds
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: bounceBottomYOffset
+      value: -0.35
+      objectReference: {fileID: 0}
     - target: {fileID: 1466197436971015820, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 97025998, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 1466197436971015820, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: m_SortingOrder
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 3657060400200870950, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Name
       value: Ghost_Blinky Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 3718778801018091632, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: frightBlue
+      value: 
+      objectReference: {fileID: 9069394235336695142}
+    - target: {fileID: 3718778801018091632, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: frightWhite
+      value: 
+      objectReference: {fileID: 8563101044716455518}
     - target: {fileID: 3718778801018091632, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: flashInterval
       value: 0.4
@@ -24,6 +52,22 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: bef35ae01d14be2418c873358a2f38a9, type: 2}
+    - target: {fileID: 4092809288570748153, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: m_SortingOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5054545328746106472, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: m_SortingOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6007269523664781191, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: initialDirection.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6248239528917311017, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: eyesObstacleMask.m_Bits
+      value: 256
+      objectReference: {fileID: 0}
     - target: {fileID: 6368014658890702140, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -131,6 +175,10 @@ PrefabInstance:
     - target: {fileID: 8116846737151291312, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Color.g
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8116846737151291312, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: m_SortingOrder
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6883016487423491841, guid: 1855884bb736be542a66a632047a1995, type: 3}

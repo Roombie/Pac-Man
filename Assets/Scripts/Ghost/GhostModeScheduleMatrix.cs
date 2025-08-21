@@ -1,80 +1,84 @@
-using UnityEngine;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using UnityEngine;
 
-[CreateAssetMenu(fileName = "GhostModeScheduleMatrix", menuName = "Pacman/Ghost Mode Schedule Matrix")]
+[CreateAssetMenu(menuName = "Pacman/Ghost Mode Schedule Matrix")]
 public class GhostModeScheduleMatrix : ScriptableObject
 {
     [Serializable]
     public class Row
     {
-        [HideInInspector] public string name; // deprecated
-        public int fromLevel = 1;                 // first level in this band (inclusive)
+        [Tooltip("This row applies starting at this level (inclusive).")]
+        public int fromLevel = 1;
 
-        // Phase durations
-        public float s1 = 7f, c1 = 20f, s2 = 7f, c2 = 20f, s3 = 5f, c3 = 0f, s4 = 0f, c4 = 0f;
+        [Tooltip("Scatter/Chase phases for this band.")]
+        public GhostPhase[] phases;
 
-        // Frightened duration
+        [Tooltip("Frightened duration (seconds) for this band.")]
         public float frightened = 6f;
-        [TextArea(1, 3)] public string notes;
+
+        // House exit (dot counters & stall timer)
+        [Header("House Exit")]
+        [Tooltip("Pinky dot limit (usually 0 on all bands).")]
+        public int pinkyDotLimit = 0;
+
+        [Tooltip("Inky dot limit (e.g., 30 on L1, 0 on L2+).")]
+        public int inkyDotLimit = 0;
+
+        [Tooltip("Clyde dot limit (e.g., 60 on L1, 50 on L2, 0 on L3+).")]
+        public int clydeDotLimit = 0;
+
+        [Tooltip("No-dot release seconds for this band (4s on L1–4, 3s on L5+).")]
+        public float noDotRelease = 4f;
     }
 
     public List<Row> rows = new();
 
-    // Build phases for a given 'currentLevel'
-    public GhostPhase[] GetPhasesForLevel(int currentLevel, out float frightenedDuration)
+    // Select row with greatest fromLevel <= level
+    private Row SelectRow(int level)
     {
-        frightenedDuration = 6f;
         if (rows == null || rows.Count == 0)
-            return new[] { new GhostPhase { mode = Ghost.Mode.Chase, durationSeconds = 0f } };
+            return new Row { fromLevel = 1, phases = Array.Empty<GhostPhase>(), frightened = 6f };
 
-        var sorted = rows.OrderBy(r => r.fromLevel).ToList();
-
-        // pick last row whose 'level' <= currentLevel
-        Row sel = sorted[0];
-        foreach (var r in sorted) if (currentLevel >= r.fromLevel) sel = r;
-
-        frightenedDuration = sel.frightened;
-
-        var list = new List<GhostPhase>();
-        void AddDur(float dur, Ghost.Mode m)
+        Row sel = rows[0];
+        for (int i = 0; i < rows.Count; i++)
         {
-            if (m == Ghost.Mode.Scatter) { if (dur > 0f) list.Add(new GhostPhase { mode = m, durationSeconds = dur }); return; }
-            if (dur > 0f) list.Add(new GhostPhase { mode = m, durationSeconds = dur });
-            else if (list.Count == 0 || (list[^1].mode == Ghost.Mode.Chase && list[^1].durationSeconds <= 0f)) { /* avoid dup ∞ */ }
-            else list.Add(new GhostPhase { mode = Ghost.Mode.Chase, durationSeconds = 0f });
+            var r = rows[i];
+            if (level >= r.fromLevel) sel = r;
         }
-
-        AddDur(sel.s1, Ghost.Mode.Scatter); AddDur(sel.c1, Ghost.Mode.Chase);
-        AddDur(sel.s2, Ghost.Mode.Scatter); AddDur(sel.c2, Ghost.Mode.Chase);
-        AddDur(sel.s3, Ghost.Mode.Scatter); AddDur(sel.c3, Ghost.Mode.Chase);
-        AddDur(sel.s4, Ghost.Mode.Scatter); AddDur(sel.c4, Ghost.Mode.Chase);
-
-        if (list.Count == 0)
-            list.Add(new GhostPhase { mode = Ghost.Mode.Chase, durationSeconds = 0f });
-
-        return list.ToArray();
+        return sel;
     }
-    
-    public string GetBandLabelForLevel(int levelValue)
+
+    public GhostPhase[] GetPhasesForLevel(int level, out float frightenedSeconds)
     {
-        if (rows == null || rows.Count == 0) return "Default";
+        var row = SelectRow(level);
+        frightenedSeconds = row.frightened;
+        return row.phases ?? Array.Empty<GhostPhase>();
+    }
 
-        var sorted = rows.OrderBy(r => r.fromLevel).ToList();
+    public string GetBandLabelForLevel(int level)
+    {
+        var row = SelectRow(level);
+        return $"L{row.fromLevel}+";
+    }
 
-        // pick the last row whose 'level' <= levelValue
-        int idx = 0;
-        for (int i = 0; i < sorted.Count; i++)
-            if (levelValue >= sorted[i].fromLevel) idx = i;
+    // house-exit params per level band
+    [Serializable]
+    public struct HouseExitParams
+    {
+        public int pinky, inky, clyde;
+        public float noDotSeconds;
+    }
 
-        int start = Mathf.Max(1, sorted[idx].fromLevel);
-        int end = (idx + 1 < sorted.Count)
-            ? Mathf.Max(start, sorted[idx + 1].fromLevel - 1)
-            : int.MaxValue;
-
-        return end == int.MaxValue
-            ? $"Level {start}+"
-            : (start == end ? $"Level {start}" : $"Levels {start}–{end}");
+    public HouseExitParams GetHouseExitForLevel(int level)
+    {
+        var row = SelectRow(level);
+        return new HouseExitParams
+        {
+            pinky = row.pinkyDotLimit,
+            inky = row.inkyDotLimit,
+            clyde = row.clydeDotLimit,
+            noDotSeconds = row.noDotRelease
+        };
     }
 }

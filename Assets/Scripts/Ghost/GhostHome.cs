@@ -1,167 +1,235 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Ghost))]
 public class GhostHome : MonoBehaviour
 {
-    [Header("Pen geometry")]
-    [SerializeField] private Node doorNode;       // place at the door, just *outside* the box
-    [SerializeField] private float arriveRadius = 0.15f;
+    [Header("Door targets (assign in Inspector)")]
+    [SerializeField] private Transform insideDoor;   // point just INSIDE the door
+    [SerializeField] private Transform outsideDoor;  // point just OUTSIDE the door
 
-    [Header("Vertical bounce inside house")]
-    [SerializeField] private float bounceTopYOffset = 0.25f;   // relative to starting Y
-    [SerializeField] private float bounceBottomYOffset = -0.25f;
-    [SerializeField] private float bounceSpeed = 2f;
+    [Header("Timing")]
+    [SerializeField] private float launchDelaySeconds = 4f;   // counts only after movement is enabled
+    [SerializeField] private float alignStepDuration = 0.20f; // per axis (Y then X)
+    [SerializeField] private float doorStepDuration  = 0.40f; // inside→outside
 
-    [Header("Launch delay per-ghost")]
-    [SerializeField] private float launchDelaySeconds = 4f; // e.g. Pinky=4, Inky=8, Clyde=12
+    [Header("Home speed")]
+    [Tooltip("Base speed multiplier while the ghost is in Home (pacing).")]
+    [SerializeField] private float homeSpeedMult = 0.75f;     // tweak to taste; 0.75 feels right
 
-    [SerializeField] private bool forceExitNow;
-
-    private Ghost g;
+    private Ghost ghost;
     private Movement move;
+    private GhostEyes eyes;
 
-    private enum PenState { Idle, Waiting, Exiting }
-    private PenState state = PenState.Idle;
+    private float launchTimer;
+    private bool exiting;
+    private bool queuedExit;
+    private bool pacingApplied;
+    private Vector2 initialPaceDir;
 
-    private float t;                  // timer for Waiting
-    private float startY;
-    private Vector2Int lastCell = new Vector2Int(int.MinValue, int.MinValue);
-    private static readonly Vector2[] DIRS = { Vector2.up, Vector2.left, Vector2.down, Vector2.right };
+    public bool IsExiting => exiting;
 
-    public void RequestImmediateExit() => forceExitNow = true;
+    private int obstacleLayer;
 
-    void Awake()
+    private void Awake()
     {
-        g = GetComponent<Ghost>();
-        move = g.movement ? g.movement : GetComponent<Movement>();
-        startY = transform.position.y;
+        ghost = GetComponent<Ghost>();
+        move  = ghost.movement ?? GetComponent<Movement>();
+        obstacleLayer = LayerMask.NameToLayer("Obstacle");
+        eyes = GetComponent<GhostEyes>();
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
-        // whenever we re-enter Home, restart the wait
-        if (g && g.CurrentMode == Ghost.Mode.Home)
+        if (!ghost || !move) return;
+
+        exiting = false;
+        queuedExit = false;
+        pacingApplied = false;
+
+        // Decide pacing direction now; apply when movement actually starts.
+        initialPaceDir = (ghost.Type == GhostType.Pinky) ? Vector2.down : Vector2.up;
+
+        // Reset the timer; start counting only after movement is enabled.
+        launchTimer = launchDelaySeconds;
+
+        // While in Home we:
+        //  1) disable Movement pre-checks (collide + bounce via OnCollisionEnter2D)
+        //  2) apply a fixed Home speed multiplier for consistent pacing
+        move.SetObstacleMask(0);                // no pre-checks → let collisions bounce
+        move.SetBaseSpeedMultiplier(homeSpeedMult);
+
+        if (queuedExit) { queuedExit = false; BeginExit(); }
+    }
+
+    private void OnDisable()
+    {
+        if (move)
         {
-            state = PenState.Idle;
-            t = launchDelaySeconds;
+            move.ClearObstacleMask();           // restore normal pre-checks
+            move.SetBaseSpeedMultiplier(1f);    // clear home speed on disable (safety)
         }
+        pacingApplied = false;
     }
 
-    void Update()
+    private void Update()
     {
-        if (!g || !move) return;
+        if (!ghost || !move) return;
 
-        if (g.CurrentMode != Ghost.Mode.Home)
+        if (ghost.CurrentMode != Ghost.Mode.Home)
         {
-            state = PenState.Idle;
+            enabled = false;
             return;
         }
 
-        if (g.CurrentMode == Ghost.Mode.Home)
+        // Wait for gameplay start
+        if (!move.enabled) return;
+
+        if (!pacingApplied)
         {
-            // if forceExitNow -> bypass any launch delay and head to door
-            if (forceExitNow)
-            {
-                // set your internal state to 'exiting' immediately
-                // e.g., state = PenState.Exiting; launchDelaySeconds = 0f; etc.
-                // and give it an upward nudge:
-                if (g.movement) g.movement.SetDirection(Vector2.up, forced: true);
-            }
+            move.SetDirection(initialPaceDir, true);
+            pacingApplied = true;
         }
 
-        if (!doorNode)
+        if (!exiting)
         {
-            // Safe fallback: stop movement if we can't exit
-            move.SetDirection(Vector2.zero, true);
+            launchTimer -= Time.deltaTime;
+            if (launchTimer <= 0f) BeginExit();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D col)
+    {
+        if (!ghost || !move) return;
+        if (ghost.CurrentMode != Ghost.Mode.Home || exiting) return;
+
+        if (col.collider.gameObject.layer == obstacleLayer)
+        {
+            if (Mathf.Abs(move.direction.y) > Mathf.Abs(move.direction.x))
+                move.SetDirection(-move.direction, true);
+        }
+    }
+
+    private IEnumerator MoveToExact(Vector3 target, float duration)
+    {
+        var rb2d = move ? move.rb : null;
+        Vector2 curr = rb2d ? rb2d.position : (Vector2)transform.position;
+        float dist = Vector2.Distance(curr, (Vector2)target);
+        float speed = (duration <= 0f) ? Mathf.Infinity : dist / duration;
+        const float eps2 = 0.00004f;
+
+        while (true)
+        {
+            curr = rb2d ? rb2d.position : (Vector2)transform.position;
+            Vector2 diff = ((Vector2)target - curr);
+            if (diff.sqrMagnitude <= eps2) break;
+
+            // make the eyes “move”: face the dominant axis toward the target
+            if (eyes)
+            {
+                Vector2 dir = (Mathf.Abs(diff.x) >= Mathf.Abs(diff.y))
+                            ? new Vector2(Mathf.Sign(diff.x), 0f)
+                            : new Vector2(0f, Mathf.Sign(diff.y));
+                eyes.LookAt(dir);  // updates the sprite instantly
+            }
+
+            Vector3 next = Vector3.MoveTowards(curr, target, speed * Time.deltaTime);
+            if (rb2d) rb2d.MovePosition(next); else transform.position = next;
+
+            yield return null;
+        }
+
+        if (rb2d) rb2d.position = target; else transform.position = target;
+    }
+
+    public void RequestExit()
+    {
+        if (exiting || ghost.CurrentMode != Ghost.Mode.Home) return;
+
+        if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
+        {
+            queuedExit = true;
             return;
         }
 
-        switch (state)
-        {
-            case PenState.Idle:
-                // Arrived from Eaten or level start → stop and begin waiting
-                move.SetDirection(Vector2.zero, true);
-                t = launchDelaySeconds;
-                state = PenState.Waiting;
-                break;
-
-            case PenState.Waiting:
-            {
-                // Classic up/down “bobbing” while waiting the release timer
-                t -= Time.deltaTime;
-
-                float top = startY + bounceTopYOffset;
-                float bottom = startY + bounceBottomYOffset;
-
-                // sine ping-pong
-                float y = Mathf.Lerp(bottom, top, 0.5f * (1f + Mathf.Sin(Time.time * bounceSpeed)));
-                Vector2 target = new Vector2(move.rb.position.x, y);
-                Vector2 dir = (target - move.rb.position).normalized;
-
-                // choose the dominant axis: up or down
-                move.SetDirection(Mathf.Sign(dir.y) >= 0 ? Vector2.up : Vector2.down);
-
-                if (t <= 0f)
-                    state = PenState.Exiting;
-                break;
-            }
-
-            case PenState.Exiting:
-            {
-                // Greedy toward the door (same chooser style as Chase/Scatter)
-                Vector2 d = DecideToward(doorNode.transform.position);
-                move.SetDirection(d);
-
-                // Reached the door? Switch to Scatter and reset
-                if (((Vector2)move.rb.position - (Vector2)doorNode.transform.position).sqrMagnitude <= arriveRadius * arriveRadius)
-                {
-                    g.SetMode(Ghost.Mode.Scatter);
-                    state = PenState.Idle;
-                }
-                break;
-            }
-        }
+        BeginExit();
     }
 
-    // ---- greedy chooser (once per tile) ----
-    Vector2Int WorldToCell(Vector2 p)
+    private void BeginExit()
     {
-        return new Vector2Int(Mathf.RoundToInt(p.x), Mathf.RoundToInt(p.y));
-    }
+        if (exiting) return;
+        exiting = true;
 
-    bool CanGo(Vector2 d) => move != null && !move.Occupied(d);
-
-    Vector2 DecideToward(Vector3 worldTarget)
-    {
-        var cell = WorldToCell(move.rb.position);
-        if (cell == lastCell) return move.direction;
-        lastCell = cell;
-
-        Vector2 current = move.direction;
-        Vector2 best = Vector2.zero;
-        float bestScore = float.PositiveInfinity;
-
-        foreach (var d in DIRS)
+        if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
         {
-            if (d == -current) continue;
-            if (!CanGo(d)) continue;
-
-            Vector3 next = (Vector3)move.rb.position + (Vector3)d;
-            float score = (next - worldTarget).sqrMagnitude;
-            if (score < bestScore) { bestScore = score; best = d; }
+            queuedExit = true;
+            exiting = false;
+            return;
         }
 
-        if (best == Vector2.zero && CanGo(-current)) best = -current;
-        return best == Vector2.zero ? current : best;
+        if (!insideDoor || !outsideDoor)
+        {
+            move.ClearObstacleMask();
+            move.SetBaseSpeedMultiplier(1f);
+            move.SetDirection(Vector2.up, true);
+            ghost.SetMode(Ghost.Mode.Scatter);
+            enabled = false;
+            return;
+        }
+
+        StartCoroutine(ExitRoutine());
     }
 
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
+    private IEnumerator ExitRoutine()
     {
-        if (!doorNode) return;
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(doorNode.transform.position, 0.12f);
-        Gizmos.DrawLine(transform.position, doorNode.transform.position);
+        // pause physics & movement
+        if (move.rb)
+        {
+    #if UNITY_2023_1_OR_NEWER
+            move.rb.linearVelocity = Vector2.zero;
+    #else
+            move.rb.velocity = Vector2.zero;
+    #endif
+            move.rb.bodyType = RigidbodyType2D.Kinematic;
+        }
+        move.enabled = false;
+
+        // 1) Align Y
+        Vector3 now = transform.position;
+        Vector3 yAligned = new Vector3(now.x, insideDoor.position.y, now.z);
+        yield return MoveToExact(yAligned, alignStepDuration);
+
+        // 2) Align X
+        Vector3 xAligned = new Vector3(insideDoor.position.x, insideDoor.position.y, now.z);
+        yield return MoveToExact(xAligned, alignStepDuration);
+
+        // 3) Inside -> Outside
+        yield return MoveToExact(outsideDoor.position, doorStepDuration);
+
+        // outside: resume normal play
+        ghost.SetMode(Ghost.Mode.Scatter);
+
+        if (move.rb) move.rb.bodyType = RigidbodyType2D.Dynamic;
+        move.enabled = true;
+
+        var dir = ghost.ConsumeExitShouldGoRight() ? Vector2.right : Vector2.left;
+        if (move.Occupied(dir)) dir = -dir;
+        move.SetDirection(dir, true);
+
+        enabled = false;
     }
-#endif
+
+    private IEnumerator LerpTo(Vector3 target, float duration)
+    {
+        Vector3 start = transform.position;
+        float t = 0f;
+        float dur = Mathf.Max(0.0001f, duration);
+        while (t < dur)
+        {
+            transform.position = Vector3.Lerp(start, target, t / dur);
+            t += Time.deltaTime;
+            yield return null;
+        }
+        transform.position = target;
+    }
 }

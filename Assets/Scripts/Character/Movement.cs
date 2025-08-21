@@ -8,6 +8,7 @@ public class Movement : MonoBehaviour
     public float envMultiplier = 1f;
     public Vector2 initialDirection;
     public LayerMask obstacleLayer;
+    private LayerMask activeObstacleMask;
 
     public Rigidbody2D rb { get; private set; }
     public Vector2 direction { get; private set; }
@@ -19,6 +20,7 @@ public class Movement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         startingPosition = transform.position;
+        activeObstacleMask = obstacleLayer;
     }
 
     private void Start()
@@ -29,6 +31,7 @@ public class Movement : MonoBehaviour
     public void ResetState()
     {
         speedMultiplier = 1f;
+        activeObstacleMask = obstacleLayer;
         direction = initialDirection;
         nextDirection = Vector2.zero;
         transform.position = startingPosition;
@@ -50,13 +53,18 @@ public class Movement : MonoBehaviour
     {
         // isBlocked = Occupied(direction);
         Vector2 position = rb.position;
-        Vector2 translation = speed * speedMultiplier * Time.fixedDeltaTime * direction;
+        Vector2 translation = speed * speedMultiplier * envMultiplier * Time.fixedDeltaTime * direction;
         rb.MovePosition(position + translation);
     }
+    
+    public void SetObstacleMask(LayerMask mask)  { activeObstacleMask = mask; }
+    public void ClearObstacleMask()              { activeObstacleMask = obstacleLayer; }
 
     public void SetDirection(Vector2 direction, bool forced = false)
     {
-        // Only set the direction if the tile in that direction is available
+        // Disallow immediate 180° unless forced (used for global reversals/frightened enter)
+        if (!forced && direction == -this.direction) { nextDirection = direction; return; }
+
         // otherwise we set it as the next direction so it'll automatically be
         // set when it does become available
         if (forced || !Occupied(direction))
@@ -70,11 +78,8 @@ public class Movement : MonoBehaviour
         }
     }
 
-    public bool Occupied(Vector2 direction)
-    {
-        // If no collider is hit then there is no obstacle in that direction
-        RaycastHit2D hit = Physics2D.BoxCast(transform.position, Vector2.one * 0.75f, 0f, direction, 1.5f, obstacleLayer);
-        return hit.collider != null;
+    public bool Occupied(Vector2 dir) {
+        return Physics2D.BoxCast(transform.position, Vector2.one * 0.75f, 0f, dir, 1.5f, activeObstacleMask).collider != null;
     }
 
     /// <summary>Sets the “base” multiplier (modes/elroy). Does not touch env multiplier.</summary>

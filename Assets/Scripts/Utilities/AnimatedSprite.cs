@@ -12,6 +12,7 @@ public class AnimatedSprite : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private int frame;
     private bool isAnimating = true;
+    public bool IsPlaying => isAnimating && IsInvoking(nameof(Animate));
 
     private void Awake()
     {
@@ -20,6 +21,7 @@ public class AnimatedSprite : MonoBehaviour
 
     private void OnEnable()
     {
+        if (sprites == null || sprites.Length == 0) { enabled = false; return; }
         frame = 0;
         isAnimating = true;
         InvokeRepeating(nameof(Animate), framerate, framerate);
@@ -58,11 +60,18 @@ public class AnimatedSprite : MonoBehaviour
         }
     }
 
-    public void StopAnimation()
+    public void Stop(bool resetToFirstFrame = false)
     {
         isAnimating = false;
-        spriteRenderer.sprite = sprites[0]; // Set the sprite to the first frame
+        CancelInvoke(nameof(Animate));
+
+        if (resetToFirstFrame && sprites != null && sprites.Length > 0)
+        {
+            frame = 0;
+            spriteRenderer.sprite = sprites[0];
+        }
     }
+
 
     public void PauseAnimation()
     {

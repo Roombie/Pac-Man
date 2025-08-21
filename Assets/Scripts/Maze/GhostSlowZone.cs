@@ -13,7 +13,7 @@ public class GhostSlowZone : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         var ghost = other.GetComponent<Ghost>();
-        if (ghost && Affects(ghost.Type))
+        if (ghost && (ghost.CurrentMode != Ghost.Mode.Frightened || ghost.CurrentMode != Ghost.Mode.Eaten) && Affects(ghost.Type))
             ghost.movement?.SetEnvSpeedMultiplier(slowMultiplier);
     }
 
@@ -37,7 +37,7 @@ public class GhostSlowZone : MonoBehaviour
 #if UNITY_EDITOR
     void OnValidate()
     {
-        var col = GetComponent<Collider2D>();
+        var col = GetComponent<CircleCollider2D>();
         if (col) col.isTrigger = true;
     }
 #endif

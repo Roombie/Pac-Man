@@ -13,39 +13,72 @@ MonoBehaviour:
   m_Name: GhostModeScheduleMatrix
   m_EditorClassIdentifier: 
   rows:
-  - name: Level 1
-    fromLevel: 1
-    s1: 7
-    c1: 20
-    s2: 7
-    c2: 20
-    s3: 5
-    c3: 0
-    s4: 0
-    c4: 0
+  - fromLevel: 1
+    phases:
+    - mode: 0
+      durationSeconds: 7
+    - mode: 1
+      durationSeconds: 20
+    - mode: 0
+      durationSeconds: 7
+    - mode: 1
+      durationSeconds: 20
+    - mode: 1
+      durationSeconds: 5
+    - mode: 0
+      durationSeconds: 20
+    - mode: 0
+      durationSeconds: 5
+    - mode: 1
+      durationSeconds: 0
     frightened: 6
-    notes: 
-  - name: 
-    fromLevel: 2
-    s1: 7
-    c1: 20
-    s2: 7
-    c2: 1033
-    s3: 0.016666668
-    c3: 0
-    s4: 0
-    c4: 0
+    pinkyDotLimit: 0
+    inkyDotLimit: 30
+    clydeDotLimit: 60
+    noDotRelease: 4
+  - fromLevel: 2
+    phases:
+    - mode: 0
+      durationSeconds: 7
+    - mode: 1
+      durationSeconds: 20
+    - mode: 0
+      durationSeconds: 7
+    - mode: 1
+      durationSeconds: 20
+    - mode: 0
+      durationSeconds: 5
+    - mode: 1
+      durationSeconds: 1033
+    - mode: 0
+      durationSeconds: 0.016666668
+    - mode: 1
+      durationSeconds: 0
     frightened: 6
-    notes: 
-  - name: 
-    fromLevel: 5
-    s1: 7
-    c1: 20
-    s2: 7
-    c2: 1037
-    s3: 0.016666668
-    c3: 0
-    s4: 0
-    c4: 0
+    pinkyDotLimit: 0
+    inkyDotLimit: 0
+    clydeDotLimit: 50
+    noDotRelease: 4
+  - fromLevel: 5
+    phases:
+    - mode: 0
+      durationSeconds: 5
+    - mode: 1
+      durationSeconds: 20
+    - mode: 0
+      durationSeconds: 5
+    - mode: 1
+      durationSeconds: 20
+    - mode: 0
+      durationSeconds: 5
+    - mode: 1
+      durationSeconds: 1037
+    - mode: 0
+      durationSeconds: 0.016666668
+    - mode: 1
+      durationSeconds: 0
     frightened: 6
-    notes: 
+    pinkyDotLimit: 0
+    inkyDotLimit: 0
+    clydeDotLimit: 0
+    noDotRelease: 4

@@ -8,10 +8,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: bounceSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: bounceTopYOffset
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: launchDelaySeconds
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: bounceBottomYOffset
+      value: -0.35
+      objectReference: {fileID: 0}
     - target: {fileID: 1466197436971015820, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -827398702, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 1466197436971015820, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: m_SortingOrder
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 3657060400200870950, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Name
       value: Ghost_Clyde Variant
@@ -26,7 +46,11 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: bef35ae01d14be2418c873358a2f38a9, type: 2}
     - target: {fileID: 6007269523664781191, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: initialDirection.y
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6248239528917311017, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: eyesObstacleMask.m_Bits
+      value: 256
       objectReference: {fileID: 0}
     - target: {fileID: 6368014658890702140, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_LocalPosition.x
@@ -78,7 +102,7 @@ PrefabInstance:
       objectReference: {fileID: 6200000, guid: e25cb296a7a3d6f4cb02bc935c6dd600, type: 2}
     - target: {fileID: 6921662381185705033, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Constraints
-      value: 4
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6921662381185705033, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_SleepingMode
@@ -115,6 +139,10 @@ PrefabInstance:
     - target: {fileID: 8116846737151291312, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Color.g
       value: 0.7176471
+      objectReference: {fileID: 0}
+    - target: {fileID: 8116846737151291312, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: m_SortingOrder
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6883016487423491841, guid: 1855884bb736be542a66a632047a1995, type: 3}

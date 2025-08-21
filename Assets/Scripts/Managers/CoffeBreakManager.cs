@@ -13,16 +13,13 @@ public class CoffeeBreakManager : MonoBehaviour
 
     private readonly Dictionary<int, CoffeeBreakData> coffeeBreakLookup = new();
     private CoffeeBreakData currentCoffeeBreak;
+    private bool isPlaying;
 
     void Awake()
     {
         foreach (var cb in coffeeBreaks)
-        {
             if (!coffeeBreakLookup.ContainsKey(cb.round))
-            {
                 coffeeBreakLookup.Add(cb.round, cb);
-            }
-        }
     }
 
     public void StartCoffeeBreak(int round)
@@ -35,42 +32,54 @@ public class CoffeeBreakManager : MonoBehaviour
         }
 
         Debug.Log($"Starting coffee break for round: {round}");
-
         GameManager.Instance.SetState(GameManager.GameState.Intermission);
 
-        maze.SetActive(false);
-        ui.SetActive(false);
+        if (maze) maze.SetActive(false);
+        if (ui) ui.SetActive(false);
 
-        coffeeBreak.cutsceneRoot?.SetActive(true);
+        if (coffeeBreak.cutsceneRoot) coffeeBreak.cutsceneRoot.SetActive(true);
 
         currentCoffeeBreak = coffeeBreak;
+        isPlaying = true;
 
         var director = coffeeBreak.cutsceneDirector;
-        director.stopped -= OnCoffeeBreakEnd;
-        director.stopped += OnCoffeeBreakEnd;
-
-        director.Play();
+        if (director)
+        {
+            director.stopped -= OnCoffeeBreakEnd;
+            director.stopped += OnCoffeeBreakEnd;
+            director.Play();
+        }
+        else
+        {
+            OnCoffeeBreakEnd(null);
+        }
     }
 
     private void OnCoffeeBreakEnd(PlayableDirector director)
     {
+        if (!isPlaying) return; // guard double invoke
+        isPlaying = false;
+
         Debug.Log("Coffee break ended!");
 
         if (currentCoffeeBreak != null)
         {
-            currentCoffeeBreak.cutsceneRoot?.SetActive(false);
-            currentCoffeeBreak.cutsceneDirector.stopped -= OnCoffeeBreakEnd;
+            if (currentCoffeeBreak.cutsceneRoot)
+                currentCoffeeBreak.cutsceneRoot.SetActive(false);
+
+            if (currentCoffeeBreak.cutsceneDirector)
+                currentCoffeeBreak.cutsceneDirector.stopped -= OnCoffeeBreakEnd;
 
             currentCoffeeBreak = null;
         }
 
-        maze.SetActive(true);
-        ui.SetActive(true);
+        if (maze) maze.SetActive(true);
+        if (ui) ui.SetActive(true);
 
         GameManager.Instance.SetState(GameManager.GameState.Intro);
         GameManager.Instance.StartNextLevel();
     }
-
+    
     public bool HasCoffeeBreakForLevel(int level)
     {
         return coffeeBreakLookup.ContainsKey(level);

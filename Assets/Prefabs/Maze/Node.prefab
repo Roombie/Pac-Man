@@ -44,10 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31dfaee94a3a52243a15a33caf5a3ffc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  up: {fileID: 0}
-  left: {fileID: 0}
-  down: {fileID: 0}
-  right: {fileID: 0}
-  isTunnel: 0
-  isPortal: 0
-  isGhostHouseDoor: 0
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 256

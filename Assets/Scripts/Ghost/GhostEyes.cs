@@ -78,7 +78,7 @@ public class GhostEyes : MonoBehaviour
     {
         // Elroy visuals only make sense when the body is visible.
         if (ghost.CurrentMode == Ghost.Mode.Eaten) return false;
-        return ghost.IsElroyActive;
+        return ghost.IsElroy;
     }
 
     Sprite SelectSprite(Facing f, bool elroy)

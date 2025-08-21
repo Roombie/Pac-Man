@@ -6,21 +6,27 @@ public class GhostVisuals : MonoBehaviour
     [Header("Children")]
     [SerializeField] private GameObject eyes;
     [SerializeField] private GameObject body;
-    [SerializeField] private GameObject fright;
-    [SerializeField] private GameObject white; 
+    [SerializeField] private GameObject fright; // blue
+    [SerializeField] private GameObject white;  // flashing white
 
     [Header("Frightened")]
     [SerializeField] private float fallbackFrightenedSeconds = 6f;
-    [SerializeField] private float flashThreshold = 2f;   // start flicker on x seconds of the end
-    [SerializeField] private float flashInterval  = 0.4f; // 5 flickers before turning back to normal
+    [SerializeField] private float flashThreshold = 2f;   // start flicker when <= this many seconds remain
+    [SerializeField] private float flashInterval  = 0.4f; // flicker cadence
 
     private Ghost ghost;
     private Ghost.Mode lastMode;
 
-    private Timer frightenedTimer;
-    private Timer flashTimer;       // alternate fright/white
+    // Visual-only timers (NOT the authoritative controller timers)
+    private Timer frightenedTimer;   // counts down for flicker threshold
+    private Timer flashTimer;        // toggles blue/white
 
     private bool whitePhase;
+    private bool paused;
+
+    // Saved state for score popup hide
+    private bool savedBody, savedEyes, savedFright, savedWhite;
+    private bool hasSavedState;
 
     void Awake()
     {
@@ -40,10 +46,13 @@ public class GhostVisuals : MonoBehaviour
             lastMode = mode;
         }
 
-        // Control countdown and flicker during Frightened
+        if (paused) return; // freeze visuals (used during 1s ghost-score and level clear)
+
+        // Drive frightened flicker locally (controller owns real frightened end)
         if (mode == Ghost.Mode.Frightened && frightenedTimer != null)
         {
             frightenedTimer.Tick(Time.deltaTime);
+
             if (frightenedTimer.RemainingSeconds <= flashThreshold)
             {
                 if (flashTimer == null)
@@ -58,21 +67,21 @@ public class GhostVisuals : MonoBehaviour
 
     private void OnModeChanged(Ghost.Mode prev, Ghost.Mode next)
     {
-        // Restart visual state and timers according to the new mode
+        // Reset visual state and local timers for the new mode
         if (next == Ghost.Mode.Frightened)
         {
             StartFrightenedTimer(fallbackFrightenedSeconds);
-            SetActive(body: false, eyes: false, fright: true, white: false);
+            SetActive(body: false, eyes: false, fright: true, white: false); // show blue immediately
         }
         else if (next == Ghost.Mode.Eaten)
         {
             KillFrightVisuals();
-            SetActive(body: false, eyes: true, fright: false, white: false);
+            SetActive(body: false, eyes: true, fright: false, white: false); // eyes only
         }
         else // Scatter / Chase / Home
         {
             KillFrightVisuals();
-            SetActive(body: true, eyes: true, fright: false, white: false);
+            SetActive(body: true, eyes: true, fright: false, white: false);  // normal
         }
     }
 
@@ -98,12 +107,15 @@ public class GhostVisuals : MonoBehaviour
     private void StartFrightenedTimer(float seconds)
     {
         frightenedTimer = new Timer(seconds);
-        if (flashTimer != null) flashTimer = null;
+        flashTimer = null;     // will be created on demand at threshold
         whitePhase = false;
     }
 
     private void ToggleFlash()
     {
+        // If we become paused exactly when the timer fires, skip toggling
+        if (paused) return;
+
         whitePhase = !whitePhase;
         SetActive(body:false, eyes:false, fright:!whitePhase, white:whitePhase);
         flashTimer.Reset(flashInterval);
@@ -114,7 +126,8 @@ public class GhostVisuals : MonoBehaviour
         flashTimer = null;
         frightenedTimer = null;
         whitePhase = false;
-        if (white) white.SetActive(false);
+
+        if (white)  white.SetActive(false);
         if (fright) fright.SetActive(false);
     }
 
@@ -126,10 +139,45 @@ public class GhostVisuals : MonoBehaviour
         if (this.white)  this.white.SetActive(white);
     }
 
+    // --- Public API ---
+
+    /// <summary>Called by controller when frightened starts; shows blue immediately.</summary>
     public void OnFrightenedStart(float durationSeconds)
     {
         StartFrightenedTimer(durationSeconds);
-        if (ghost.CurrentMode == Ghost.Mode.Frightened)
-            SetActive(body:false, eyes:false, fright:true, white:false);
+        // Show blue RIGHT NOW (don’t depend on mode-change ordering)
+        SetActive(body:false, eyes:false, fright:true, white:false);
+    }
+
+    /// <summary>Freeze/unfreeze visual timers (used during 1s score pause & level clear).</summary>
+    public void SetPaused(bool pause) => paused = pause;
+
+    /// <summary>Hide all parts (for the 1s score popup), remembering previous state.</summary>
+    public void HideAllForScore()
+    {
+        if (!hasSavedState)
+        {
+            savedBody   = body   ? body.activeSelf   : false;
+            savedEyes   = eyes   ? eyes.activeSelf   : false;
+            savedFright = fright ? fright.activeSelf : false;
+            savedWhite  = white  ? white.activeSelf  : false;
+            hasSavedState = true;
+        }
+        SetActive(false, false, false, false);
+    }
+
+    /// <summary>Restore the visuals after HideAllForScore().</summary>
+    public void ShowAfterScore()
+    {
+        if (hasSavedState)
+        {
+            SetActive(savedBody, savedEyes, savedFright, savedWhite);
+            hasSavedState = false;
+        }
+        else
+        {
+            // Fallback if nothing saved
+            ApplyForMode(ghost ? ghost.CurrentMode : Ghost.Mode.Scatter);
+        }
     }
 }

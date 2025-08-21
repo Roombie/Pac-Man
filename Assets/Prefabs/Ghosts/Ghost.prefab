@@ -191,9 +191,11 @@ MonoBehaviour:
   pacman: {fileID: 0}
   ghostType: 0
   blinky: {fileID: 0}
-  currentMode: 0
-  elroy1Multiplier: 1.08
-  elroy2Multiplier: 1.16
+  scatter: {fileID: -2863338508393274213}
+  chase: {fileID: 7634560066299346982}
+  frightened: {fileID: 3123794828252240889}
+  home: {fileID: -7464493849995840156}
+  eaten: {fileID: 6248239528917311017}
   elroyStage: 0
 --- !u!114 &3718778801018091632
 MonoBehaviour:
@@ -285,7 +287,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c94fe1f2983fcf4eb42fd3b57f1be9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  homeTarget: {fileID: 0}
+  outsideDoor: {fileID: 0}
+  insideDoor: {fileID: 0}
+  eyesLayerName: GhostEyes
+  normalLayerName: Ghost
+  eyesObstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
   arriveRadius: 0.15
 --- !u!114 &-7464493849995840156
 MonoBehaviour:
@@ -299,12 +307,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb80fa5d9f21e4148bfd646a7007bc84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  exitPoint: {fileID: 0}
-  arriveRadius: 0.15
-  bounceTopYOffset: 0.25
-  bounceBottomYOffset: -0.25
-  bounceSpeed: 2
+  insideDoor: {fileID: 0}
+  outsideDoor: {fileID: 0}
   launchDelaySeconds: 4
+  alignStepDuration: 0.2
+  doorStepDuration: 0.4
+  homeSpeedMult: 0.75
 --- !u!50 &6921662381185705033
 Rigidbody2D:
   serializedVersion: 5
@@ -321,7 +329,7 @@ Rigidbody2D:
   m_LinearDamping: 0
   m_AngularDamping: 0
   m_GravityScale: 0
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: e25cb296a7a3d6f4cb02bc935c6dd600, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -330,8 +338,8 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 0
+  m_CollisionDetection: 1
+  m_Constraints: 4
 --- !u!58 &2727292459076215859
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -380,7 +388,7 @@ GameObject:
   - component: {fileID: 4092809288570748153}
   - component: {fileID: 6803679749651820648}
   m_Layer: 6
-  m_Name: White
+  m_Name: FrightWhite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -485,7 +493,7 @@ GameObject:
   - component: {fileID: 5054545328746106472}
   - component: {fileID: 4356915088538598083}
   m_Layer: 6
-  m_Name: Fright
+  m_Name: FrightBlue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -704,7 +712,9 @@ MonoBehaviour:
   pacman: {fileID: 0}
   ghostType: 0
   blinky: {fileID: 0}
-  currentMode: 0
-  elroy1Multiplier: 1.08
-  elroy2Multiplier: 1.16
+  scatter: {fileID: 0}
+  chase: {fileID: 0}
+  frightened: {fileID: 0}
+  home: {fileID: 0}
+  eaten: {fileID: 0}
   elroyStage: 0
