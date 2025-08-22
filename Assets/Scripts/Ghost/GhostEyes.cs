@@ -11,35 +11,78 @@ public class GhostEyes : MonoBehaviour
     [Header("Elroy eyes")]
     public Sprite rightEyesElroy, leftEyesElroy, upEyesElroy, downEyesElroy;
 
-    private Ghost    ghost;
+    private Ghost ghost;
     private Movement mover;
 
     private Vector2 lastDir = Vector2.right;
-    private Facing  lastFacing = Facing.Right;
+    private Facing  lastFacing;
     private bool    lastUsingElroy = false;
 
     private bool overrideActive;
     private Vector2 overrideDir = Vector2.right;
 
+    // NEW: for transform-delta facing when kinematic/scripted
+    [SerializeField] private float motionEpsilon = 0.0005f;
+    private Vector3 lastPos;
+    private bool    haveLastPos = false;
+
     void Awake()
     {
-        ghost  = GetComponent<Ghost>();
-        mover  = ghost.movement ? ghost.movement : GetComponent<Movement>();
+        ghost = GetComponent<Ghost>();
+        mover = ghost.movement ? ghost.movement : GetComponent<Movement>();
         if (!eyesRenderer) eyesRenderer = GetComponentInChildren<SpriteRenderer>(true);
+
+        // Start Blinky looking left (until real motion takes over)
+        if (ghost && ghost.Type == GhostType.Blinky)
+            lastDir = Vector2.left;
+
+        lastPos = transform.position;
+        haveLastPos = true;
+    }
+
+    void OnEnable()
+    {
+        // Reset position baseline on re-enable to avoid a big first delta
+        lastPos = transform.position;
+        haveLastPos = true;
     }
 
     void LateUpdate()
     {
         if (!eyesRenderer || !eyesRenderer.enabled) return;
 
-        // Use override if active; otherwise follow Movement
-        Vector2 dir = overrideActive
-                        ? overrideDir
-                        : (mover ? mover.direction : Vector2.zero);
+        Vector2 dir;
 
-        if (dir == Vector2.zero) dir = lastDir;
+        if (overrideActive)
+        {
+            dir = overrideDir;
+        }
+        else
+        {
+            // Prefer transform delta (works when rb is Kinematic / scripted motion)
+            Vector2 delta = Vector2.zero;
+            if (haveLastPos)
+                delta = (Vector2)(transform.position - lastPos);
 
-        var facing   = MajorFacing(dir);
+            if (delta.sqrMagnitude > motionEpsilon * motionEpsilon)
+            {
+                dir = delta;
+            }
+            else if (mover && mover.rb && mover.rb.bodyType == RigidbodyType2D.Dynamic &&
+                     mover.rb.linearVelocity.sqrMagnitude > motionEpsilon * motionEpsilon)
+            {
+                // Use real physics velocity when dynamic
+                dir = mover.rb.linearVelocity;
+            }
+            else
+            {
+                // Fall back to planned heading; then stickiness
+                dir = mover ? mover.direction : Vector2.zero;
+                if (dir == Vector2.zero) dir = lastDir;
+            }
+        }
+
+        var facing    = MajorFacing(dir);
         bool useElroy = ShouldUseElroySprites();
 
         if (facing != lastFacing || useElroy != lastUsingElroy)
@@ -49,7 +92,9 @@ public class GhostEyes : MonoBehaviour
             lastUsingElroy = useElroy;
         }
 
-        lastDir = dir;
+        lastDir   = dir;
+        lastPos   = transform.position;
+        haveLastPos = true;
     }
 
     /// <summary>Force the eye facing (e.g., during GhostHome ExitRoutine).</summary>
@@ -65,11 +110,8 @@ public class GhostEyes : MonoBehaviour
         lastUsingElroy = ShouldUseElroySprites();
     }
 
-    /// <summary>Return control back to Movement-driven facing.</summary>
-    public void ClearOverrideFacing()
-    {
-        overrideActive = false;
-    }
+    /// <summary>Return control back to movement-driven facing.</summary>
+    public void ClearOverrideFacing() => overrideActive = false;
 
     /// <summary>Directly set facing once (no persistent override).</summary>
     public void LookAt(Vector2 dir)
@@ -78,9 +120,9 @@ public class GhostEyes : MonoBehaviour
         if (dir == Vector2.zero) dir = lastDir;
         lastDir = dir;
 
-        var facing = MajorFacing(dir);
-        eyesRenderer.sprite = SelectSprite(facing, ShouldUseElroySprites());
-        lastFacing = facing;
+        var f = MajorFacing(dir);
+        eyesRenderer.sprite = SelectSprite(f, ShouldUseElroySprites());
+        lastFacing = f;
         lastUsingElroy = ShouldUseElroySprites();
     }
 
@@ -92,8 +134,7 @@ public class GhostEyes : MonoBehaviour
     {
         if (Mathf.Abs(d.x) >= Mathf.Abs(d.y))
             return d.x >= 0f ? Facing.Right : Facing.Left;
-        else
-            return d.y >= 0f ? Facing.Up : Facing.Down;
+        return d.y >= 0f ? Facing.Up : Facing.Down;
     }
 
     private Vector2 Snap4(Vector2 d)

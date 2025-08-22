@@ -832,6 +832,7 @@ public class GameManager : MonoBehaviour
     private void GameOver()
     {
         pacman.gameObject.SetActive(false);
+        bonusItemManager.DespawnBonusItem(true);
         uiManager.ShowGameOverText(true);
         Debug.Log("Game Over!");
 

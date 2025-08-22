@@ -71,7 +71,7 @@ public class GhostHome : MonoBehaviour
         if (move)
         {
             move.ClearObstacleMask();           // restore normal pre-checks
-            move.SetBaseSpeedMultiplier(1f);    // clear home speed on disable (safety)
+            move.SetBaseSpeedMultiplier(1f);    // clear home speed on disable
         }
         if (eyes) eyes.ClearOverrideFacing();
         StopExitNow();
@@ -198,12 +198,33 @@ public class GhostHome : MonoBehaviour
         move.enabled = false;
 
         if (cancelExit) yield break;
+
+        // Align Y to insideDoor.y
+        if (eyes)
+        {
+            float dy = insideDoor.position.y - transform.position.y;
+            eyes.SetOverrideFacing(dy >= 0f ? Vector2.up : Vector2.down);
+        }
         yield return MoveToExact(new Vector3(transform.position.x, insideDoor.position.y, 0f), alignStepDuration);
 
         if (cancelExit) yield break;
+
+        // Align X to insideDoor.x
+        if (eyes)
+        {
+            float dx = insideDoor.position.x - transform.position.x;
+            eyes.SetOverrideFacing(dx >= 0f ? Vector2.right : Vector2.left);
+        }
         yield return MoveToExact(new Vector3(insideDoor.position.x, insideDoor.position.y, 0f), alignStepDuration);
 
         if (cancelExit) yield break;
+
+        // Move through the door to outside
+        if (eyes)
+        {
+            float dy2 = outsideDoor.position.y - transform.position.y;
+            eyes.SetOverrideFacing(dy2 >= 0f ? Vector2.up : Vector2.down);
+        }
         yield return MoveToExact(outsideDoor.position, doorStepDuration);
 
         if (cancelExit) yield break;
@@ -218,9 +239,11 @@ public class GhostHome : MonoBehaviour
         if (move.Occupied(dir)) dir = -dir;
         move.SetDirection(dir, true);
 
+        // release control back to movement-driven eyes
         if (eyes) eyes.ClearOverrideFacing();
         enabled = false;
     }
+
 
     public void StopExitNow()
     {

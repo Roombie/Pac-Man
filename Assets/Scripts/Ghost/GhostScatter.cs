@@ -22,13 +22,17 @@ public class GhostScatter : MonoBehaviour
     private Node lastDecisionNode;
     private CircleCollider2D circleCollider2D;
 
+    // Track movement-enabled edge & initial commit
+    private bool lastMoveEnabled = false;
+    private bool blinkyInitialCommitted = false;
+
     // Arcade tie-break order: Up, Left, Down, Right
     private static readonly Vector2[] TIE = { Vector2.up, Vector2.left, Vector2.down, Vector2.right };
 
     void Awake()
     {
         ghost = GetComponent<Ghost>();
-        move = ghost.movement ?? GetComponent<Movement>();
+        move  = ghost.movement ?? GetComponent<Movement>();
 
         circleCollider2D = GetComponent<CircleCollider2D>();
 #if UNITY_2023_1_OR_NEWER
@@ -41,27 +45,81 @@ public class GhostScatter : MonoBehaviour
     void OnEnable()
     {
         lastDecisionNode = null;
-
-        // If we spawn into Scatter, choose an initial heading IMMEDIATELY (even if movement is disabled).
-        if (ghost && ghost.CurrentMode == Ghost.Mode.Scatter)
-        {
-            var n = ClosestNodeWithin(commitRadius);
-            if (n) DecideAtNode(n, forceTurn: true);  // <<< force the first pick so there's no stall
-        }
+        blinkyInitialCommitted = false;
         circleCollider2D.enabled = true;
+
+        if (!ghost || !move) return;
+
+        lastMoveEnabled = move.enabled;
+
+        // If we spawn into Scatter and movement is already live, allow an immediate commit at node
+        if (ghost.CurrentMode == Ghost.Mode.Scatter && move.enabled)
+        {
+            // If this is Blinky's very first live frame, we still want LEFT; that is handled in Update's rising-edge block
+            var n = ClosestNodeWithin(commitRadius);
+            if (n) DecideAtNode(n, forceTurn: true);
+        }
     }
 
     void Update()
     {
         if (!ghost || !move) return;
+
+        // Detect rising edge: movement just became enabled
+        bool nowEnabled = move.enabled;
+        if (nowEnabled && !lastMoveEnabled)
+        {
+            // On the first enabled frame in Scatter, make Blinky commit LEFT (arcade start) if he has no heading yet.
+            if (!blinkyInitialCommitted &&
+                ghost.Type == GhostType.Blinky &&
+                ghost.CurrentMode == Ghost.Mode.Scatter &&
+                move.direction == Vector2.zero)
+            {
+                // Prefer to commit via node if we're close enough and LEFT is valid there
+                var n = ClosestNodeWithin(commitRadius);
+                bool committed = false;
+
+                if (n)
+                {
+                    var options = n.availableDirections;
+                    bool leftAllowed = options != null && options.Contains(Vector2.left) &&
+                                       !(move.direction != Vector2.zero && Vector2.left == -move.direction);
+
+                    if (leftAllowed)
+                    {
+                        move.SetDirection(Vector2.left, true);
+                        if (move.rb) { move.rb.simulated = true; move.rb.WakeUp(); }
+                        lastDecisionNode = n;
+                        committed = true;
+                    }
+                }
+
+                // Fallback: commit LEFT if not blocked; else go RIGHT
+                if (!committed)
+                {
+                    var dir = Vector2.left;
+                    if (move.Occupied(dir)) dir = Vector2.right;
+                    move.SetDirection(dir, true);
+                    if (move.rb) { move.rb.simulated = true; move.rb.WakeUp(); }
+                }
+
+                blinkyInitialCommitted = true;
+                // Return so we don't also do a same-frame DecideAtNode that could override LEFT
+                lastMoveEnabled = nowEnabled;
+                return;
+            }
+        }
+        lastMoveEnabled = nowEnabled;
+
         if (ghost.CurrentMode != Ghost.Mode.Scatter) return;
+        if (!move.enabled) return; // still frozen
 
-        // Only decide at nodes
-        var n = ClosestNodeWithin(commitRadius);
-        if (!n || n == lastDecisionNode) return;
+        // Normal scatter decisions at nodes
+        var node = ClosestNodeWithin(commitRadius);
+        if (!node || node == lastDecisionNode) return;
 
-        DecideAtNode(n, forceTurn:true);            // <<< force turns at node centers to avoid parking
-        lastDecisionNode = n;
+        DecideAtNode(node, forceTurn: true); // force at node centers to avoid parking
+        lastDecisionNode = node;
     }
 
     private void DecideAtNode(Node node, bool forceTurn)
@@ -79,14 +137,12 @@ public class GhostScatter : MonoBehaviour
         Vector2 current = move.direction;
         Vector2 bestDir = Vector2.zero;
         float bestScore = float.PositiveInfinity;
-        int viable = 0;
 
         // Prefer non-reverse options in tie-break order
         foreach (var d in TIE)
         {
-            if (!options.Contains(d)) continue;
+            if (options == null || !options.Contains(d)) continue;
             if (current != Vector2.zero && d == -current) continue; // avoid 180 for now
-            viable++;
 
             Vector3 nextCenter = node.transform.position + (Vector3)d;
             float score = (nextCenter - targetPos).sqrMagnitude;
@@ -94,11 +150,11 @@ public class GhostScatter : MonoBehaviour
         }
 
         // If corner/dead end left only the reverse, allow it
-        if (bestDir == Vector2.zero && current != Vector2.zero && options.Contains(-current))
+        if (bestDir == Vector2.zero && current != Vector2.zero && options != null && options.Contains(-current))
             bestDir = -current;
 
         // Still nothing? take first available by tie-break
-        if (bestDir == Vector2.zero)
+        if (bestDir == Vector2.zero && options != null)
             foreach (var d in TIE) { if (options.Contains(d)) { bestDir = d; break; } }
 
         if (bestDir != Vector2.zero)
@@ -106,7 +162,7 @@ public class GhostScatter : MonoBehaviour
             // FORCE the turn at the node so we don’t rely on Movement’s own commit radius
             move.SetDirection(bestDir, forced: forceTurn || current == Vector2.zero);
 
-            // Make sure physics is awake when gameplay begins
+            // Ensure physics is awake
             if (move.rb) { move.rb.simulated = true; move.rb.WakeUp(); }
         }
     }

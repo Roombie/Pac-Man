@@ -29417,10 +29417,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4655944684649160370, guid: 574030822bb295046bb2b202399dce5e, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -29435,10 +29431,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 3995126019261799096, guid: 0f0d28bda64fdb4479305b7c75d3bcbb, type: 3}
-      propertyPath: gateNode
-      value: 
-      objectReference: {fileID: 1220182771}
-    - target: {fileID: 3995126019261799096, guid: 0f0d28bda64fdb4479305b7c75d3bcbb, type: 3}
       propertyPath: insideDoor
       value: 
       objectReference: {fileID: 309751672}
@@ -29446,10 +29438,6 @@ PrefabInstance:
       propertyPath: outsideDoor
       value: 
       objectReference: {fileID: 1220182768}
-    - target: {fileID: 3995126019261799096, guid: 0f0d28bda64fdb4479305b7c75d3bcbb, type: 3}
-      propertyPath: outsideDoorNode
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 4144681105962508298, guid: 0f0d28bda64fdb4479305b7c75d3bcbb, type: 3}
       propertyPath: cornerNode
       value: 
@@ -29520,10 +29508,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1683239857205657173, guid: a973dbe00b946b64ab0465d965e74478, type: 3}
-      propertyPath: gateNode
-      value: 
-      objectReference: {fileID: 1220182771}
-    - target: {fileID: 1683239857205657173, guid: a973dbe00b946b64ab0465d965e74478, type: 3}
       propertyPath: insideDoor
       value: 
       objectReference: {fileID: 309751672}
@@ -29531,10 +29515,6 @@ PrefabInstance:
       propertyPath: outsideDoor
       value: 
       objectReference: {fileID: 1220182768}
-    - target: {fileID: 1683239857205657173, guid: a973dbe00b946b64ab0465d965e74478, type: 3}
-      propertyPath: outsideDoorNode
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 1849085848644715751, guid: a973dbe00b946b64ab0465d965e74478, type: 3}
       propertyPath: cornerNode
       value: 
@@ -29879,10 +29859,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1220182768}
     - target: {fileID: 6968706925950100670, guid: c3c19f3655f15274fb23cf5668f3333a, type: 3}
-      propertyPath: gateNode
-      value: 
-      objectReference: {fileID: 1220182771}
-    - target: {fileID: 6968706925950100670, guid: c3c19f3655f15274fb23cf5668f3333a, type: 3}
       propertyPath: insideDoor
       value: 
       objectReference: {fileID: 309751672}
@@ -29890,10 +29866,6 @@ PrefabInstance:
       propertyPath: outsideDoor
       value: 
       objectReference: {fileID: 1220182768}
-    - target: {fileID: 6968706925950100670, guid: c3c19f3655f15274fb23cf5668f3333a, type: 3}
-      propertyPath: outsideDoorNode
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 7944497576229821964, guid: c3c19f3655f15274fb23cf5668f3333a, type: 3}
       propertyPath: cornerNode
       value: 
@@ -29975,10 +29947,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1220182768}
     - target: {fileID: 7100233532736088296, guid: 113da6f8c97fd5945ae60ce1e9d33e94, type: 3}
-      propertyPath: gateNode
-      value: 
-      objectReference: {fileID: 1220182771}
-    - target: {fileID: 7100233532736088296, guid: 113da6f8c97fd5945ae60ce1e9d33e94, type: 3}
       propertyPath: insideDoor
       value: 
       objectReference: {fileID: 309751672}
@@ -29986,10 +29954,6 @@ PrefabInstance:
       propertyPath: outsideDoor
       value: 
       objectReference: {fileID: 1220182768}
-    - target: {fileID: 7100233532736088296, guid: 113da6f8c97fd5945ae60ce1e9d33e94, type: 3}
-      propertyPath: outsideDoorNode
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 7809408808459938813, guid: 113da6f8c97fd5945ae60ce1e9d33e94, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2

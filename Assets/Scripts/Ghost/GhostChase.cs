@@ -27,7 +27,7 @@ public class GhostChase : MonoBehaviour
         if (ghost.CurrentMode != Ghost.Mode.Chase) return;
         
         Vector3 target = GetChaseTarget();
-        Vector2 dir    = ChooseDirectionToward(target);
+        Vector2 dir = ChooseDirectionToward(target);
         move.SetDirection(dir);
     }
 

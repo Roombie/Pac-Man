@@ -57,8 +57,8 @@ public class Movement : MonoBehaviour
         rb.MovePosition(position + translation);
     }
     
-    public void SetObstacleMask(LayerMask mask)  { activeObstacleMask = mask; }
-    public void ClearObstacleMask()              { activeObstacleMask = obstacleLayer; }
+    public void SetObstacleMask(LayerMask mask) { activeObstacleMask = mask; }
+    public void ClearObstacleMask() { activeObstacleMask = obstacleLayer; }
 
     public void SetDirection(Vector2 direction, bool forced = false)
     {
@@ -77,8 +77,14 @@ public class Movement : MonoBehaviour
             nextDirection = direction;
         }
     }
+    
+    public void SetNextDirection(Vector2 dir)
+    {
+        nextDirection = dir;
+    }
 
-    public bool Occupied(Vector2 dir) {
+    public bool Occupied(Vector2 dir)
+    {
         return Physics2D.BoxCast(transform.position, Vector2.one * 0.75f, 0f, dir, 1.5f, activeObstacleMask).collider != null;
     }
 
