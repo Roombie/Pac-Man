@@ -56,12 +56,11 @@ public class GlobalGhostModeController : MonoBehaviour
 
     private void Update()
     {
-        // PAUSE schedule during frightened
-        if (!isFrightenedActive && phaseTimer != null)
-            phaseTimer.Tick(Time.deltaTime);
-
-        if (isFrightenedActive && frightenedTimer != null)
-            frightenedTimer.Tick(Time.deltaTime);
+        // Do NOT tick any timers while frozen (e.g., during READY intro)
+        // This took me two days to realize... bruh
+        if (timersFrozen) return;          // <- add this
+        if (!isFrightenedActive && phaseTimer != null) phaseTimer.Tick(Time.deltaTime);
+        if (isFrightenedActive && frightenedTimer != null) frightenedTimer.Tick(Time.deltaTime);
 
         // Stall timer for house release (only while someone is inside Home)
         if (houseReleaseEnabled && !useGlobalCounter && GetPreferredHomeGhost() != null)
@@ -71,6 +70,7 @@ public class GlobalGhostModeController : MonoBehaviour
         }
         else if (!useGlobalCounter)
         {
+            // Only reset these counters when we're not frozen
             noDotTimer = 0f;
             personalDotCounter = 0;
         }
@@ -174,8 +174,6 @@ public class GlobalGhostModeController : MonoBehaviour
 
         frightenedTimer.OnTimerEnd -= EndFrightened;
         frightenedTimer.OnTimerEnd += EndFrightened;
-
-        float remaining = dur;
 
         ForEachGhost(ghost =>
         {
@@ -341,7 +339,7 @@ public class GlobalGhostModeController : MonoBehaviour
             if (pauseHomeExit)
             {
                 var home = g.GetComponent<GhostHome>();
-                home.SetExitPaused(true);
+                if (home) home.SetExitPaused(true);
             }
         });
     }

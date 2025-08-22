@@ -242,6 +242,8 @@ public class GameManager : MonoBehaviour
     private IEnumerator StartSequence()
     {
         AudioManager.Instance.Play(AudioManager.Instance.gameMusic, SoundCategory.Music);
+        // Freeze the global timers & visuals during READY intro
+        globalGhostModeController.SetTimersFrozen(true);
 
         globalGhostModeController.DeactivateAllGhosts();
 
@@ -273,6 +275,8 @@ public class GameManager : MonoBehaviour
         UpdateSiren(pelletManager.RemainingPelletCount());
         pelletManager.CachePelletLayout(currentPlayer);
 
+        // Unfreeze timers exactly when gameplay begins
+        globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();
         globalGhostModeController.SetHouseReleaseEnabled(true);
 
@@ -283,6 +287,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator NewRoundSequence()
     {
+        globalGhostModeController.SetTimersFrozen(true);
         ResetActorsState();
         bonusItemManager.DespawnBonusItem(true);
         CurrentPlayerData.level++;
@@ -321,6 +326,7 @@ public class GameManager : MonoBehaviour
         pelletManager.CachePelletLayout(currentPlayer);
         bonusItemThresholds = new Queue<int>(new[] { 70, 170 });
 
+        globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();
         
         pacman.animator.speed = 1f;
@@ -364,6 +370,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator RestartLevelSequence()
     {
+        globalGhostModeController.SetTimersFrozen(true);
         bonusItemManager.DespawnBonusItem(true);
 
         yield return new WaitForSeconds(1f);
@@ -404,6 +411,7 @@ public class GameManager : MonoBehaviour
 
         SetState(GameState.Playing);
 
+        globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();
         UpdateSiren(pelletManager.RemainingPelletCount());
         pelletManager.CachePelletLayout(currentPlayer);

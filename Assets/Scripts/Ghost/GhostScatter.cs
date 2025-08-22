@@ -128,9 +128,17 @@ public class GhostScatter : MonoBehaviour
 
         IList<Vector2> options = node.availableDirections;
 
-        // Corner target; Blinky (Elroy) can chase Pac-Man if desired
-        Vector3 targetPos =
-            (elroyChasesDuringScatter && ghost.Type == GhostType.Blinky && ghost.IsElroy && ghost.pacman)
+        // Corner target; DO NOT chase Pac-Man during Scatter (even if Elroy),
+        // but allow it outside Scatter if you call BestDirAtNode from other modes.
+        bool isScatter = ghost && ghost.CurrentMode == Ghost.Mode.Scatter;
+        bool targetPacman =
+            elroyChasesDuringScatter &&
+            ghost.Type == GhostType.Blinky &&
+            ghost.IsElroy &&
+            ghost.pacman &&
+            !isScatter; // ← gate chase OFF during Scatter
+
+        Vector3 targetPos = targetPacman
             ? ghost.pacman.transform.position
             : (cornerNode ? cornerNode.transform.position : transform.position);
 
