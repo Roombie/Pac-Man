@@ -169,7 +169,7 @@ public class Ghost : MonoBehaviour
 
     private void EnableOnly(Mode mode)
     {
-        if (scatter) scatter.enabled= mode == Mode.Scatter;
+        if (scatter) scatter.enabled = mode == Mode.Scatter;
         if (chase) chase.enabled = mode == Mode.Chase;
         if (frightened) frightened.enabled = mode == Mode.Frightened;
         if (home) home.enabled = mode == Mode.Home;

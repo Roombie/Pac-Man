@@ -58,8 +58,8 @@ public class GhostHome : MonoBehaviour
         launchTimer = launchDelaySeconds;
 
         // While in Home we:
-        //  1) disable Movement pre-checks (collide + bounce via OnCollisionEnter2D)
-        //  2) apply a fixed Home speed multiplier for consistent pacing
+        //  disable Movement pre-checks (collide + bounce via OnCollisionEnter2D)
+        //  apply a fixed Home speed multiplier for consistent pacing
         move.SetObstacleMask(0);                // no pre-checks → let collisions bounce
         move.SetBaseSpeedMultiplier(homeSpeedMult);
 

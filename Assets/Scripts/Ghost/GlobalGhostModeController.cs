@@ -120,24 +120,24 @@ public class GlobalGhostModeController : MonoBehaviour
         float m =
             (mode == Ghost.Mode.Frightened) ? frightenedMult :
             (mode == Ghost.Mode.Eaten) ? eatenMult :
-                                              scatterChaseMult;
+                                            scatterChaseMult;
 
         g.movement.SetBaseSpeedMultiplier(m);
     }
 
-    private void SetGhostAnimatorsSpeed(float s)
+    private void SetGhostAnimatorsSpeed(float speed)
     {
-        ForEachGhost(g =>
+        ForEachGhost(ghost =>
         {
-            if (!g) return;
+            if (!ghost) return;
 
-            foreach (var a in g.GetComponentsInChildren<Animator>(true))
-                a.speed = s;
+            foreach (var a in ghost.GetComponentsInChildren<Animator>(true))
+                a.speed = speed;
 
-            var animSprites = g.GetComponentsInChildren<AnimatedSprite>(true);
+            var animSprites = ghost.GetComponentsInChildren<AnimatedSprite>(true);
             foreach (var spr in animSprites)
             {
-                if (Mathf.Approximately(s, 0f)) spr.PauseAnimation();
+                if (Mathf.Approximately(speed, 0f)) spr.PauseAnimation();
                 else spr.ResumeAnimation();
             }
         });
@@ -151,9 +151,9 @@ public class GlobalGhostModeController : MonoBehaviour
         timersFrozen = frozen;
 
         // Pause visual flicker & anims so they freeze too
-        ForEachGhost(g =>
+        ForEachGhost(ghost =>
         {
-            var vis = g ? g.GetComponent<GhostVisuals>() : null;
+            var vis = ghost ? ghost.GetComponent<GhostVisuals>() : null;
             if (vis) vis.SetPaused(frozen);
         });
 
@@ -165,11 +165,9 @@ public class GlobalGhostModeController : MonoBehaviour
     {
         float dur = duration ?? previewFrightenedSeconds;
 
-        // If we were NOT already frightened, do the global reversal (skip ghosts in Home).
         if (!isFrightenedActive)
             ReverseAll(skipHome: true);
 
-        // (Re)start the global frightened timer
         isFrightenedActive = true;
         if (frightenedTimer == null) frightenedTimer = new Timer(dur);
         else frightenedTimer.Reset(dur);
@@ -177,22 +175,19 @@ public class GlobalGhostModeController : MonoBehaviour
         frightenedTimer.OnTimerEnd -= EndFrightened;
         frightenedTimer.OnTimerEnd += EndFrightened;
 
-        float remaining = FrightenedRemainingSeconds;
+        float remaining = dur;
 
-        // Apply Frightened (or refresh it) to all ghosts that can be affected NOW
-        ForEachGhost(g =>
+        ForEachGhost(ghost =>
         {
-            if (!g) return;
-            if (g.CurrentMode == Ghost.Mode.Eaten) return; // eyes unaffected
-            if (g.CurrentMode == Ghost.Mode.Home) return; // Home ghosts will adopt on exit
+            if (!ghost) return;
+            if (ghost.CurrentMode == Ghost.Mode.Eaten) return;
+            if (ghost.CurrentMode == Ghost.Mode.Home)  return;
 
-            // Force/refresh mode & speed
-            g.SetMode(Ghost.Mode.Frightened);
-            ApplyModeSpeed(g, Ghost.Mode.Frightened);
+            ghost.SetMode(Ghost.Mode.Frightened);
+            ApplyModeSpeed(ghost, Ghost.Mode.Frightened);
 
-            // Reset visuals + local flicker clocks unconditionally
-            var vis = g.GetComponent<GhostVisuals>();
-            if (vis) vis.OnFrightenedStart(remaining);
+            var vis = ghost.GetComponent<GhostVisuals>();
+            if (vis) vis.OnFrightenedStart();
         });
     }
 
@@ -204,15 +199,15 @@ public class GlobalGhostModeController : MonoBehaviour
         AdvancePhase(initial: true);
     }
 
-    private void EnsureExit(Ghost g)
+    private void EnsureExit(Ghost ghost)
     {
-        if (!g) return;
-        var home = g.GetComponent<GhostHome>();
+        if (!ghost) return;
+        var home = ghost.GetComponent<GhostHome>();
         if (!home) return;
 
-        // If the GO is inactive, activate it first so coroutines can run
-        if (!g.gameObject.activeInHierarchy)
-            g.gameObject.SetActive(true);
+        // If the ghost is inactive, activate it first so coroutines can run
+        if (!ghost.gameObject.activeInHierarchy)
+            ghost.gameObject.SetActive(true);
 
         home.RequestExit();
     }
@@ -266,41 +261,46 @@ public class GlobalGhostModeController : MonoBehaviour
             if (!g.gameObject.activeSelf)
                 g.gameObject.SetActive(true);
 
-            // Enable movement component
-            if (g.movement)
-            {
-                g.movement.enabled = true;
-            }
+            var home = g.GetComponent<GhostHome>();
+            bool isExitingHome = home && home.IsExiting;
 
-            // Enable colliders BEFORE we do any Occupied(...) checks
+            // Only enable Movement if we are NOT in the scripted exit
+            if (g.movement)
+                g.movement.enabled = !isExitingHome;
+
+            // colliders first, as you already do
             var cols = g.GetComponents<CircleCollider2D>();
             for (int i = 0; i < cols.Length; i++) cols[i].enabled = true;
 
-            // If we paused with direction==0 and left a nextDirection, consume it immediately
-            if (g.movement && g.movement.direction == Vector2.zero && g.movement.nextDirection != Vector2.zero)
-            {
-                g.movement.SetDirection(g.movement.nextDirection);
-            }
-
-            // Apply current global phase to non-Home, non-Eyes ghosts
             ResumeAllGhostAnimations();
+
+            // Apply global phase only to outside, non-eyes ghosts
             if (!isFrightenedActive && g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten)
             {
                 g.SetMode(currentPhaseMode);
                 ApplyModeSpeed(g, currentPhaseMode);
             }
 
-            // If still no heading, pick one now
+            // If still outside with no heading, seed a start direction
             if (g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten && g.movement)
             {
                 if (g.movement.direction == Vector2.zero)
                 {
-                    // Prefer LEFT, but if blocked, go RIGHT. This avoids a brief stall at game start.
                     var startDir = Vector2.left;
                     if (g.movement.Occupied(startDir)) startDir = -startDir;
                     g.movement.SetDirection(startDir, forced: true);
                 }
             }
+
+            // If we’re resuming Home behaviour (not exiting) and direction is zero, seed pacing
+            if (g.CurrentMode == Ghost.Mode.Home && !isExitingHome && g.movement && g.movement.direction == Vector2.zero)
+            {
+                var init = (g.Type == GhostType.Pinky) ? Vector2.down : Vector2.up;
+                g.movement.SetDirection(init, true);
+            }
+
+            // Finally, if you paused the exit earlier, unpause it here
+            if (home) home.SetExitPaused(false);
         });
     }
 
@@ -312,7 +312,7 @@ public class GlobalGhostModeController : MonoBehaviour
         });
     }
 
-    public void StopAllGhosts(bool disableColliders = true, bool zeroDirection = true)
+    public void StopAllGhosts(bool disableColliders = true, bool zeroDirection = true, bool pauseHomeExit = false)
     {
         ForEachGhost(g =>
         {
@@ -320,7 +320,13 @@ public class GlobalGhostModeController : MonoBehaviour
 
             if (g.movement)
             {
-                if (zeroDirection) g.movement.SetDirection(Vector2.zero);
+                if (zeroDirection)
+                {
+                    g.movement.SetDirection(Vector2.zero, true);
+                }
+
+                if (g.movement.rb) g.movement.rb.linearVelocity = Vector2.zero;
+
                 g.movement.enabled = false;
             }
 
@@ -330,6 +336,12 @@ public class GlobalGhostModeController : MonoBehaviour
             {
                 var cols = g.GetComponents<CircleCollider2D>();
                 for (int i = 0; i < cols.Length; i++) cols[i].enabled = false;
+            }
+
+            if (pauseHomeExit)
+            {
+                var home = g.GetComponent<GhostHome>();
+                home.SetExitPaused(true);
             }
         });
     }

@@ -34,8 +34,8 @@ public class GameManager : MonoBehaviour
         public bool hard;
         public List<Behaviour> disabled; // Movement/Animator we turned off in soft freeze
     }
-    private readonly Stack<FreezeState> _freeze = new();
-    private float _savedTimeScale = 1f;
+    private readonly Stack<FreezeState> freeze = new();
+    private float savedTimeScale = 1f;
 
     public enum GameState { Intro, Playing, Paused, LevelClear, Intermission, GameOver }
     public GameState CurrentGameState { get; private set; }
@@ -273,17 +273,17 @@ public class GameManager : MonoBehaviour
         UpdateSiren(pelletManager.RemainingPelletCount());
         pelletManager.CachePelletLayout(currentPlayer);
 
-        pacman.animator.speed = 1f;
-        pacman.enabled = true;
-        pacman.movement.SetDirection(Vector2.right);
-
         globalGhostModeController.StartAllGhosts();
         globalGhostModeController.SetHouseReleaseEnabled(true);
-        
+
+        pacman.animator.speed = 1f;
+        pacman.enabled = true;
+        pacman.movement.SetDirection(Vector2.right); 
     }
 
     private IEnumerator NewRoundSequence()
     {
+        ResetActorsState();
         bonusItemManager.DespawnBonusItem(true);
         CurrentPlayerData.level++;
         globalGhostModeController.ActivateAllGhosts();
@@ -294,6 +294,7 @@ public class GameManager : MonoBehaviour
         CurrentPlayerData.pelletsEaten = 0;
         CurrentPlayerData.eatenPellets.Clear();
         thresholdIndex = 0;
+        pelletManager.ResetPellets(new HashSet<int>());
 
         globalGhostModeController.StopAllGhosts();
         fruitDisplayController.RefreshFruits(CurrentRound);
@@ -318,14 +319,13 @@ public class GameManager : MonoBehaviour
 
         UpdateSiren(pelletManager.RemainingPelletCount());
         pelletManager.CachePelletLayout(currentPlayer);
+        bonusItemThresholds = new Queue<int>(new[] { 70, 170 });
+
+        globalGhostModeController.StartAllGhosts();
         
         pacman.animator.speed = 1f;
         pacman.enabled = true;
         pacman.movement.SetDirection(Vector2.right);
-
-        bonusItemThresholds = new Queue<int>(new[] { 70, 170 });
-
-        globalGhostModeController.StartAllGhosts();
     }
 
     public void TogglePause()
@@ -368,7 +368,7 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
     
-        ResetActorsState();
+        ResetState();
 
         if (IsTwoPlayerMode)
         {
@@ -614,9 +614,9 @@ public class GameManager : MonoBehaviour
     #region Game State & Resets
     public void PushFreezeHard()
     {
-        _freeze.Push(new FreezeState { hard = true, disabled = null });
-        if (_freeze.Count == 1) {
-            _savedTimeScale = Time.timeScale;
+        freeze.Push(new FreezeState { hard = true, disabled = null });
+        if (freeze.Count == 1) {
+            savedTimeScale = Time.timeScale;
             Time.timeScale = 0f;
             globalGhostModeController?.SetTimersFrozen(true); // pauses frightened/phase + flicker
         }
@@ -639,34 +639,33 @@ public class GameManager : MonoBehaviour
         // Stop all ghosts EXCEPT eyes (Eaten)
         if (globalGhostModeController)
         {
-            foreach (var g in globalGhostModeController.ghosts)
+            foreach (var ghost in globalGhostModeController.ghosts)
             {
-                if (!g) continue;
-                if (g.CurrentMode == Ghost.Mode.Eaten) continue; // let eyes move!
+                if (!ghost) continue;
+                if (ghost.CurrentMode == Ghost.Mode.Eaten) continue; // let eyes move!
 
-                if (g.movement && g.movement.enabled) { g.movement.enabled = false; list.Add(g.movement); }
+                if (ghost.movement && ghost.movement.enabled) { ghost.movement.enabled = false; list.Add(ghost.movement); }
 
                 // pause anims on body/frightened/white
-                foreach (var a in g.GetComponentsInChildren<Animator>(true))
+                foreach (var a in ghost.GetComponentsInChildren<Animator>(true))
                     if (a.enabled) { a.enabled = false; list.Add(a); }
             }
         }
 
-        _freeze.Push(new FreezeState { hard = false, disabled = list });
+        freeze.Push(new FreezeState { hard = false, disabled = list });
     }
 
     public void PopFreeze()
     {
-        if (_freeze.Count == 0) return;
-        var top = _freeze.Pop();
+        if (freeze.Count == 0) return;
+        var top = freeze.Pop();
 
         if (top.hard)
         {
-            if (_freeze.Count == 0 || !_freeze.Peek().hard) {
-                Time.timeScale = _freeze.Count == 0 ? _savedTimeScale : 0f;
-                if (_freeze.Count == 0) {
+            if (freeze.Count == 0 || !freeze.Peek().hard) {
+                Time.timeScale = freeze.Count == 0 ? savedTimeScale : 0f;
+                if (freeze.Count == 0) {
                     globalGhostModeController?.SetTimersFrozen(false);
-                    // AudioListener.pause = false;
                 }
             }
         }
@@ -677,10 +676,10 @@ public class GameManager : MonoBehaviour
                 foreach (var b in top.disabled)
                     if (b) b.enabled = true;
 
-            if (_freeze.Count == 0 || _freeze.Peek().hard)
+            if (freeze.Count == 0 || freeze.Peek().hard)
             {
                 // If stack is empty or next is hard, timers remain as that state dictates
-                if (_freeze.Count == 0)
+                if (freeze.Count == 0)
                     globalGhostModeController?.SetTimersFrozen(false);
             }
         }
@@ -689,10 +688,9 @@ public class GameManager : MonoBehaviour
     // Safety if you change scenes/states
     public void ClearAllFreezes()
     {
-        _freeze.Clear();
+        freeze.Clear();
         Time.timeScale = 1f;
         globalGhostModeController?.SetTimersFrozen(false);
-        // AudioListener.pause = false;
     }
 
     public void ResetActorsState()
@@ -786,22 +784,23 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator GhostEatenSequence(Ghost ghost)
     {
+        // Freeze visuals/timers so the 1s popup is static
         globalGhostModeController.SetTimersFrozen(true);
 
-        // Freeze Pacman and all ghosts
+        // Freeze Pac-Man
         pacman.isInputLocked = true;
         pacman.movement.enabled = false;
         pacman.animator.speed = 0f;
         pacman.gameObject.SetActive(false);
 
+        // Freeze ghosts (soft) during popup; your version allows eyes logic as needed
         PushFreezeSoftAllowEyes();
-        var visuals = ghost.GetComponent<GhostVisuals>();
-        if (visuals != null)
-        {
-            visuals.HideAllForScore();
-        }
 
-        // Show points
+        // Hide this ghost's visuals under the score popup
+        var visuals = ghost.GetComponent<GhostVisuals>();
+        if (visuals) visuals.HideAllForScore();
+
+        // Score & SFX
         int comboIndex = Mathf.Clamp(ghostMultiplier - 1, 0, ghostComboPoints.Length - 1);
         int points = ghostComboPoints[comboIndex];
         AddScore(points);
@@ -810,22 +809,24 @@ public class GameManager : MonoBehaviour
 
         ghostMultiplier++;
 
-        // Wait one second (according to The Pacman Dossier)
+        // Arcade-accurate 1.0s pause (unscaled)
         yield return new WaitForSecondsRealtime(1f);
 
-        // The eaten ghost activates the enter home behavior
-        // which set eyes mode, adjust their speed and go home to regenerate
+        // Switch to Eaten and set correct speed BEFORE unfreezing anything
         ghost.SetMode(Ghost.Mode.Eaten);
+        globalGhostModeController.ApplyModeSpeed(ghost, Ghost.Mode.Eaten);
 
-        // Unfreeze Pacman and the other ghosts
+        // Unfreeze timers/animations first so visuals resume cleanly
+        globalGhostModeController.SetTimersFrozen(false);
+
+        // Bring Pac-Man back
         pacman.gameObject.SetActive(true);
         pacman.movement.enabled = true;
         pacman.isInputLocked = false;
         pacman.animator.speed = 1f;
 
-        PopFreeze(); 
-        globalGhostModeController.SetTimersFrozen(false);
-        globalGhostModeController.ApplyModeSpeed(ghost, Ghost.Mode.Eaten);
+        // Unfreeze ghosts
+        PopFreeze();
     }
 
     private void GameOver()
@@ -879,7 +880,6 @@ public class GameManager : MonoBehaviour
         // Reset the ghost multiplier and any other necessary resets
         ResetGhostMultiplier();
     }
-
 
     private void ResetGhostMultiplier()
     {
