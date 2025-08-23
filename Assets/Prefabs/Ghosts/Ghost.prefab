@@ -128,6 +128,7 @@ GameObject:
   - component: {fileID: 3123794828252240889}
   - component: {fileID: 6248239528917311017}
   - component: {fileID: -7464493849995840156}
+  - component: {fileID: 6982565004029077696}
   - component: {fileID: 6921662381185705033}
   - component: {fileID: 6345951948588010480}
   - component: {fileID: 2727292459076215859}
@@ -176,6 +177,9 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 256
+  corneringEnabled: 1
+  cornerWindow: 0.25
+  snapEpsilon: 0.02
 --- !u!114 &6465194683156975210
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -316,6 +320,19 @@ MonoBehaviour:
   alignStepDuration: 0.2
   doorStepDuration: 0.4
   homeSpeedMult: 0.75
+--- !u!114 &6982565004029077696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3657060400200870950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e836faeef2ef7e48b3723d0490f3c2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  margin: 0.5
 --- !u!50 &6921662381185705033
 Rigidbody2D:
   serializedVersion: 5

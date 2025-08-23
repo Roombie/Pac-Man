@@ -74,7 +74,7 @@ public class Pacman : MonoBehaviour
             spriteRenderer.flipY = false;
         }
 
-        animator.speed = movement.isBlocked ? 0f : 1f;
+        // animator.speed = movement.isBlocked ? 0f : 1f;
     }
 
     /// <summary>

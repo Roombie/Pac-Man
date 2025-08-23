@@ -245,6 +245,7 @@ public class GameManager : MonoBehaviour
         // Freeze the global timers & visuals during READY intro
         globalGhostModeController.SetTimersFrozen(true);
         globalGhostModeController.DeactivateAllGhosts();
+        globalGhostModeController.SetEyesAudioAllowed(false);
 
         pacman.gameObject.SetActive(false);
 

@@ -82,7 +82,7 @@ public class GhostEyes : MonoBehaviour
             }
         }
 
-        var facing    = MajorFacing(dir);
+        var facing = MajorFacing(dir);
         bool useElroy = ShouldUseElroySprites();
 
         if (facing != lastFacing || useElroy != lastUsingElroy)
@@ -92,8 +92,10 @@ public class GhostEyes : MonoBehaviour
             lastUsingElroy = useElroy;
         }
 
-        lastDir   = dir;
-        lastPos   = transform.position;
+        if (dir.sqrMagnitude > 0.0001f)
+            lastDir = dir;
+            
+        lastPos = transform.position;
         haveLastPos = true;
     }
 

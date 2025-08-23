@@ -354,6 +354,9 @@ public class GlobalGhostModeController : MonoBehaviour
 
             // Finally, if you paused the exit earlier, unpause it here
             if (home) home.SetExitPaused(false);
+
+            var eyes = g.GetComponent<GhostEyes>();
+            if (eyes) eyes.enabled = true;
         });
     }
 
@@ -371,15 +374,15 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             if (!g) return;
 
+            var eyes = g.GetComponent<GhostEyes>();
+            if (eyes) eyes.enabled = false;
+
             if (g.movement)
             {
                 if (zeroDirection)
-                {
                     g.movement.SetDirection(Vector2.zero, true);
-                }
 
                 if (g.movement.rb) g.movement.rb.linearVelocity = Vector2.zero;
-
                 g.movement.enabled = false;
             }
 
@@ -388,7 +391,7 @@ public class GlobalGhostModeController : MonoBehaviour
             if (disableColliders)
             {
                 var cols = g.GetComponents<CircleCollider2D>();
-                for (int i = 0; i < cols.Length; i++) cols[i].enabled = false;
+                foreach (var c in cols) c.enabled = false;
             }
 
             if (pauseHomeExit)

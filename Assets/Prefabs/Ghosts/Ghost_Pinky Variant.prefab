@@ -53,6 +53,22 @@ PrefabInstance:
       value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6007269523664781191, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: probeSize.x
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 6007269523664781191, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: probeSize.y
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 6007269523664781191, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: probeDistance
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6007269523664781191, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: corneringEnabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6007269523664781191, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: initialDirection.y
       value: 0
       objectReference: {fileID: 0}

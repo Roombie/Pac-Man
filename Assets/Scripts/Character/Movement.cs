@@ -72,7 +72,7 @@ public class Movement : MonoBehaviour
                 cornerDir = Snap4(nextDirection);
             }
         }
-        
+
         isBlocked = Occupied(direction);
     }
 
