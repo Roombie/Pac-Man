@@ -49,13 +49,13 @@ public class Pacman : MonoBehaviour
                 lastInputDirection = inputDirection;
             }
 
-            TrySetDirection(inputDirection);   // ⬅️ use the safe “force reverse” helper
+            TrySetDirection(inputDirection);   // use the safe “force reverse” helper
 
             UpdateIndicator(inputDirection);
         }
         else if (Time.time <= inputBufferTime)
         {
-            TrySetDirection(lastInputDirection); // ⬅️ apply buffered input with same logic
+            TrySetDirection(lastInputDirection); // apply buffered input with same logic
         }
 
         // If there's input, rotate depending on the input
@@ -74,7 +74,7 @@ public class Pacman : MonoBehaviour
             spriteRenderer.flipY = false;
         }
 
-        // animator.speed = movement.isBlocked ? 0f : 1f;
+        animator.speed = movement.isBlocked ? 0f : 1f;
     }
 
     /// <summary>
@@ -158,7 +158,6 @@ public class Pacman : MonoBehaviour
     private IEnumerator DieSequence()
     {
         isDead = true;
-
         
         GameManager.Instance.globalGhostModeController.StopAllGhosts(disableColliders: true, zeroDirection: true, pauseHomeExit: true);
         GameManager.Instance.globalGhostModeController.SetEyesAudioAllowed(false);
