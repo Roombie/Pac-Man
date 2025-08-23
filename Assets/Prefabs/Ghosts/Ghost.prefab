@@ -129,6 +129,7 @@ GameObject:
   - component: {fileID: 6248239528917311017}
   - component: {fileID: -7464493849995840156}
   - component: {fileID: 6921662381185705033}
+  - component: {fileID: 6345951948588010480}
   - component: {fileID: 2727292459076215859}
   m_Layer: 6
   m_Name: Ghost
@@ -213,7 +214,6 @@ MonoBehaviour:
   body: {fileID: 406121738378801342}
   fright: {fileID: 5467106861094070257}
   white: {fileID: 4671879606381133001}
-  fallbackFrightenedSeconds: 6
   flashThreshold: 2
   flashInterval: 0.15
 --- !u!114 &7708044788880522505
@@ -237,6 +237,7 @@ MonoBehaviour:
   leftEyesElroy: {fileID: -287270737, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
   upEyesElroy: {fileID: 1282927560, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
   downEyesElroy: {fileID: 925705772, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+  motionEpsilon: 0.0005
 --- !u!114 &-2863338508393274213
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -249,7 +250,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f52d4df1f68bf440805df72940f832c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cornerTarget: {fileID: 0}
+  cornerNode: {fileID: 0}
+  commitRadius: 0.18
+  elroyChasesDuringScatter: 1
 --- !u!114 &7634560066299346982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -287,14 +290,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c94fe1f2983fcf4eb42fd3b57f1be9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  outsideDoor: {fileID: 0}
   insideDoor: {fileID: 0}
+  outsideDoor: {fileID: 0}
+  commitRadius: 0.18
+  outsideStepSeconds: 0.2
+  insideStepSeconds: 0.2
   eyesLayerName: GhostEyes
-  normalLayerName: Ghost
-  eyesObstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
-  arriveRadius: 0.15
+  ghostLayerName: Ghost
+  setLayerRecursively: 1
 --- !u!114 &-7464493849995840156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -337,9 +340,45 @@ Rigidbody2D:
     serializedVersion: 2
     m_Bits: 0
   m_Interpolate: 0
-  m_SleepingMode: 1
+  m_SleepingMode: 0
   m_CollisionDetection: 1
   m_Constraints: 4
+--- !u!58 &6345951948588010480
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3657060400200870950}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 6200000, guid: e25cb296a7a3d6f4cb02bc935c6dd600, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
 --- !u!58 &2727292459076215859
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -452,7 +491,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1878241059
   m_SortingLayer: 1
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_Sprite: {fileID: -1636797939, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -557,7 +596,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1878241059
   m_SortingLayer: 1
-  m_SortingOrder: 0
+  m_SortingOrder: 3
   m_Sprite: {fileID: 125702033, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -596,8 +635,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7800802239619638279}
   - component: {fileID: 1466197436971015820}
-  - component: {fileID: 6883016487423491841}
-  - component: {fileID: 187565768491132636}
   m_Layer: 6
   m_Name: Eyes
   m_TagString: Untagged
@@ -675,46 +712,3 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &6883016487423491841
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7075192717053300214}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f23c46661e6249b4d97ecd2d1ccd0c38, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  eyesRenderer: {fileID: 0}
-  rightEyes: {fileID: 0}
-  leftEyes: {fileID: 0}
-  upEyes: {fileID: 0}
-  downEyes: {fileID: 0}
-  rightEyesElroy: {fileID: 0}
-  leftEyesElroy: {fileID: 0}
-  upEyesElroy: {fileID: 0}
-  downEyesElroy: {fileID: 0}
---- !u!114 &187565768491132636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7075192717053300214}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e50eb5e057fbeb547a398eebfce28f95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  movement: {fileID: 0}
-  pacman: {fileID: 0}
-  ghostType: 0
-  blinky: {fileID: 0}
-  scatter: {fileID: 0}
-  chase: {fileID: 0}
-  frightened: {fileID: 0}
-  home: {fileID: 0}
-  eaten: {fileID: 0}
-  elroyStage: 0

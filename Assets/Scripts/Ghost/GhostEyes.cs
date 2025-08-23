@@ -15,16 +15,16 @@ public class GhostEyes : MonoBehaviour
     private Movement mover;
 
     private Vector2 lastDir = Vector2.right;
-    private Facing  lastFacing;
-    private bool    lastUsingElroy = false;
+    private Facing lastFacing;
+    private bool lastUsingElroy = false;
 
     private bool overrideActive;
     private Vector2 overrideDir = Vector2.right;
 
-    // NEW: for transform-delta facing when kinematic/scripted
+    // for transform-delta facing when kinematic/scripted
     [SerializeField] private float motionEpsilon = 0.0005f;
     private Vector3 lastPos;
-    private bool    haveLastPos = false;
+    private bool haveLastPos = false;
 
     void Awake()
     {

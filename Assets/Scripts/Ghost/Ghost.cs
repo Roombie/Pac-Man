@@ -9,6 +9,7 @@ public class Ghost : MonoBehaviour
 
     [SerializeField] private GhostType ghostType = GhostType.Blinky;
     public GhostType Type => ghostType;
+    private bool settingMode;
 
     private Vector3 startingPosition;
 
@@ -36,6 +37,7 @@ public class Ghost : MonoBehaviour
     private float baseNormalSpeed = -1f;
     private float pendingElroySpeedMult = 1f;
     private int homeModeFlipCount = 0;
+    public event Action<Ghost, Mode, Mode> ModeChanged;
 
 #if UNITY_EDITOR
     void OnValidate()
@@ -72,6 +74,10 @@ public class Ghost : MonoBehaviour
     public void SetMode(Mode newMode)
     {
         if (CurrentMode == newMode) return;
+        if (settingMode) return;
+
+        settingMode = true;
+        var prev = CurrentMode;
 
         CurrentMode = newMode;
         EnableOnly(newMode);
@@ -82,6 +88,10 @@ public class Ghost : MonoBehaviour
             if (elroyStage == 0) baseNormalSpeed = movement.speed;
             else if (pendingElroySpeedMult > 0f) ApplyElroySpeed(pendingElroySpeedMult);
         }
+
+        settingMode = false;
+
+        ModeChanged?.Invoke(this, prev, newMode);
     }
 
     /// <summary>Elroy 0/1/2; speedMult is relative to level's normal speed.</summary>

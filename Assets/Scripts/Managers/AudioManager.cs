@@ -123,7 +123,8 @@ public class AudioManager : MonoBehaviour
         if (category == SoundCategory.Music)
             CurrentMusic = clip;
 
-        if (category == SoundCategory.SFX)
+        // Only auto-return one-shots. Loops manage their own lifetime.
+        if (category == SoundCategory.SFX && !loop)
             StartCoroutine(ReturnToPoolAfterPlayback(source, clip.length / Mathf.Abs(pitch)));
     }
 
@@ -213,14 +214,12 @@ public class AudioManager : MonoBehaviour
     {
         if (clip == null || !activeSounds.ContainsKey(clip))
         {
-            Debug.LogWarning($"[AudioManager] Tried to stop unregistered clip: {clip?.name ?? "null"}");
             return;
         }
 
         AudioSource source = activeSounds[clip];
         if (source != null)
         {
-            Debug.Log($"[AudioManager] Stopping clip: {clip.name} from source: {source}");
             source.Stop();
         }
 

@@ -11,7 +11,7 @@ public class GhostVisuals : MonoBehaviour
 
     [Header("Frightened")]
     [SerializeField] private float flashThreshold = 2f;   // start flicker when <= this many seconds remain
-    [SerializeField] private float flashInterval = 0.4f; // flicker cadence
+    [SerializeField] private float flashInterval = 0.4f;  // flicker cadence
 
     private Ghost ghost;
     private Ghost.Mode lastMode;
@@ -21,9 +21,16 @@ public class GhostVisuals : MonoBehaviour
     void Awake()
     {
         ghost = GetComponent<Ghost>();
-        ctrl = GameManager.Instance.globalGhostModeController;
-        lastMode = ghost.CurrentMode;
+        lastMode = ghost ? ghost.CurrentMode : Ghost.Mode.Scatter;
         ApplyForMode(lastMode);
+
+        BindControllerIfNeeded();  // safe in Awake
+    }
+
+    void Start()
+    {
+        // In case GameManager was created after our Awake
+        BindControllerIfNeeded();
     }
 
     void Update()
@@ -51,13 +58,31 @@ public class GhostVisuals : MonoBehaviour
             else
             {
                 float elapsedIntoFlash = flashThreshold - remaining;
-                int phaseIndex = Mathf.FloorToInt(elapsedIntoFlash / flashInterval);
-                bool showWhite = (phaseIndex % 2) == 1;
+                int   phaseIndex       = Mathf.FloorToInt(elapsedIntoFlash / flashInterval);
+                bool  showWhite        = (phaseIndex % 2) == 1;
 
                 SetActive(body: false, eyes: false, fright: !showWhite, white: showWhite);
             }
-            return; // don't run any local-timer logic
+            return;
         }
+    }
+
+    private void BindControllerIfNeeded()
+    {
+        if (ctrl) return;
+
+        // Prefer the GameManager singleton if it's alive
+        var gm = GameManager.Instance;
+        if (gm) ctrl = gm.globalGhostModeController;
+        if (ctrl) return;
+
+        // Version-safe scene search fallback
+#if UNITY_2023_1_OR_NEWER
+        ctrl = Object.FindFirstObjectByType<GlobalGhostModeController>();
+        if (!ctrl) ctrl = Object.FindAnyObjectByType<GlobalGhostModeController>();
+#else
+        ctrl = Object.FindObjectOfType<GlobalGhostModeController>();
+#endif
     }
 
     private void OnModeChanged(Ghost.Mode prev, Ghost.Mode next)
@@ -98,32 +123,26 @@ public class GhostVisuals : MonoBehaviour
 
     private void KillFrightVisuals()
     {
-        if (white) white.SetActive(false);
+        if (white)  white.SetActive(false);
         if (fright) fright.SetActive(false);
     }
 
     private void SetActive(bool body, bool eyes, bool fright, bool white)
     {
-        if (this.body) this.body.SetActive(body);
-        if (this.eyes) this.eyes.SetActive(eyes);
+        if (this.body)   this.body.SetActive(body);
+        if (this.eyes)   this.eyes.SetActive(eyes);
         if (this.fright) this.fright.SetActive(fright);
-        if (this.white) this.white.SetActive(white);
+        if (this.white)  this.white.SetActive(white);
     }
 
-    /// <summary>Called by controller when frightened starts; shows blue immediately.</summary>
     public void OnFrightenedStart()
     {
         SetActive(body: false, eyes: false, fright: true, white: false);
     }
 
-    /// <summary>Freeze/unfreeze visual timers (used during 1s score pause & level clear).</summary>
     public void SetPaused(bool pause) => paused = pause;
 
-    /// <summary>Hide all parts (for the 1s score popup), remembering previous state.</summary>
-    public void HideAllForScore()
-    {
-        SetActive(false, false, false, false);
-    }
+    public void HideAllForScore() => SetActive(false, false, false, false);
 
     public void ShowForCurrentMode() => ApplyForMode(ghost ? ghost.CurrentMode : Ghost.Mode.Scatter);
 }

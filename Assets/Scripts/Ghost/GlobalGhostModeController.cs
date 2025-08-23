@@ -52,13 +52,38 @@ public class GlobalGhostModeController : MonoBehaviour
     private bool useGlobalCounter = false;
     private int globalDotCounter = 0;
 
+    // Eyes audio control
+    private int eatenActiveCount = 0;
+    [SerializeField] private bool eyesAudioAllowed = true;
+
+    void Awake()
+    {
+        ForEachGhost(g =>
+        {
+            if (!g) return;
+            // prevent double-subscribe if called multiple times
+            g.ModeChanged -= OnGhostModeChanged;
+            g.ModeChanged += OnGhostModeChanged;
+        });
+
+        // Initial eaten count + audio state
+        eatenActiveCount = 0;
+        ForEachGhost(g => { if (g && g.CurrentMode == Ghost.Mode.Eaten) eatenActiveCount++; });
+        UpdateEyesAudio();
+    }
+
+    void OnDestroy()
+    {
+        ForEachGhost(g => { if (g) g.ModeChanged -= OnGhostModeChanged; });
+    }
+
     private void Start() => ApplyLevel(currentLevel);
 
     private void Update()
     {
         // Do NOT tick any timers while frozen (e.g., during READY intro)
-        // This took me two days to realize... bruh
-        if (timersFrozen) return;          // <- add this
+        if (timersFrozen) return;
+
         if (!isFrightenedActive && phaseTimer != null) phaseTimer.Tick(Time.deltaTime);
         if (isFrightenedActive && frightenedTimer != null) frightenedTimer.Tick(Time.deltaTime);
 
@@ -120,7 +145,7 @@ public class GlobalGhostModeController : MonoBehaviour
         float m =
             (mode == Ghost.Mode.Frightened) ? frightenedMult :
             (mode == Ghost.Mode.Eaten) ? eatenMult :
-                                            scatterChaseMult;
+            scatterChaseMult;
 
         g.movement.SetBaseSpeedMultiplier(m);
     }
@@ -161,6 +186,36 @@ public class GlobalGhostModeController : MonoBehaviour
         else ResumeAllGhostAnimations();
     }
 
+    private void OnGhostModeChanged(Ghost g, Ghost.Mode prev, Ghost.Mode next)
+    {
+        if (prev == Ghost.Mode.Eaten) eatenActiveCount = Mathf.Max(0, eatenActiveCount - 1);
+        if (next == Ghost.Mode.Eaten) eatenActiveCount++;
+        UpdateEyesAudio();
+    }
+
+    /// <summary>Allow or suppress the "eyes returning" loop. Use from GameManager during death/ready.</summary>
+    public void SetEyesAudioAllowed(bool allowed)
+    {
+        eyesAudioAllowed = allowed;
+        UpdateEyesAudio();
+    }
+
+    /// <summary>Start/stop the eyes loop based on allowance + active eaten count.</summary>
+    private void UpdateEyesAudio()
+    {
+        if (!AudioManager.Instance) return;
+
+        if (eyesAudioAllowed && eatenActiveCount > 0)
+        {
+            if (!AudioManager.Instance.IsPlaying(AudioManager.Instance.eyes))
+                AudioManager.Instance.Play(AudioManager.Instance.eyes, SoundCategory.SFX, 1f, 1f, loop: true);
+        }
+        else
+        {
+            AudioManager.Instance.Stop(AudioManager.Instance.eyes);
+        }
+    }
+
     public void TriggerFrightened(float? duration = null)
     {
         float dur = duration ?? previewFrightenedSeconds;
@@ -179,7 +234,7 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             if (!ghost) return;
             if (ghost.CurrentMode == Ghost.Mode.Eaten) return;
-            if (ghost.CurrentMode == Ghost.Mode.Home)  return;
+            if (ghost.CurrentMode == Ghost.Mode.Home) return;
 
             ghost.SetMode(Ghost.Mode.Frightened);
             ApplyModeSpeed(ghost, Ghost.Mode.Frightened);
@@ -451,7 +506,7 @@ public class GlobalGhostModeController : MonoBehaviour
     /// <summary>Invoke whenever Pac-Man eats a pellet.</summary>
     public void OnPelletEaten()
     {
-       if (!houseReleaseEnabled) return;
+        if (!houseReleaseEnabled) return;
 
         if (useGlobalCounter)
         {
@@ -496,7 +551,7 @@ public class GlobalGhostModeController : MonoBehaviour
             else if (g.Type == GhostType.Clyde) clyde = g;
         });
         if (pinky) return pinky;
-        if (inky)  return inky;
+        if (inky) return inky;
         if (clyde) return clyde;
         return null;
     }
@@ -507,7 +562,7 @@ public class GlobalGhostModeController : MonoBehaviour
         ForEachGhost(g => { if (g && g.Type == type && g.CurrentMode == Ghost.Mode.Home) found = g; });
         return found;
     }
-    
+
     public void SetHouseReleaseEnabled(bool enabled)
     {
         houseReleaseEnabled = enabled;

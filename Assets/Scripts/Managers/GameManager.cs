@@ -244,7 +244,6 @@ public class GameManager : MonoBehaviour
         AudioManager.Instance.Play(AudioManager.Instance.gameMusic, SoundCategory.Music);
         // Freeze the global timers & visuals during READY intro
         globalGhostModeController.SetTimersFrozen(true);
-
         globalGhostModeController.DeactivateAllGhosts();
 
         pacman.gameObject.SetActive(false);
@@ -278,6 +277,7 @@ public class GameManager : MonoBehaviour
         // Unfreeze timers exactly when gameplay begins
         globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();
+        globalGhostModeController.SetEyesAudioAllowed(true);
         globalGhostModeController.SetHouseReleaseEnabled(true);
 
         pacman.animator.speed = 1f;
@@ -288,6 +288,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator NewRoundSequence()
     {
         globalGhostModeController.SetTimersFrozen(true);
+        globalGhostModeController.SetEyesAudioAllowed(false);
         ResetActorsState();
         bonusItemManager.DespawnBonusItem(true);
         CurrentPlayerData.level++;
@@ -328,6 +329,7 @@ public class GameManager : MonoBehaviour
 
         globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();
+        globalGhostModeController.SetEyesAudioAllowed(true);
         
         pacman.animator.speed = 1f;
         pacman.enabled = true;
@@ -468,6 +470,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator HandleAllPelletsCollected()
     {
         SetState(GameState.LevelClear);
+        globalGhostModeController.SetEyesAudioAllowed(false);
         AudioManager.Instance.StopAll();
         PushFreezeHard();
 
@@ -839,6 +842,7 @@ public class GameManager : MonoBehaviour
 
     private void GameOver()
     {
+        globalGhostModeController.SetEyesAudioAllowed(false);
         pacman.gameObject.SetActive(false);
         bonusItemManager.DespawnBonusItem(true);
         uiManager.ShowGameOverText(true);
