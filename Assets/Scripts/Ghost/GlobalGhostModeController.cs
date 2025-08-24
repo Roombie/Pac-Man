@@ -188,9 +188,18 @@ public class GlobalGhostModeController : MonoBehaviour
 
     private void OnGhostModeChanged(Ghost g, Ghost.Mode prev, Ghost.Mode next)
     {
-        if (prev == Ghost.Mode.Eaten) eatenActiveCount = Mathf.Max(0, eatenActiveCount - 1);
-        if (next == Ghost.Mode.Eaten) eatenActiveCount++;
-        UpdateEyesAudio();
+        if (next == Ghost.Mode.Eaten)
+        {
+            eatenActiveCount++;
+            if (eyesAudioAllowed)
+                AudioManager.Instance.Play(AudioManager.Instance.eyes, SoundCategory.SFX, 1f, 1f, loop: true);
+        }
+        else if (prev == Ghost.Mode.Eaten && next == Ghost.Mode.Home)
+        {
+            eatenActiveCount = Mathf.Max(0, eatenActiveCount - 1);
+            if (eatenActiveCount == 0)
+                AudioManager.Instance.Stop(AudioManager.Instance.eyes);
+        }
     }
 
     /// <summary>Allow or suppress the "eyes returning" loop. Use from GameManager during death/ready.</summary>
@@ -205,19 +214,27 @@ public class GlobalGhostModeController : MonoBehaviour
     {
         if (!AudioManager.Instance) return;
 
-        if (eyesAudioAllowed && eatenActiveCount > 0)
+        if (eatenActiveCount > 0)
         {
-            if (!AudioManager.Instance.IsPlaying(AudioManager.Instance.eyes))
+            // While eyes exist, keep the loop alive if allowed.
+            // If someone toggles allowed=false mid-flight, we simply don't (re)start it,
+            // but we also don't stop a loop that's already playing until eyes reach Home.
+            if (eyesAudioAllowed && !AudioManager.Instance.IsPlaying(AudioManager.Instance.eyes))
+            {
                 AudioManager.Instance.Play(AudioManager.Instance.eyes, SoundCategory.SFX, 1f, 1f, loop: true);
+            }
+            // else: leave whatever is currently happening (playing or silent)
         }
         else
         {
+            // No eyes out there, force stop
             AudioManager.Instance.Stop(AudioManager.Instance.eyes);
         }
     }
 
     public void TriggerFrightened(float? duration = null)
     {
+        SetEyesAudioAllowed(true);
         float dur = duration ?? previewFrightenedSeconds;
 
         if (!isFrightenedActive)
@@ -278,6 +295,8 @@ public class GlobalGhostModeController : MonoBehaviour
         globalDotCounter = 0;
         noDotTimer = 0f;
         personalDotCounter = 0;
+        eatenActiveCount = 0;
+        UpdateEyesAudio();
     }
 
     public void ActivateAllGhosts()

@@ -121,9 +121,9 @@ public class Ghost : MonoBehaviour
         Vector2 initDir = Vector2.left; // outside ghosts default left
 
         if (mode == Mode.Home)
-            initDir = (Type == GhostType.Pinky) ? Vector2.down : Vector2.up;  // arcade intro bounce
+            initDir = (Type == GhostType.Pinky) ? Vector2.down : Vector2.up; // arcade intro bounce
         else if (mode == Mode.Eaten)
-            initDir = Vector2.up;  // heading toward the door by default
+            initDir = Vector2.up; // heading toward the door by default
 
         eyes.ResetEyes(initDir);
     }

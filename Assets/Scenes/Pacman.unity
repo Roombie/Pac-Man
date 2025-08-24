@@ -29797,6 +29797,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1557195851}
     m_Modifications:
+    - target: {fileID: 4690221747086396266, guid: ae9782efde0ad2640b4b0987a2f31e94, type: 3}
+      propertyPath: probeSize.x
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4694625664711476940, guid: ae9782efde0ad2640b4b0987a2f31e94, type: 3}
       propertyPath: m_Name
       value: Pac-Man

@@ -132,15 +132,21 @@ public class Movement : MonoBehaviour
         dir = Snap4(dir);
         if (dir == Vector2.zero) return;
 
-        // prevent instant reverse unless forced (global reversals, frightened enter, etc.)
+        // Avoid instantaneous reverse unless it's forced
         if (!forced && dir == -direction) { nextDirection = dir; return; }
 
         if (forced || !Occupied(dir))
         {
             direction = dir;
             nextDirection = Vector2.zero;
-            // if we just took the queued turn, cornering is moot
-            if (cornering && dir == cornerDir)
+
+            // cancel any cornering if change is forced
+            if (forced)
+            {
+                cornering = false;
+                cornerDir = Vector2.zero;
+            }
+            else if (cornering && dir == cornerDir)
             {
                 cornering = false;
                 cornerDir = Vector2.zero;
