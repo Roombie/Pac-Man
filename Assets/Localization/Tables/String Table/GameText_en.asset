@@ -180,6 +180,10 @@ MonoBehaviour:
     m_Localized: Press A Button To Join
     m_Metadata:
       m_Items: []
+  - m_Id: 11074833985925120
+    m_Localized: Player {0} disconnected
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

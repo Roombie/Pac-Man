@@ -30,12 +30,19 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ScorePopupManager scorePopupManager;
     [SerializeField] private PauseUIController pauseUI;
 
-    private struct FreezeState {
-        public bool hard;
-        public List<Behaviour> disabled; // Movement/Animator we turned off in soft freeze
+    [System.Serializable]
+    private struct FreezeFrame
+    {
+        public bool hard; // hard = Time.timeScale = 0
+        public bool freezeTimers; // freeze ghost timers (mode timers, home exits, etc.)
+        public List<Behaviour> disabled; // components this frame disabled (soft)
     }
-    private readonly Stack<FreezeState> freeze = new();
+
+    private int timersCount = 0; // any timers -> timers frozen
+    private readonly Stack<FreezeFrame> freeze = new Stack<FreezeFrame>();
     private float savedTimeScale = 1f;
+    private int hardCount = 0;
+    private readonly Dictionary<Behaviour,int> softDisableRef = new();
 
     public enum GameState { Intro, Playing, Paused, LevelClear, Intermission, GameOver }
     public GameState CurrentGameState { get; private set; }
@@ -79,7 +86,7 @@ public class GameManager : MonoBehaviour
     private static readonly int[] extraPointValues = GameConstants.ExtraPoints;
     public static IReadOnlyList<int> ExtraPointValues => extraPointValues;
     private int nextLifeScoreThreshold = 0;
-    public event System.Action<int, int, int> OnRoundChanged; 
+    public event System.Action<int, int, int> OnRoundChanged;
 
     public CharacterSkin GetSelectedSkinForPlayer(int playerIndex)
     {
@@ -472,8 +479,9 @@ public class GameManager : MonoBehaviour
     {
         SetState(GameState.LevelClear);
         globalGhostModeController.SetEyesAudioAllowed(false);
+        globalGhostModeController.SetHouseReleaseEnabled(false);
         AudioManager.Instance.StopAll();
-        PushFreezeHard();
+        PushFreeze(true);
 
         if (coffeeBreakManager.HasCoffeeBreakForLevel(CurrentPlayerData.level))
             SetState(GameState.Intermission);
@@ -624,22 +632,40 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Game State & Resets
-    public void PushFreezeHard()
+    public void PushFreeze(bool hard, bool freezeTimers = false, IEnumerable<Behaviour> toDisable = null)
     {
-        freeze.Push(new FreezeState { hard = true, disabled = null });
-        if (freeze.Count == 1) {
-            savedTimeScale = Time.timeScale;
+        var frame = new FreezeFrame {
+            hard = hard,
+            freezeTimers = freezeTimers,
+            disabled = toDisable != null ? new List<Behaviour>(toDisable) : null
+        };
+        freeze.Push(frame);
+
+        if (hard)
+        {
+            if (hardCount++ == 0)
+                savedTimeScale = Time.timeScale;
             Time.timeScale = 0f;
-            globalGhostModeController?.SetTimersFrozen(true); // pauses frightened/phase + flicker
+        }
+
+        if (freezeTimers && ++timersCount == 1)
+            globalGhostModeController?.SetTimersFrozen(true);
+
+        if (!hard && frame.disabled != null)
+        {
+            foreach (var b in frame.disabled)
+            {
+                if (!b) continue;
+                softDisableRef.TryGetValue(b, out var n);
+                softDisableRef[b] = n + 1;
+                if (n == 0) b.enabled = false;
+            }
         }
     }
 
     public void PushFreezeSoftAllowEyes()
     {
         var list = new List<Behaviour>();
-
-        // Pause timers/flicker but keep world time running
-        globalGhostModeController?.SetTimersFrozen(true);
 
         // Stop Pac-Man movement and animations
         if (pacman) {
@@ -664,35 +690,47 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        freeze.Push(new FreezeState { hard = false, disabled = list });
+        PushFreeze(hard: false, freezeTimers: true, toDisable: list);
     }
 
     public void PopFreeze()
     {
         if (freeze.Count == 0) return;
+
         var top = freeze.Pop();
 
         if (top.hard)
         {
-            if (freeze.Count == 0 || !freeze.Peek().hard) {
-                Time.timeScale = freeze.Count == 0 ? savedTimeScale : 0f;
-                if (freeze.Count == 0) {
-                    globalGhostModeController?.SetTimersFrozen(false);
-                }
-            }
+            if (--hardCount == 0)
+                Time.timeScale = savedTimeScale;
+            else
+                Time.timeScale = 0f; // still at least one hard
         }
-        else // soft
-        {
-            // Re-enable anything we disabled
-            if (top.disabled != null)
-                foreach (var b in top.disabled)
-                    if (b) b.enabled = true;
 
-            if (freeze.Count == 0 || freeze.Peek().hard)
+        if (top.freezeTimers)
+        {
+            if (--timersCount == 0 && hardCount == 0)
+                globalGhostModeController?.SetTimersFrozen(false);
+            else
+                globalGhostModeController?.SetTimersFrozen(true);
+        }
+        else
+        {
+            // if any hard remains, timers stay frozen; otherwise respect timersCount
+            globalGhostModeController?.SetTimersFrozen(hardCount > 0 || timersCount > 0);
+        }
+
+        if (!top.hard && top.disabled != null)
+        {
+            foreach (var b in top.disabled)
             {
-                // If stack is empty or next is hard, timers remain as that state dictates
-                if (freeze.Count == 0)
-                    globalGhostModeController?.SetTimersFrozen(false);
+                if (!b) continue;
+                if (softDisableRef.TryGetValue(b, out var n))
+                {
+                    n--;
+                    if (n <= 0) { softDisableRef.Remove(b); b.enabled = true; }
+                    else softDisableRef[b] = n;
+                }
             }
         }
     }
@@ -796,8 +834,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator GhostEatenSequence(Ghost ghost)
     {
-        // Freeze visuals/timers so the 1s popup is static
-        globalGhostModeController.SetTimersFrozen(true);
+        globalGhostModeController.SetHomeExitsPaused(true);
 
         // Freeze Pac-Man
         pacman.isInputLocked = true;
@@ -828,9 +865,6 @@ public class GameManager : MonoBehaviour
         ghost.SetMode(Ghost.Mode.Eaten);
         globalGhostModeController.ApplyModeSpeed(ghost, Ghost.Mode.Eaten);
 
-        // Unfreeze timers/animations first so visuals resume cleanly
-        globalGhostModeController.SetTimersFrozen(false);
-
         // Bring Pac-Man back
         pacman.gameObject.SetActive(true);
         pacman.movement.enabled = true;
@@ -839,6 +873,7 @@ public class GameManager : MonoBehaviour
 
         // Unfreeze ghosts
         PopFreeze();
+        globalGhostModeController.SetHomeExitsPaused(false); 
     }
 
     private void GameOver()

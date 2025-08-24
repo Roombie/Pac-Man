@@ -157,7 +157,23 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 97025998, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
     - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: normalUp
+      value: 
+      objectReference: {fileID: -827398702, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: rightEyes
+      value: 
+      objectReference: {fileID: 576093033, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: normalDown
+      value: 
+      objectReference: {fileID: -2079706475, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: normalLeft
+      value: 
+      objectReference: {fileID: 97025998, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: normalRight
       value: 
       objectReference: {fileID: 576093033, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
     - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}

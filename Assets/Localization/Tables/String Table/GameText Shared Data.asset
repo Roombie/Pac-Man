@@ -175,6 +175,10 @@ MonoBehaviour:
     m_Key: JoinInstruction_Text
     m_Metadata:
       m_Items: []
+  - m_Id: 11074833985925120
+    m_Key: PlayerDisconnected_Text
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

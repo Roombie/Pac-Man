@@ -8,7 +8,7 @@ public class GhostEyesEditor : Editor
 {
     // Names of the Elroy-only fields in your GhostEyes
     static readonly string[] ElroyProps = {
-        "rightEyesElroy","leftEyesElroy","upEyesElroy","downEyesElroy"
+        "elroyUp","elroyDown","elroyLeft","elroyRight"
     };
 
     public override void OnInspectorGUI()

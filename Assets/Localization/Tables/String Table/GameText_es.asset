@@ -180,6 +180,10 @@ MonoBehaviour:
     m_Localized: "Presiona un Bot\xF3n para Unirte"
     m_Metadata:
       m_Items: []
+  - m_Id: 11074833985925120
+    m_Localized: Jugador {0} desconectado
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

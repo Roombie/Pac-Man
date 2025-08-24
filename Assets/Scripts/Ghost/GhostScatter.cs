@@ -132,11 +132,11 @@ public class GhostScatter : MonoBehaviour
         // but allow it outside Scatter if you call BestDirAtNode from other modes.
         bool isScatter = ghost && ghost.CurrentMode == Ghost.Mode.Scatter;
         bool targetPacman =
+            isScatter &&
             elroyChasesDuringScatter &&
             ghost.Type == GhostType.Blinky &&
             ghost.IsElroy &&
-            ghost.pacman &&
-            !isScatter; // ← gate chase OFF during Scatter
+            ghost.pacman;
 
         Vector3 targetPos = targetPacman
             ? ghost.pacman.transform.position

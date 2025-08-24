@@ -137,6 +137,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: -827398702, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
     - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: elroyUp
+      value: 
+      objectReference: {fileID: 1282927560, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: downEyes
       value: 
       objectReference: {fileID: -2079706475, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
@@ -145,7 +149,35 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 97025998, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
     - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: normalUp
+      value: 
+      objectReference: {fileID: -827398702, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: elroyDown
+      value: 
+      objectReference: {fileID: 925705772, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: elroyLeft
+      value: 
+      objectReference: {fileID: -287270737, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: rightEyes
+      value: 
+      objectReference: {fileID: 576093033, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: elroyRight
+      value: 
+      objectReference: {fileID: -1382634798, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: normalDown
+      value: 
+      objectReference: {fileID: -2079706475, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: normalLeft
+      value: 
+      objectReference: {fileID: 97025998, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+    - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: normalRight
       value: 
       objectReference: {fileID: 576093033, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
     - target: {fileID: 7708044788880522505, guid: 1855884bb736be542a66a632047a1995, type: 3}

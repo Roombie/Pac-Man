@@ -55,6 +55,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pacman: {fileID: 0}
+  globalGhostModeController: {fileID: 409079033118078462}
   uiManager: {fileID: 7908264411556593840}
   mazeFlashController: {fileID: 7747503494696074549}
   lifeIconsController: {fileID: 6878185589549712317}
@@ -64,7 +65,6 @@ MonoBehaviour:
   coffeeBreakManager: {fileID: 3517510330910360623}
   scorePopupManager: {fileID: 8601527251409674083}
   pauseUI: {fileID: 3164118511359414081}
-  globalGhostModeController: {fileID: 409079033118078462}
   selectedCharacters: []
 --- !u!114 &409079033118078462
 MonoBehaviour:
@@ -85,7 +85,13 @@ MonoBehaviour:
   - {fileID: 0}
   phases: []
   matrix: {fileID: 11400000, guid: 7b0d1b7dfb82e054793b54d70c97450d, type: 2}
-  currentLevel: 1
+  houseReleaseEnabled: 0
+  scatterChaseMult: 1
+  frightenedMult: 0.5
+  eatenMult: 1.5
+  timersFrozen: 0
+  eyesAudioAllowed: 1
+  affectHomeGhostsDuringFrightened: 0
 --- !u!114 &5893468776855778113
 MonoBehaviour:
   m_ObjectHideFlags: 0

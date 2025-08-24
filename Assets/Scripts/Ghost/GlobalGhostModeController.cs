@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 [AddComponentMenu("Pacman/Global Ghost Mode Controller")]
 [DisallowMultipleComponent]
@@ -56,12 +57,20 @@ public class GlobalGhostModeController : MonoBehaviour
     private int eatenActiveCount = 0;
     [SerializeField] private bool eyesAudioAllowed = true;
 
+    [Header("Frightened options")]
+    [Tooltip("If active, ghosts within Home are also affected (slower + blue/white visuals) during Frightened.")]
+    [SerializeField] private bool affectHomeGhostsDuringFrightened = false;
+
+    // Track who we slowed while in Home during Frightened (and painted blue)
+    private readonly HashSet<Ghost> homeFrightened = new HashSet<Ghost>();
+    // Track who re-formed from Eyes → Home while Frightened is active; they should NOT enter Frightened when exiting
+    private readonly HashSet<Ghost> reformedFromEaten = new HashSet<Ghost>();
+
     void Awake()
     {
         ForEachGhost(g =>
         {
             if (!g) return;
-            // prevent double-subscribe if called multiple times
             g.ModeChanged -= OnGhostModeChanged;
             g.ModeChanged += OnGhostModeChanged;
         });
@@ -136,6 +145,8 @@ public class GlobalGhostModeController : MonoBehaviour
         globalDotCounter = 0;
         noDotTimer = 0f;
         personalDotCounter = 0;
+        homeFrightened.Clear();
+        reformedFromEaten.Clear();
     }
 
     public void ApplyModeSpeed(Ghost g, Ghost.Mode mode)
@@ -171,6 +182,16 @@ public class GlobalGhostModeController : MonoBehaviour
     public void PauseAllGhostAnimations() => SetGhostAnimatorsSpeed(0f);
     public void ResumeAllGhostAnimations() => SetGhostAnimatorsSpeed(1f);
 
+    public void SetHomeExitsPaused(bool paused)
+    {
+        ForEachGhost(g =>
+        {
+            if (!g) return;
+            var home = g.GetComponent<GhostHome>();
+            if (home) home.SetExitPaused(paused);
+        });
+    }
+
     public void SetTimersFrozen(bool frozen)
     {
         timersFrozen = frozen;
@@ -188,18 +209,13 @@ public class GlobalGhostModeController : MonoBehaviour
 
     private void OnGhostModeChanged(Ghost g, Ghost.Mode prev, Ghost.Mode next)
     {
-        if (next == Ghost.Mode.Eaten)
-        {
-            eatenActiveCount++;
-            if (eyesAudioAllowed)
-                AudioManager.Instance.Play(AudioManager.Instance.eyes, SoundCategory.SFX, 1f, 1f, loop: true);
-        }
-        else if (prev == Ghost.Mode.Eaten && next == Ghost.Mode.Home)
-        {
-            eatenActiveCount = Mathf.Max(0, eatenActiveCount - 1);
-            if (eatenActiveCount == 0)
-                AudioManager.Instance.Stop(AudioManager.Instance.eyes);
-        }
+        if (prev != Ghost.Mode.Eaten && next == Ghost.Mode.Eaten) eatenActiveCount++;
+        if (prev == Ghost.Mode.Eaten && next != Ghost.Mode.Eaten) eatenActiveCount = Mathf.Max(0, eatenActiveCount - 1);
+        UpdateEyesAudio();
+
+        // Eyes → Home while Frightened is active ⇒ mark so we DON'T re-enter Frightened on exit
+        if (prev == Ghost.Mode.Eaten && next == Ghost.Mode.Home && isFrightenedActive)
+            reformedFromEaten.Add(g);
     }
 
     /// <summary>Allow or suppress the "eyes returning" loop. Use from GameManager during death/ready.</summary>
@@ -214,22 +230,31 @@ public class GlobalGhostModeController : MonoBehaviour
     {
         if (!AudioManager.Instance) return;
 
+        if (!eyesAudioAllowed)
+        {
+            AudioManager.Instance.Stop(AudioManager.Instance.eyes);
+            return;
+        }
+
         if (eatenActiveCount > 0)
         {
-            // While eyes exist, keep the loop alive if allowed.
-            // If someone toggles allowed=false mid-flight, we simply don't (re)start it,
-            // but we also don't stop a loop that's already playing until eyes reach Home.
-            if (eyesAudioAllowed && !AudioManager.Instance.IsPlaying(AudioManager.Instance.eyes))
+            if (!AudioManager.Instance.IsPlaying(AudioManager.Instance.eyes))
             {
                 AudioManager.Instance.Play(AudioManager.Instance.eyes, SoundCategory.SFX, 1f, 1f, loop: true);
             }
-            // else: leave whatever is currently happening (playing or silent)
         }
         else
         {
-            // No eyes out there, force stop
             AudioManager.Instance.Stop(AudioManager.Instance.eyes);
         }
+    }
+
+    /// <summary>Used by GhostVisuals to know if a Home ghost should render blue/white.</summary>
+    public bool ShowHomeFrightened(Ghost g)
+    {
+        return isFrightenedActive
+            && affectHomeGhostsDuringFrightened
+            && homeFrightened.Contains(g);
     }
 
     public void TriggerFrightened(float? duration = null)
@@ -247,17 +272,33 @@ public class GlobalGhostModeController : MonoBehaviour
         frightenedTimer.OnTimerEnd -= EndFrightened;
         frightenedTimer.OnTimerEnd += EndFrightened;
 
-        ForEachGhost(ghost =>
+        ForEachGhost(g =>
         {
-            if (!ghost) return;
-            if (ghost.CurrentMode == Ghost.Mode.Eaten) return;
-            if (ghost.CurrentMode == Ghost.Mode.Home) return;
+            if (!g) return;
 
-            ghost.SetMode(Ghost.Mode.Frightened);
-            ApplyModeSpeed(ghost, Ghost.Mode.Frightened);
+            // Home ghosts → slow + paint (optional), but DO NOT change mode
+            if (g.CurrentMode == Ghost.Mode.Home)
+            {
+                if (affectHomeGhostsDuringFrightened && g.movement)
+                {
+                    g.movement.SetEnvSpeedMultiplier(frightenedMult);
+                    homeFrightened.Add(g);
 
-            var vis = ghost.GetComponent<GhostVisuals>();
-            if (vis) vis.OnFrightenedStart();
+                    // ensure visuals go blue and will flicker as time runs out
+                    var vis = g.GetComponent<GhostVisuals>();
+                    if (vis) vis.OnFrightenedStart();
+                }
+                return;
+            }
+
+            // Outside Home: normal Frightened (skip Eyes)
+            if (g.CurrentMode == Ghost.Mode.Eaten) return;
+
+            g.SetMode(Ghost.Mode.Frightened);
+            ApplyModeSpeed(g, Ghost.Mode.Frightened);
+
+            var v = g.GetComponent<GhostVisuals>();
+            if (v) v.OnFrightenedStart();
         });
     }
 
@@ -272,12 +313,11 @@ public class GlobalGhostModeController : MonoBehaviour
     private void EnsureExit(Ghost ghost)
     {
         if (!ghost) return;
+        if (!houseReleaseEnabled) return;
+        if (!ghost.gameObject.activeInHierarchy) return;
+
         var home = ghost.GetComponent<GhostHome>();
         if (!home) return;
-
-        // If the ghost is inactive, activate it first so coroutines can run
-        if (!ghost.gameObject.activeInHierarchy)
-            ghost.gameObject.SetActive(true);
 
         home.RequestExit();
     }
@@ -296,6 +336,8 @@ public class GlobalGhostModeController : MonoBehaviour
         noDotTimer = 0f;
         personalDotCounter = 0;
         eatenActiveCount = 0;
+        homeFrightened.Clear();
+        reformedFromEaten.Clear();
         UpdateEyesAudio();
     }
 
@@ -303,6 +345,9 @@ public class GlobalGhostModeController : MonoBehaviour
     {
         isFrightenedActive = false;
         frightenedTimer = null;
+
+        eatenActiveCount = 0;
+        UpdateEyesAudio();
 
         ForEachGhost(g =>
         {
@@ -322,6 +367,15 @@ public class GlobalGhostModeController : MonoBehaviour
         globalDotCounter = 0;
         noDotTimer = 0f;
         personalDotCounter = 0;
+        homeFrightened.Clear();
+        reformedFromEaten.Clear();
+    }
+
+    private System.Collections.IEnumerator ClearEyesOverrideNextFrame(GhostEyes eyes)
+    {
+        // wait one frame so Movement has its seeded direction
+        yield return null;
+        if (eyes) eyes.ClearOverrideFacing();
     }
 
     public void StartAllGhosts()
@@ -330,57 +384,70 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             if (!g) return;
 
+            // make sure the GO is active
             if (!g.gameObject.activeSelf)
                 g.gameObject.SetActive(true);
 
             var home = g.GetComponent<GhostHome>();
             bool isExitingHome = home && home.IsExiting;
+            var eyes = g.GetComponent<GhostEyes>();
+
+            if (g.movement)
+            {
+                if (g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten)
+                {
+                    // Outside ghosts: seed LEFT (arcade), fallback to RIGHT if blocked
+                    var seedDir = Vector2.left;
+                    if (g.movement.Occupied(seedDir)) seedDir = -seedDir;
+
+                    g.movement.SetDirection(seedDir, forced: true);
+                    if (eyes) eyes.ResetEyes(seedDir);   // keep visuals consistent on first frame
+                }
+                else if (g.CurrentMode == Ghost.Mode.Home && !isExitingHome)
+                {
+                    // Inside Home (not exiting): seed pacing direction + eyes
+                    var init = (g.Type == GhostType.Pinky) ? Vector2.down : Vector2.up;
+                    g.movement.SetDirection(init, forced: true);
+                    if (eyes) eyes.ResetEyes(init);
+                }
+            }
 
             // Only enable Movement if we are NOT in the scripted exit
             if (g.movement)
                 g.movement.enabled = !isExitingHome;
 
-            // colliders first, as you already do
+            // enable colliders
             var cols = g.GetComponents<CircleCollider2D>();
             for (int i = 0; i < cols.Length; i++) cols[i].enabled = true;
 
+            // resume anims
             ResumeAllGhostAnimations();
 
-            // Apply global phase only to outside, non-eyes ghosts
+            // Apply global phase only to outside, non-eyes ghosts (when not frightened)
             if (!isFrightenedActive && g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten)
             {
                 g.SetMode(currentPhaseMode);
                 ApplyModeSpeed(g, currentPhaseMode);
             }
 
-            // If still outside with no heading, seed a start direction
-            if (g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten && g.movement)
-            {
-                if (g.movement.direction == Vector2.zero)
-                {
-                    var startDir = Vector2.left;
-                    if (g.movement.Occupied(startDir)) startDir = -startDir;
-                    g.movement.SetDirection(startDir, forced: true);
-                }
-            }
+            // If resuming Home behaviour and not exiting, pacing direction was already seeded above
 
-            // If we’re resuming Home behaviour (not exiting) and direction is zero, seed pacing
-            if (g.CurrentMode == Ghost.Mode.Home && !isExitingHome && g.movement && g.movement.direction == Vector2.zero)
-            {
-                var init = (g.Type == GhostType.Pinky) ? Vector2.down : Vector2.up;
-                g.movement.SetDirection(init, true);
-            }
-
-            // Finally, if you paused the exit earlier, unpause it here
+            // make sure exit routine (if any) isn't paused
             if (home) home.SetExitPaused(false);
 
-            var eyes = g.GetComponent<GhostEyes>();
+            // visuals component on
             if (eyes) eyes.enabled = true;
         });
     }
 
     public void DeactivateAllGhosts()
     {
+        isFrightenedActive = false;
+        frightenedTimer = null;
+
+        eatenActiveCount = 0;
+        UpdateEyesAudio();
+
         ForEachGhost(g =>
         {
             if (g && g.gameObject.activeSelf) g.gameObject.SetActive(false);
@@ -419,6 +486,9 @@ public class GlobalGhostModeController : MonoBehaviour
                 if (home) home.SetExitPaused(true);
             }
         });
+
+        eatenActiveCount = 0;
+        UpdateEyesAudio();
     }
 
     private void AdvancePhase(bool initial = false)
@@ -456,7 +526,48 @@ public class GlobalGhostModeController : MonoBehaviour
     {
         isFrightenedActive = false;
         frightenedTimer = null;
+
+        // restore Home slowdowns (optional feature)
+        foreach (var g in homeFrightened)
+            if (g && g.movement) g.movement.SetEnvSpeedMultiplier(1f);
+
+        homeFrightened.Clear();
+        reformedFromEaten.Clear();
+
         SetAll(currentPhaseMode);
+    }
+
+    public void OnGhostExitedHomeDoor(Ghost g)
+    {
+        if (!g) return;
+
+        // Clear any Home slowdown we applied
+        if (homeFrightened.Remove(g) && g.movement)
+            g.movement.SetEnvSpeedMultiplier(1f);
+
+        // decide if this ghost should enter Frightened on exit
+        bool shouldEnterFrightened =
+            isFrightenedActive &&
+            affectHomeGhostsDuringFrightened &&
+            !reformedFromEaten.Contains(g); // eyes→home re-forms do NOT become frightened
+
+        if (shouldEnterFrightened)
+        {
+            g.SetMode(Ghost.Mode.Frightened);
+            ApplyModeSpeed(g, Ghost.Mode.Frightened);
+
+            // ensure visuals are blue + flicker after exiting
+            var vis = g.GetComponent<GhostVisuals>();
+            if (vis) vis.OnFrightenedStart();
+        }
+        else
+        {
+            g.SetMode(currentPhaseMode);
+            ApplyModeSpeed(g, currentPhaseMode);
+        }
+
+        // once used, clear the re-formed flag
+        reformedFromEaten.Remove(g);
     }
 
     private static bool IsScatterChasePair(Ghost.Mode a, Ghost.Mode b) =>
@@ -567,6 +678,7 @@ public class GlobalGhostModeController : MonoBehaviour
         ForEachGhost(g =>
         {
             if (!g) return;
+            if (!g.gameObject.activeInHierarchy) return; // avoid counting deactivated ghosts
             if (g.CurrentMode != Ghost.Mode.Home) return;
             if (g.Type == GhostType.Pinky) pinky = g;
             else if (g.Type == GhostType.Inky) inky = g;
@@ -635,7 +747,7 @@ public class GlobalGhostModeController : MonoBehaviour
         }
     }
 
-    //Global (post-death) counter: Pinky 7, Inky 17, Clyde 32
+    // Global (post-death) counter: Pinky 7, Inky 17, Clyde 32
     private void TryReleaseByGlobalCounter()
     {
         // If nobody is inside, stop global mode

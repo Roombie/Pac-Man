@@ -229,8 +229,12 @@ public class GhostHome : MonoBehaviour
 
         if (cancelExit) yield break;
 
-        // outside: resume normal play
-        ghost.SetMode(Ghost.Mode.Scatter);
+        var ctrl = GameManager.Instance ? GameManager.Instance.globalGhostModeController : null;
+        if (ctrl != null) ctrl.OnGhostExitedHomeDoor(ghost);
+
+        // Only force Scatter if controller didn’t switch us to Frightened
+        if (ghost.CurrentMode != Ghost.Mode.Frightened)
+            ghost.SetMode(Ghost.Mode.Scatter);
 
         if (move.rb) move.rb.bodyType = RigidbodyType2D.Dynamic;
         move.enabled = true;
@@ -239,11 +243,9 @@ public class GhostHome : MonoBehaviour
         if (move.Occupied(dir)) dir = -dir;
         move.SetDirection(dir, true);
 
-        // release control back to movement-driven eyes
         if (eyes) eyes.ClearOverrideFacing();
         enabled = false;
     }
-
 
     public void StopExitNow()
     {

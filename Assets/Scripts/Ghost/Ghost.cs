@@ -138,6 +138,7 @@ public class Ghost : MonoBehaviour
             movement.SetDirection(Vector2.zero, true);
 
             if (baseNormalSpeed < 0f) baseNormalSpeed = movement.speed;
+            if (movement) movement.SetEnvSpeedMultiplier(1f);
         }
 
         homeModeFlipCount = 0;

@@ -22,7 +22,6 @@ public class GhostEaten : MonoBehaviour
     [Header("Layers")]
     [SerializeField] private string eyesLayerName = "GhostEyes";
     [SerializeField] private string ghostLayerName = "Ghost";
-    [SerializeField] private bool setLayerRecursively = true;
 
     private Ghost ghost;
     private Movement move;
@@ -214,7 +213,7 @@ public class GhostEaten : MonoBehaviour
     {
         if (eyesLayer < 0) return;
         if (gameObject.layer == eyesLayer) return;
-        SetLayer(gameObject, eyesLayer, setLayerRecursively);
+        SetLayer(gameObject, eyesLayer);
     }
 
     private void RestoreGhostLayer()
@@ -222,14 +221,13 @@ public class GhostEaten : MonoBehaviour
         int target = ghostLayer >= 0 ? ghostLayer : originalLayer;
         if (target < 0) return;
         if (gameObject.layer == target) return;
-        SetLayer(gameObject, target, setLayerRecursively);
+        SetLayer(gameObject, target);
     }
 
-    private static void SetLayer(GameObject go, int layer, bool recursive)
+    private static void SetLayer(GameObject go, int layer)
     {
         if (!go) return;
         go.layer = layer;
-        if (!recursive) return;
 
         var stack = new Stack<Transform>();
         stack.Push(go.transform);
