@@ -159,7 +159,7 @@ public class Pacman : MonoBehaviour
     {
         isDead = true;
         
-        GameManager.Instance.globalGhostModeController.StopAllGhosts(disableColliders: true, zeroDirection: true, pauseHomeExit: true);
+        GameManager.Instance.globalGhostModeController.StopAllGhosts();
         GameManager.Instance.globalGhostModeController.SetEyesAudioAllowed(false);
         AudioManager.Instance.StopAll();
         movement.rb.constraints = RigidbodyConstraints2D.FreezeAll;

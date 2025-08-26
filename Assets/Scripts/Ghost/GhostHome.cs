@@ -5,17 +5,17 @@ using UnityEngine;
 public class GhostHome : MonoBehaviour
 {
     [Header("Door targets (assign in Inspector)")]
-    [SerializeField] private Transform insideDoor;   // point just INSIDE the door
-    [SerializeField] private Transform outsideDoor;  // point just OUTSIDE the door
+    [SerializeField] private Transform insideDoor; // point just INSIDE the door
+    [SerializeField] private Transform outsideDoor; // point just OUTSIDE the door
 
     [Header("Timing")]
-    [SerializeField] private float launchDelaySeconds;   // counts only after movement is enabled
+    [SerializeField] private float launchDelaySeconds; // counts only after movement is enabled
     [SerializeField] private float alignStepDuration = 0.20f; // per axis (Y then X)
-    [SerializeField] private float doorStepDuration = 0.40f; // inside→outside
+    [SerializeField] private float doorStepDuration = 0.40f; // inside → outside
 
     [Header("Home speed")]
     [Tooltip("Base speed multiplier while the ghost is in Home (pacing).")]
-    [SerializeField] private float homeSpeedMult = 0.75f;     // tweak to taste; 0.75 feels right
+    [SerializeField] private float homeSpeedMult = 0.75f; // tweak to taste; 0.75 feels right
 
     private Ghost ghost;
     private Movement move;
@@ -60,8 +60,12 @@ public class GhostHome : MonoBehaviour
         // While in Home we:
         //  disable Movement pre-checks (collide + bounce via OnCollisionEnter2D)
         //  apply a fixed Home speed multiplier for consistent pacing
-        move.SetObstacleMask(0);                // no pre-checks → let collisions bounce
-        move.SetBaseSpeedMultiplier(homeSpeedMult);
+        if (move)
+        {
+            move.SetEnvSpeedMultiplier(1f); // clear any leftover frightened/env scaling
+            move.SetBaseSpeedMultiplier(homeSpeedMult); // apply the uniform Home pacing
+            move.SetObstacleMask(0); // let wall collisions bounce us in Home
+        }
 
         if (queuedExit) { queuedExit = false; BeginExit(); }
     }
@@ -70,12 +74,21 @@ public class GhostHome : MonoBehaviour
     {
         if (move)
         {
-            move.ClearObstacleMask();           // restore normal pre-checks
-            move.SetBaseSpeedMultiplier(1f);    // clear home speed on disable
+            move.ClearObstacleMask(); // restore normal pre-checks
+            move.SetBaseSpeedMultiplier(1f);
+            move.SetBaseSpeedMultiplier(1f); // clear home speed on disable
         }
         if (eyes) eyes.ClearOverrideFacing();
         StopExitNow();
         pacingApplied = false;
+    }
+
+    // Attempt to fix build state
+    public void ReapplyHomePacingNow()
+    {
+        if (!move) return;
+        move.SetEnvSpeedMultiplier(1f); // clear any leftover frightened/env scale
+        move.SetBaseSpeedMultiplier(homeSpeedMult);
     }
 
     private void Update()

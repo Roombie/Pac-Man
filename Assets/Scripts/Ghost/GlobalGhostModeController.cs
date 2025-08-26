@@ -390,6 +390,12 @@ public class GlobalGhostModeController : MonoBehaviour
 
             var home = g.GetComponent<GhostHome>();
             bool isExitingHome = home && home.IsExiting;
+
+            if (g.CurrentMode == Ghost.Mode.Home && !isExitingHome && home)
+            {
+                home.ReapplyHomePacingNow();
+            }
+
             var eyes = g.GetComponent<GhostEyes>();
 
             if (g.movement)
@@ -419,6 +425,13 @@ public class GlobalGhostModeController : MonoBehaviour
             // enable colliders
             var cols = g.GetComponents<CircleCollider2D>();
             for (int i = 0; i < cols.Length; i++) cols[i].enabled = true;
+
+            if (g.movement && g.movement.rb)
+            {
+                g.movement.rb.linearVelocity = Vector2.zero;
+                g.movement.rb.bodyType = RigidbodyType2D.Dynamic;
+                g.movement.rb.simulated = true;
+            }
 
             // resume anims
             ResumeAllGhostAnimations();
@@ -454,37 +467,34 @@ public class GlobalGhostModeController : MonoBehaviour
         });
     }
 
-    public void StopAllGhosts(bool disableColliders = true, bool zeroDirection = true, bool pauseHomeExit = false)
+    public void StopAllGhosts()
     {
         ForEachGhost(g =>
         {
             if (!g) return;
+
+            var home = g.GetComponent<GhostHome>();
+            if (home) home.StopExitNow();
 
             var eyes = g.GetComponent<GhostEyes>();
             if (eyes) eyes.enabled = false;
 
             if (g.movement)
             {
-                if (zeroDirection)
-                    g.movement.SetDirection(Vector2.zero, true);
-
-                if (g.movement.rb) g.movement.rb.linearVelocity = Vector2.zero;
+                if (g.movement.rb)
+                {
+                    g.movement.rb.linearVelocity = Vector2.zero;
+                    g.movement.rb.bodyType = RigidbodyType2D.Dynamic;
+                    g.movement.rb.simulated = false;   
+                }
                 g.movement.enabled = false;
             }
 
             PauseAllGhostAnimations();
 
-            if (disableColliders)
-            {
-                var cols = g.GetComponents<CircleCollider2D>();
-                foreach (var c in cols) c.enabled = false;
-            }
-
-            if (pauseHomeExit)
-            {
-                var home = g.GetComponent<GhostHome>();
-                if (home) home.SetExitPaused(true);
-            }
+            var cols = g.GetComponents<Collider2D>();
+            for (int i = 0; i < cols.Length; i++)
+                cols[i].enabled = false;
         });
 
         eatenActiveCount = 0;

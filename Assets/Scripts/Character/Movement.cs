@@ -54,6 +54,9 @@ public class Movement : MonoBehaviour
 
     private void Update()
     {
+        if (!enabled) return;
+        if (!rb || !rb.simulated) return;
+
         // Keep trying queued turns for responsiveness
         if (nextDirection != Vector2.zero)
         {

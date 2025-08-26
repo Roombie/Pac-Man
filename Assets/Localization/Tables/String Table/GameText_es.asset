@@ -16,7 +16,8 @@ MonoBehaviour:
     m_Code: es
   m_SharedData: {fileID: 11400000, guid: 28d5660381f26fe448cbd3d1bb5a4cfb, type: 2}
   m_Metadata:
-    m_Items: []
+    m_Items:
+    - rid: 6841095920325755019
   m_TableData:
   - m_Id: 624585175040
     m_Localized: Si
@@ -183,7 +184,14 @@ MonoBehaviour:
   - m_Id: 11074833985925120
     m_Localized: Jugador {0} desconectado
     m_Metadata:
-      m_Items: []
+      m_Items:
+      - rid: 6841095920325755019
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 6841095920325755019
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 11074833985925120
