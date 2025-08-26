@@ -41,12 +41,14 @@ public class Movement : MonoBehaviour
 
     public void ResetState()
     {
-        speedMultiplier = 1f;
         activeObstacleMask = obstacleLayer;
         direction = initialDirection;
         nextDirection = Vector2.zero;
         transform.position = startingPosition;
         rb.bodyType = RigidbodyType2D.Dynamic;
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        rb.simulated = true;  
         cornering = false;
         cornerDir = Vector2.zero;
         enabled = true;
@@ -54,9 +56,6 @@ public class Movement : MonoBehaviour
 
     private void Update()
     {
-        if (!enabled) return;
-        if (!rb || !rb.simulated) return;
-
         // Keep trying queued turns for responsiveness
         if (nextDirection != Vector2.zero)
         {
@@ -81,6 +80,9 @@ public class Movement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!enabled) return;
+        if (!rb || !rb.simulated) return;
+
         Vector2 pos = rb.position;
         float step = speed * speedMultiplier * envMultiplier * Time.fixedDeltaTime;
 
@@ -133,6 +135,16 @@ public class Movement : MonoBehaviour
     public void SetDirection(Vector2 dir, bool forced = false)
     {
         dir = Snap4(dir);
+
+        if (forced && dir == Vector2.zero)
+        {
+            direction = Vector2.zero;
+            nextDirection = Vector2.zero;
+            cornering = false;
+            cornerDir = Vector2.zero;
+            return;
+        }
+
         if (dir == Vector2.zero) return;
 
         // Avoid instantaneous reverse unless it's forced

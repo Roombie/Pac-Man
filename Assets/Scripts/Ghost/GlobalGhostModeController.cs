@@ -66,6 +66,22 @@ public class GlobalGhostModeController : MonoBehaviour
     // Track who re-formed from Eyes → Home while Frightened is active; they should NOT enter Frightened when exiting
     private readonly HashSet<Ghost> reformedFromEaten = new HashSet<Ghost>();
 
+    // This is for ghost HUD
+    public Ghost.Mode CurrentPhaseMode => currentPhaseMode;
+    // Time left for the current Scatter/Chase phase (0 if none or while frightened)
+    public float CurrentPhaseRemainingSeconds =>
+        (!isFrightenedActive && phaseTimer != null) ? phaseTimer.RemainingSeconds : 0f;
+    // Effective global mode to display (Frightened overrides Scatter/Chase)
+    public Ghost.Mode EffectiveGlobalMode =>
+        isFrightenedActive ? Ghost.Mode.Frightened : currentPhaseMode;
+    // Time left for the effective global mode (Frightened time if active; else phase time)
+    public float EffectiveGlobalRemainingSeconds =>
+        isFrightenedActive
+            ? FrightenedRemainingSeconds
+            : (phaseTimer != null ? phaseTimer.RemainingSeconds : 0f);
+    // Optional: expose whether timers are frozen (useful to see READY state etc.)
+    public bool TimersFrozen => timersFrozen;
+
     void Awake()
     {
         ForEachGhost(g =>
@@ -153,10 +169,28 @@ public class GlobalGhostModeController : MonoBehaviour
     {
         if (!g || !g.movement) return;
 
-        float m =
-            (mode == Ghost.Mode.Frightened) ? frightenedMult :
-            (mode == Ghost.Mode.Eaten) ? eatenMult :
-            scatterChaseMult;
+        float m;
+        switch (mode)
+        {
+            case Ghost.Mode.Eaten:
+                m = eatenMult;
+                break;
+
+            case Ghost.Mode.Frightened:
+                m = frightenedMult;
+                break;
+
+            case Ghost.Mode.Home:
+            {
+                var home = g.GetComponent<GhostHome>();
+                m = home.GetHomeSpeedMult();
+                break;
+            }
+
+            default: // Scatter/Chase
+                m = scatterChaseMult;
+                break;
+        }
 
         g.movement.SetBaseSpeedMultiplier(m);
     }
@@ -181,6 +215,25 @@ public class GlobalGhostModeController : MonoBehaviour
 
     public void PauseAllGhostAnimations() => SetGhostAnimatorsSpeed(0f);
     public void ResumeAllGhostAnimations() => SetGhostAnimatorsSpeed(1f);
+
+    private void SeedHomeIdle(Ghost g)
+    {
+        if (g == null || g.movement == null) return;
+
+        // Home-style constraints
+        g.movement.SetObstacleMask(0);
+
+        // Force the vertical idle direction right now (first frame safe)
+        var dir = HomeIdleDirFor(g);
+        g.movement.SetDirection(dir, forced: true);
+
+        // Ensure visuals match
+        var eyes = g.GetComponent<GhostEyes>();
+        if (eyes) eyes.ResetEyes(dir);
+
+        // Ensure Home speed is applied too
+        ApplyModeSpeed(g, Ghost.Mode.Home);
+    }
 
     public void SetHomeExitsPaused(bool paused)
     {
@@ -247,6 +300,21 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             AudioManager.Instance.Stop(AudioManager.Instance.eyes);
         }
+    }
+
+    public bool AnyGhostWillFlipToFrightenedNow()
+    {
+        bool any = false;
+        ForEachGhost(g =>
+        {
+            if (!g || !g.gameObject.activeInHierarchy) return;
+
+            // Only Scatter/Chase ghosts will CHANGE mode to Frightened.
+            // Home ghosts don't change mode in our design, and Eaten/eyes are ineligible.
+            if (g.CurrentMode == Ghost.Mode.Scatter || g.CurrentMode == Ghost.Mode.Chase)
+                any = true;
+        });
+        return any;
     }
 
     /// <summary>Used by GhostVisuals to know if a Home ghost should render blue/white.</summary>
@@ -329,6 +397,18 @@ public class GlobalGhostModeController : MonoBehaviour
             if (!g) return;
             var startMode = (g.Type == GhostType.Blinky) ? currentPhaseMode : Ghost.Mode.Home;
             g.ResetStateTo(startMode);
+
+            if (startMode == Ghost.Mode.Home)
+            {
+                var home = g.GetComponent<GhostHome>();
+                if (home) home.StopExitNow();
+
+                SeedHomeIdle(g);
+            }
+            else
+            {
+                ApplyModeSpeed(g, startMode);
+            }
         });
 
         useGlobalCounter = false;
@@ -341,26 +421,36 @@ public class GlobalGhostModeController : MonoBehaviour
         UpdateEyesAudio();
     }
 
+    private static Vector2 HomeIdleDirFor(Ghost g) =>
+    (g.Type == GhostType.Pinky) ? Vector2.down : Vector2.up;
+
     public void ActivateAllGhosts()
     {
         isFrightenedActive = false;
         frightenedTimer = null;
-
         eatenActiveCount = 0;
         UpdateEyesAudio();
 
         ForEachGhost(g =>
         {
             if (!g) return;
+            if (!g.gameObject.activeSelf) g.gameObject.SetActive(true);
 
-            if (!g.gameObject.activeSelf)
-                g.gameObject.SetActive(true);
-
-            var startMode = (g.Type == GhostType.Blinky)
-                ? currentPhaseMode
-                : Ghost.Mode.Home;
-
+            var startMode = (g.Type == GhostType.Blinky) ? currentPhaseMode : Ghost.Mode.Home;
             g.ResetStateTo(startMode);
+
+            if (startMode == Ghost.Mode.Home)
+            {
+                // Stop any exit routine left from previous level/life
+                var home = g.GetComponent<GhostHome>();
+                if (home) home.StopExitNow();
+
+                SeedHomeIdle(g);
+            }
+            else
+            {
+                ApplyModeSpeed(g, startMode);
+            }
         });
 
         useGlobalCounter = false;
@@ -369,13 +459,6 @@ public class GlobalGhostModeController : MonoBehaviour
         personalDotCounter = 0;
         homeFrightened.Clear();
         reformedFromEaten.Clear();
-    }
-
-    private System.Collections.IEnumerator ClearEyesOverrideNextFrame(GhostEyes eyes)
-    {
-        // wait one frame so Movement has its seeded direction
-        yield return null;
-        if (eyes) eyes.ClearOverrideFacing();
     }
 
     public void StartAllGhosts()
@@ -384,71 +467,84 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             if (!g) return;
 
-            // make sure the GO is active
             if (!g.gameObject.activeSelf)
                 g.gameObject.SetActive(true);
 
             var home = g.GetComponent<GhostHome>();
             bool isExitingHome = home && home.IsExiting;
 
-            if (g.CurrentMode == Ghost.Mode.Home && !isExitingHome && home)
+            // Reset env/physics and ALWAYS enable movement
+            if (g.movement)
             {
-                home.ReapplyHomePacingNow();
+                g.movement.SetEnvSpeedMultiplier(1f);
+
+                if (g.movement.rb)
+                {
+                    g.movement.rb.simulated = true;
+                    g.movement.rb.bodyType = RigidbodyType2D.Dynamic;
+                }
+
+                g.movement.enabled = true; // no more gating by isExitingHome
             }
 
             var eyes = g.GetComponent<GhostEyes>();
 
-            if (g.movement)
+            if (g.CurrentMode == Ghost.Mode.Home)
             {
-                if (g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten)
-                {
-                    // Outside ghosts: seed LEFT (arcade), fallback to RIGHT if blocked
-                    var seedDir = Vector2.left;
-                    if (g.movement.Occupied(seedDir)) seedDir = -seedDir;
+                // Ensure Home pacing is correct regardless of init order
+                ApplyModeSpeed(g, Ghost.Mode.Home);
 
-                    g.movement.SetDirection(seedDir, forced: true);
-                    if (eyes) eyes.ResetEyes(seedDir);   // keep visuals consistent on first frame
-                }
-                else if (g.CurrentMode == Ghost.Mode.Home && !isExitingHome)
+                if (g.movement && !isExitingHome)
                 {
-                    // Inside Home (not exiting): seed pacing direction + eyes
+                    // Home constraints + seed vertical pacing (force it even if a dir already exists)
+                    g.movement.SetObstacleMask(0);
+
                     var init = (g.Type == GhostType.Pinky) ? Vector2.down : Vector2.up;
-                    g.movement.SetDirection(init, forced: true);
+                    g.movement.SetDirection(init, true); // ← force vertical idle now
+
                     if (eyes) eyes.ResetEyes(init);
                 }
             }
+            else
+            {
+                // Outside/Eyes/Frightened
+                if (g.movement)
+                {
+                    var seed = Vector2.left;
+                    if (g.movement.Occupied(seed)) seed = -seed;
 
-            // Only enable Movement if we are NOT in the scripted exit
-            if (g.movement)
-                g.movement.enabled = !isExitingHome;
+                    // Only seed outside direction if none is set
+                    if (g.movement.direction == Vector2.zero)
+                        g.movement.SetDirection(seed, true);
+
+                    if (eyes) eyes.ResetEyes(seed);
+                }
+
+                if (g.CurrentMode == Ghost.Mode.Eaten)
+                {
+                    ApplyModeSpeed(g, Ghost.Mode.Eaten);
+                }
+                else if (isFrightenedActive && g.CurrentMode == Ghost.Mode.Frightened)
+                {
+                    ApplyModeSpeed(g, Ghost.Mode.Frightened);
+                }
+                else if (!isFrightenedActive && g.CurrentMode != Ghost.Mode.Home)
+                {
+                    g.SetMode(currentPhaseMode);
+                    ApplyModeSpeed(g, currentPhaseMode);
+                }
+            }
 
             // enable colliders
             var cols = g.GetComponents<CircleCollider2D>();
             for (int i = 0; i < cols.Length; i++) cols[i].enabled = true;
 
-            if (g.movement && g.movement.rb)
-            {
-                g.movement.rb.linearVelocity = Vector2.zero;
-                g.movement.rb.bodyType = RigidbodyType2D.Dynamic;
-                g.movement.rb.simulated = true;
-            }
-
-            // resume anims
+            // resume animations
             ResumeAllGhostAnimations();
 
-            // Apply global phase only to outside, non-eyes ghosts (when not frightened)
-            if (!isFrightenedActive && g.CurrentMode != Ghost.Mode.Home && g.CurrentMode != Ghost.Mode.Eaten)
-            {
-                g.SetMode(currentPhaseMode);
-                ApplyModeSpeed(g, currentPhaseMode);
-            }
-
-            // If resuming Home behaviour and not exiting, pacing direction was already seeded above
-
-            // make sure exit routine (if any) isn't paused
+            // unpause exit routine if any
             if (home) home.SetExitPaused(false);
 
-            // visuals component on
             if (eyes) eyes.enabled = true;
         });
     }
@@ -727,6 +823,8 @@ public class GlobalGhostModeController : MonoBehaviour
             _ => 0
         };
     }
+
+    // Global (post-death) counter: Pinky 7, Inky 17, Clyde 32
 
     private float CurrentNoDotLimit() => exitNoDotSeconds;
 

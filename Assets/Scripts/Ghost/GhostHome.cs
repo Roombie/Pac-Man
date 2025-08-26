@@ -9,6 +9,7 @@ public class GhostHome : MonoBehaviour
     [SerializeField] private Transform outsideDoor; // point just OUTSIDE the door
 
     [Header("Timing")]
+    [SerializeField] private bool allowAutoLaunchTimer = false;
     [SerializeField] private float launchDelaySeconds; // counts only after movement is enabled
     [SerializeField] private float alignStepDuration = 0.20f; // per axis (Y then X)
     [SerializeField] private float doorStepDuration = 0.40f; // inside → outside
@@ -75,8 +76,7 @@ public class GhostHome : MonoBehaviour
         if (move)
         {
             move.ClearObstacleMask(); // restore normal pre-checks
-            move.SetBaseSpeedMultiplier(1f);
-            move.SetBaseSpeedMultiplier(1f); // clear home speed on disable
+            move.SetBaseSpeedMultiplier(homeSpeedMult);
         }
         if (eyes) eyes.ClearOverrideFacing();
         StopExitNow();
@@ -84,11 +84,20 @@ public class GhostHome : MonoBehaviour
     }
 
     // Attempt to fix build state
+    public float GetHomeSpeedMult() => homeSpeedMult;
+
     public void ReapplyHomePacingNow()
     {
+        if (!ghost) ghost = GetComponent<Ghost>();
+        if (!move) move = ghost ? (ghost.movement ?? GetComponent<Movement>()) : GetComponent<Movement>();
         if (!move) return;
-        move.SetEnvSpeedMultiplier(1f); // clear any leftover frightened/env scale
+
+        // Home rules: no pre-checks, base speed = Home multiplier, seed Home pacing dir
+        move.SetObstacleMask(0);
         move.SetBaseSpeedMultiplier(homeSpeedMult);
+
+        var init = (ghost && ghost.Type == GhostType.Pinky) ? Vector2.down : Vector2.up;
+        move.SetDirection(init, true);
     }
 
     private void Update()
@@ -112,7 +121,7 @@ public class GhostHome : MonoBehaviour
             pacingApplied = true;
         }
 
-        if (!exiting)
+        if (!exiting && allowAutoLaunchTimer)
         {
             launchTimer -= Time.deltaTime;
             if (launchTimer <= 0f) BeginExit();
@@ -188,7 +197,6 @@ public class GhostHome : MonoBehaviour
         if (!insideDoor || !outsideDoor)
         {
             move.ClearObstacleMask();
-            move.SetBaseSpeedMultiplier(1f);
             move.SetDirection(Vector2.up, true);
             ghost.SetMode(Ghost.Mode.Scatter);
             if (eyes) eyes.ClearOverrideFacing();
@@ -244,10 +252,9 @@ public class GhostHome : MonoBehaviour
 
         var ctrl = GameManager.Instance ? GameManager.Instance.globalGhostModeController : null;
         if (ctrl != null) ctrl.OnGhostExitedHomeDoor(ghost);
-
-        // Only force Scatter if controller didn’t switch us to Frightened
-        if (ghost.CurrentMode != Ghost.Mode.Frightened)
-            ghost.SetMode(Ghost.Mode.Scatter);
+        
+        // Restore normal pathing checks now that we’re outside
+        if (move) move.ClearObstacleMask();  
 
         if (move.rb) move.rb.bodyType = RigidbodyType2D.Dynamic;
         move.enabled = true;

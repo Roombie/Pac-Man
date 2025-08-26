@@ -34,15 +34,16 @@ public class GameManager : MonoBehaviour
     private struct FreezeFrame
     {
         public bool hard; // hard = Time.timeScale = 0
-        public bool freezeTimers; // freeze ghost timers (mode timers, home exits, etc.)
+        public bool freezeTimers; // whether we froze controller timers
         public List<Behaviour> disabled; // components this frame disabled (soft)
+        public List<Rigidbody2D> pausedBodies;
     }
 
     private int timersCount = 0; // any timers -> timers frozen
     private readonly Stack<FreezeFrame> freeze = new Stack<FreezeFrame>();
     private float savedTimeScale = 1f;
     private int hardCount = 0;
-    private readonly Dictionary<Behaviour,int> softDisableRef = new();
+    private readonly Dictionary<Behaviour, int> softDisableRef = new();
 
     public enum GameState { Intro, Playing, Paused, LevelClear, Intermission, GameOver }
     public GameState CurrentGameState { get; private set; }
@@ -93,7 +94,7 @@ public class GameManager : MonoBehaviour
         return selectedSkins[playerIndex - 1];
     }
 
-    public int GetCurrentIndex() 
+    public int GetCurrentIndex()
     {
         return CurrentIndex;
     }
@@ -111,7 +112,7 @@ public class GameManager : MonoBehaviour
 
         // Get the amount of allowed players based on the player count key
         totalPlayers = Mathf.Clamp(PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1), 1, 2);
-        
+
         pacmanAnimator = pacman.GetComponent<Animator>();
         pacmanSpriteRenderer = pacman.GetComponent<SpriteRenderer>();
         pacmanArrowIndicator = pacman.GetComponent<ArrowIndicator>();
@@ -130,7 +131,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         SetState(GameState.Intro);
-        
+
         IsTwoPlayerMode = totalPlayers > 1;
 
         InitializePlayerScores();
@@ -290,7 +291,7 @@ public class GameManager : MonoBehaviour
 
         pacman.animator.speed = 1f;
         pacman.enabled = true;
-        pacman.movement.SetDirection(Vector2.right); 
+        pacman.movement.SetDirection(Vector2.right);
     }
 
     private IEnumerator NewRoundSequence()
@@ -338,7 +339,7 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();
         globalGhostModeController.SetEyesAudioAllowed(true);
-        
+
         pacman.animator.speed = 1f;
         pacman.enabled = true;
         pacman.movement.SetDirection(Vector2.right);
@@ -384,7 +385,7 @@ public class GameManager : MonoBehaviour
         bonusItemManager.DespawnBonusItem(true);
 
         yield return new WaitForSeconds(1f);
-    
+
         ResetState();
 
         if (IsTwoPlayerMode)
@@ -392,7 +393,7 @@ public class GameManager : MonoBehaviour
             fruitDisplayController.RefreshFruits(CurrentRound);
             ApplyCharacterDataForCurrentPlayer();
         }
-        
+
         UpdateRoundsUI();
 
         pelletManager.RestorePelletsForPlayer(GetPelletIDsEatenByCurrentPlayer());
@@ -544,7 +545,7 @@ public class GameManager : MonoBehaviour
 
         OnRoundChanged?.Invoke(CurrentIndex, CurrentPlayerData.level, CurrentPlayerData.bestRound);
     }
-    
+
     public void SetExtraPoints(int index)
     {
         if (index < 0 || index >= extraPointValues.Length)
@@ -574,7 +575,7 @@ public class GameManager : MonoBehaviour
             string highScoreKey = IsTwoPlayerMode ? "HighScoreMultiplayer" : "HighScoreSinglePlayer";
             PlayerPrefs.SetInt(highScoreKey, highScore);
             PlayerPrefs.Save();
-            
+
             uiManager.UpdateHighScore(highScore);
         }
 
@@ -634,11 +635,7 @@ public class GameManager : MonoBehaviour
     #region Game State & Resets
     public void PushFreeze(bool hard, bool freezeTimers = false, IEnumerable<Behaviour> toDisable = null)
     {
-        var frame = new FreezeFrame {
-            hard = hard,
-            freezeTimers = freezeTimers,
-            disabled = toDisable != null ? new List<Behaviour>(toDisable) : null
-        };
+        var frame = new FreezeFrame { hard = hard, freezeTimers = freezeTimers, disabled = toDisable != null ? new List<Behaviour>(toDisable) : null };
         freeze.Push(frame);
 
         if (hard)
@@ -665,74 +662,89 @@ public class GameManager : MonoBehaviour
 
     public void PushFreezeSoftAllowEyes()
     {
-        var list = new List<Behaviour>();
+        var disabled = new List<Behaviour>();
+        var bodies   = new List<Rigidbody2D>();
 
-        // Stop Pac-Man movement and animations
-        if (pacman) {
-            if (pacman.movement && pacman.movement.enabled) { pacman.movement.enabled = false; list.Add(pacman.movement); }
+        if (++timersCount == 1) 
+            globalGhostModeController?.SetTimersFrozen(true);
+
+        if (pacman)
+        {
+            if (pacman.movement && pacman.movement.enabled) { pacman.movement.enabled = false; disabled.Add(pacman.movement); }
             var anim = pacman.GetComponentInChildren<Animator>();
-            if (anim && anim.enabled) { anim.enabled = false; list.Add(anim); }
+            if (anim && anim.enabled) { anim.enabled = false; disabled.Add(anim); }
+
+            var rb = pacman.movement ? pacman.movement.rb : null;
+            if (rb && rb.simulated)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+                rb.simulated = false;
+                bodies.Add(rb);
+            }
         }
 
-        // Stop all ghosts EXCEPT eyes (Eaten)
         if (globalGhostModeController)
         {
             foreach (var ghost in globalGhostModeController.ghosts)
             {
                 if (!ghost) continue;
-                if (ghost.CurrentMode == Ghost.Mode.Eaten) continue; // let eyes move!
+                if (ghost.CurrentMode == Ghost.Mode.Eaten) continue;
 
-                if (ghost.movement && ghost.movement.enabled) { ghost.movement.enabled = false; list.Add(ghost.movement); }
+                if (ghost.movement && ghost.movement.enabled) { ghost.movement.enabled = false; disabled.Add(ghost.movement); }
 
-                // pause anims on body/frightened/white
                 foreach (var a in ghost.GetComponentsInChildren<Animator>(true))
-                    if (a.enabled) { a.enabled = false; list.Add(a); }
+                    if (a.enabled) { a.enabled = false; disabled.Add(a); }
+
+                var rb = ghost.movement ? ghost.movement.rb : null;
+                if (rb && rb.simulated)
+                {
+                    rb.linearVelocity = Vector2.zero;
+                    rb.angularVelocity = 0f;
+                    rb.simulated = false;
+                    bodies.Add(rb);
+                }
             }
         }
 
-        PushFreeze(hard: false, freezeTimers: true, toDisable: list);
+        freeze.Push(new FreezeFrame { hard = false, freezeTimers = true, disabled = disabled, pausedBodies = bodies });
     }
 
     public void PopFreeze()
     {
         if (freeze.Count == 0) return;
-
         var top = freeze.Pop();
 
         if (top.hard)
         {
             if (--hardCount == 0)
                 Time.timeScale = savedTimeScale;
-            else
-                Time.timeScale = 0f; // still at least one hard
-        }
-
-        if (top.freezeTimers)
-        {
-            if (--timersCount == 0 && hardCount == 0)
-                globalGhostModeController?.SetTimersFrozen(false);
-            else
-                globalGhostModeController?.SetTimersFrozen(true);
         }
         else
         {
-            // if any hard remains, timers stay frozen; otherwise respect timersCount
-            globalGhostModeController?.SetTimersFrozen(hardCount > 0 || timersCount > 0);
-        }
-
-        if (!top.hard && top.disabled != null)
-        {
-            foreach (var b in top.disabled)
+            // Physics back first
+            if (top.pausedBodies != null)
             {
-                if (!b) continue;
-                if (softDisableRef.TryGetValue(b, out var n))
+                foreach (var rb in top.pausedBodies)
                 {
-                    n--;
-                    if (n <= 0) { softDisableRef.Remove(b); b.enabled = true; }
-                    else softDisableRef[b] = n;
+                    if (!rb) continue;
+                    rb.angularVelocity = 0f;
+                    rb.linearVelocity = Vector2.zero;
+                    rb.simulated = true;
                 }
             }
+
+            // Behaviours back
+            if (top.disabled != null)
+            {
+                foreach (var b in top.disabled)
+                    if (b) b.enabled = true;
+            }
         }
+
+        // Timers unfreeze if this frame requested them and we’re the last one
+        if (top.freezeTimers && --timersCount == 0)
+            globalGhostModeController?.SetTimersFrozen(false);
     }
 
     // Safety if you change scenes/states
@@ -903,23 +915,30 @@ public class GameManager : MonoBehaviour
 
     public void PowerPelletEaten(PowerPellet pellet)
     {
-        // Play the frightened music
+        // If no ghost would actually flip into Frightened right now,
+        // do NOTHING except award pellet points.
+        if (!globalGhostModeController.AnyGhostWillFlipToFrightenedNow())
+        {
+            PelletEaten(pellet);  // just points, no music/timers/speed changes
+            return;
+        }
+
+        // Normal frightened flow
         AudioManager.Instance.Play(AudioManager.Instance.frightenedMusic, SoundCategory.Music, 1f, 1f, true);
 
         ghostMultiplier = 1;
 
         globalGhostModeController.TriggerFrightened(pellet.duration);
 
-        PelletEaten(pellet);  // Continue with regular pellet eating logic
+        PelletEaten(pellet);
 
-        // Ensure the reset happens after the full Power Pellet duration
         CancelInvoke(nameof(ResetGhostMultiplier));
         Invoke(nameof(ResetGhostMultiplier), pellet.duration);
 
-        // Ensure EndPowerPellet is invoked after the full duration as well
         CancelInvoke(nameof(EndPowerPellet));
         Invoke(nameof(EndPowerPellet), pellet.duration);
     }
+
 
     private void EndPowerPellet()
     {
