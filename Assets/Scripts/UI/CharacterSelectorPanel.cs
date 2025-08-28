@@ -20,17 +20,19 @@ public class CharacterSelectorPanel : MonoBehaviour
     [Header("Visual Style References")]
     public Image backgroundImage;
 
-    [Header("Input Actions")]
-    public InputActionReference submitAction;
-    public InputActionReference cancelAction;
-    public InputActionReference moveAction;
-
+    // Input actions
     private InputAction submit;
     private InputAction cancel;
     private InputAction move;
 
-    private float lastMoveTime = 0f;
-    private float moveCooldown = 0.25f;
+    // --- Navigation tuning (new) ---
+    [Header("Navigation Tuning")]
+    [SerializeField] private float moveDeadzone = 0.5f;         // how far you must tilt
+    [SerializeField] private float initialRepeatDelay = 0.35f;  // delay before auto-repeat
+    [SerializeField] private float repeatInterval = 0.12f;      // rate while held
+    private int   lastMoveSign = 0;                              // -1, 0, +1 (left, neutral, right)
+    private float nextRepeatTime = 0f;                           // when we’re allowed to repeat again
+    // --- end new ---
 
     private CharacterData[] characters;
     private int playerIndex = -1;
@@ -52,11 +54,23 @@ public class CharacterSelectorPanel : MonoBehaviour
     public int PlayerIndex => playerIndex;
     public bool HasConfirmedFinal() => hasConfirmedFinal;
 
-    private static CharacterSelectorPanel activePanel = null;
+    private static Dictionary<int, CharacterSelectorPanel> activePanels = new();
 
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
+
+        if (playerInput != null)
+        {
+            submit = playerInput.actions["Submit"];
+            cancel = playerInput.actions["Cancel"];
+            move   = playerInput.actions["Move"];
+
+            submit.performed += OnSubmitPerformed;
+            cancel.performed += OnCancelPerformed;
+            move.performed   += OnMovePerformed;
+            move.canceled    += OnMoveCanceled; // NEW
+        }
 
         if (playerInput != null)
         {
@@ -67,8 +81,8 @@ public class CharacterSelectorPanel : MonoBehaviour
 
     private void OnEnable()
     {
-        if (activePanel != null && activePanel != this) return;
-        activePanel = this;
+        if (!activePanels.ContainsKey(playerIndex))
+            activePanels[playerIndex] = this;
 
         EnableInputActions();
         UpdateJoinInstructionState();
@@ -76,34 +90,38 @@ public class CharacterSelectorPanel : MonoBehaviour
 
     private void OnDisable()
     {
-        if (activePanel == this) activePanel = null;
+        if (activePanels.ContainsKey(playerIndex) && activePanels[playerIndex] == this)
+            activePanels.Remove(playerIndex);
+
         DisableInputActions();
     }
 
     private void EnableInputActions()
     {
-        if (submitAction != null)
+        if (playerInput == null)
         {
-            submit = submitAction.action;
+            playerInput = GetComponent<PlayerInput>();
+        }
+
+        if (playerInput != null)
+        {
+            // Get per-player actions from this PlayerInput’s map
+            submit = playerInput.actions["Submit"];
+            cancel = playerInput.actions["Cancel"];
+            move   = playerInput.actions["Move"];
+
             if (!submit.enabled) submit.Enable();
-            submit.performed -= OnSubmitPerformed;
-            submit.performed += OnSubmitPerformed;
-        }
-
-        if (cancelAction != null)
-        {
-            cancel = cancelAction.action;
             if (!cancel.enabled) cancel.Enable();
-            cancel.performed -= OnCancelPerformed;
-            cancel.performed += OnCancelPerformed;
-        }
+            if (!move.enabled)   move.Enable();
 
-        if (moveAction != null)
-        {
-            move = moveAction.action;
-            if (!move.enabled) move.Enable();
-            move.performed -= OnMovePerformed;
+            submit.performed += OnSubmitPerformed;
+            cancel.performed += OnCancelPerformed;
             move.performed += OnMovePerformed;
+            move.canceled  += OnMoveCanceled; // NEW
+        }
+        else
+        {
+            Debug.LogError($"[CharacterSelectorPanel] No PlayerInput on {gameObject.name}");
         }
     }
 
@@ -111,7 +129,11 @@ public class CharacterSelectorPanel : MonoBehaviour
     {
         if (submit != null) submit.performed -= OnSubmitPerformed;
         if (cancel != null) cancel.performed -= OnCancelPerformed;
-        if (move != null) move.performed -= OnMovePerformed;
+        if (move != null)
+        {
+            move.performed -= OnMovePerformed;
+            move.canceled  -= OnMoveCanceled; // NEW
+        }
     }
 
     private void OnDeviceLost(PlayerInput input)
@@ -269,33 +291,59 @@ public class CharacterSelectorPanel : MonoBehaviour
         CancelSelection();
     }
 
+    // --- REPLACED: anti-spam repeat logic ---
     private void OnMovePerformed(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
-        Vector2 direction = context.ReadValue<Vector2>();
 
-        bool isAnalog = Mathf.Abs(direction.x) > 0.5f && Mathf.Abs(direction.x) < 1f;
-        if (isAnalog && Time.time - lastMoveTime < moveCooldown) return;
-        if (Mathf.Abs(direction.x) < 0.5f) return;
+        Vector2 v = context.ReadValue<Vector2>();
+        float x = v.x;
 
-        lastMoveTime = Time.time;
-
-        if (!hasSelectedCharacter)
+        // Deadzone check
+        if (Mathf.Abs(x) < moveDeadzone)
         {
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
-            currentIndex = (currentIndex + (direction.x > 0 ? 1 : -1) + characters.Length) % characters.Length;
-            currentSkinIndex = 0;
-            UpdateDisplay();
-            InitializeSkins();
+            // back to neutral → allow a fresh move next time
+            lastMoveSign = 0;
+            return;
         }
-        else if (!hasConfirmedSkin)
+
+        int sign = x > 0 ? +1 : -1;
+
+        bool isNewTilt = (lastMoveSign == 0) || (sign != lastMoveSign);
+        bool canRepeat = Time.time >= nextRepeatTime;
+
+        if (isNewTilt || canRepeat)
         {
-            AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
-            currentSkinIndex = (currentSkinIndex + (direction.x > 0 ? 1 : -1) + SelectedCharacter.skins.Length) % SelectedCharacter.skins.Length;
-            UpdateSkinHighlight();
-            UpdateDisplay();
+            // schedule next repeat window
+            nextRepeatTime = Time.time + (isNewTilt ? initialRepeatDelay : repeatInterval);
+            lastMoveSign = sign;
+
+            // Do the action once
+            if (!hasSelectedCharacter)
+            {
+                AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+                currentIndex = (currentIndex + (sign > 0 ? 1 : -1) + characters.Length) % characters.Length;
+                currentSkinIndex = 0;
+                UpdateDisplay();
+                InitializeSkins();
+            }
+            else if (!hasConfirmedSkin)
+            {
+                AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+                currentSkinIndex = (currentSkinIndex + (sign > 0 ? 1 : -1) + SelectedCharacter.skins.Length) % SelectedCharacter.skins.Length;
+                UpdateSkinHighlight();
+                UpdateDisplay();
+            }
         }
     }
+
+    private void OnMoveCanceled(InputAction.CallbackContext context)
+    {
+        // Stick returned to neutral / key released → reset state so next tilt is immediate
+        lastMoveSign = 0;
+        nextRepeatTime = 0f;
+    }
+    // --- end replacement ---
 
     public void ResetPanelState()
     {

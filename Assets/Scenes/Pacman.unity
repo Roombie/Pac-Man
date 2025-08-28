@@ -311,8 +311,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Eat all pellets
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: bed4f9c26b4b7d7469b093c0b9994131, type: 2}
+  m_sharedMaterial: {fileID: 3899040833245846193, guid: bed4f9c26b4b7d7469b093c0b9994131, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -336,8 +336,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
-  m_fontSizeBase: 18
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -22457,6 +22457,7 @@ GameObject:
   - component: {fileID: 1369596766}
   - component: {fileID: 1369596765}
   - component: {fileID: 1369596764}
+  - component: {fileID: 1369596768}
   - component: {fileID: 1369596763}
   - component: {fileID: 1369596762}
   - component: {fileID: 1369596761}
@@ -22716,6 +22717,23 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1369596768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1369596759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a75f3f974de72cb4b9bd89f4c47a3704, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  controller: {fileID: 1552098268}
+  textTarget: {fileID: 1791192315}
+  startVisible: 0
+  showInReleaseBuild: 1
+  toggleKey: 284
 --- !u!1 &1379414702
 GameObject:
   m_ObjectHideFlags: 0
@@ -25499,11 +25517,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1791192313}
-  - component: {fileID: 1791192314}
   - component: {fileID: 1791192316}
   - component: {fileID: 1791192315}
   m_Layer: 5
-  m_Name: GameObject
+  m_Name: Debug HUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25525,30 +25542,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 307.81674, y: -4.3113}
-  m_SizeDelta: {x: 175.573, y: 441.67}
+  m_AnchoredPosition: {x: 306.85, y: 0}
+  m_SizeDelta: {x: 175, y: 440}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1791192314
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1791192312}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a75f3f974de72cb4b9bd89f4c47a3704, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  controller: {fileID: 1552098268}
-  textTarget: {fileID: 1791192315}
-  startVisible: 1
-  showInReleaseBuild: 1
-  toggleKey: 32
-  autoCreateUI: 1
-  anchoredPos: {x: 16, y: -16}
-  size: {x: 900, y: 450}
-  fontSize: 14
 --- !u!114 &1791192315
 MonoBehaviour:
   m_ObjectHideFlags: 0

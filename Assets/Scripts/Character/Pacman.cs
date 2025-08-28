@@ -31,6 +31,10 @@ public class Pacman : MonoBehaviour
     {
         if (isDead || isInputLocked || GameManager.Instance.CurrentGameState != GameManager.GameState.Playing) return;
 
+        // If player input is not from the correct player's index 
+        if (GameManager.Instance.CurrentIndex != playerInput.playerIndex)
+            return;
+
         // Get move input direction
         Vector2 inputDirection = playerInput.actions["Move"].ReadValue<Vector2>();
 

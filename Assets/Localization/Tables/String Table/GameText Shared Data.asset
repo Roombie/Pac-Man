@@ -179,6 +179,10 @@ MonoBehaviour:
     m_Key: PlayerDisconnected_Text
     m_Metadata:
       m_Items: []
+  - m_Id: 12062438605025280
+    m_Key: Disclaimer_Text
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

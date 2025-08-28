@@ -186,6 +186,16 @@ MonoBehaviour:
     m_Metadata:
       m_Items:
       - rid: 6841095920325755019
+  - m_Id: 12062438605025280
+    m_Localized: 'Este es un proyecto hecho por un fan.
+
+      <color=#FFFF00>Pac-Man</color>
+      es una marca comercial de <color=#E60000>Bandai Namco Entertainment Inc.</color>
+
+      No
+      afiliado ni respaldado por el propietario de la marca.'
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

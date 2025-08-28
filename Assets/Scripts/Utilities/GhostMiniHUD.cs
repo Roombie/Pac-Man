@@ -1,8 +1,6 @@
 using System.Text;
 using UnityEngine;
 using TMPro;
-using UnityEngine.UI;
-using System.Reflection; // 👈 for reflective reads
 
 public class GhostMiniHUDUI : MonoBehaviour
 {
@@ -12,14 +10,8 @@ public class GhostMiniHUDUI : MonoBehaviour
 
     [Header("Behavior")]
     [SerializeField] bool startVisible = true;
-    [SerializeField] bool showInReleaseBuild = true;  // if false, Editor/Dev builds only
+    [SerializeField] bool showInReleaseBuild = true;   // if false, Editor/Dev builds only
     [SerializeField] KeyCode toggleKey = KeyCode.F3;
-    [SerializeField] bool autoCreateUI = true;        // create Canvas + TMP if not assigned
-
-    [Header("Auto-create UI layout")]
-    [SerializeField] Vector2 anchoredPos = new Vector2(16, -16);
-    [SerializeField] Vector2 size = new Vector2(900, 450);
-    [SerializeField] int fontSize = 18;
 
     bool visible;
 
@@ -40,7 +32,6 @@ public class GhostMiniHUDUI : MonoBehaviour
             }
         }
 
-        if (!textTarget && autoCreateUI) CreateRuntimeUI();
         visible = startVisible && AllowedToShow();
         ApplyVisibility();
     }
@@ -77,45 +68,33 @@ public class GhostMiniHUDUI : MonoBehaviour
 
         sb.AppendLine("<b><size=22>Ghost Debug</size></b>");
         sb.AppendLine($"TimeScale: {Time.timeScale:0.###}    FPS~: {1f / Mathf.Max(Time.smoothDeltaTime, 1e-5f):0}");
-        if (!controller) { sb.AppendLine("No GlobalGhostModeController found."); return sb.ToString(); }
 
-        // ---- Global mode summary (Frightened overrides Scatter/Chase) ----
-        Ghost.Mode effectiveMode = Ghost.Mode.Scatter;
-        float remaining = 0f;
-        bool frozen = ReflectTimersFrozen(controller);
+        if (!controller)
+        {
+            sb.AppendLine("No GlobalGhostModeController found.");
+            return sb.ToString();
+        }
 
+        // --- Global summary (simple & reflection-free) ---
+        // If frightened, show remaining time; else infer mode from any ghost outside Home/Eaten.
+        string globalMode = "—";
         if (controller.IsFrightenedActive)
         {
-            effectiveMode = Ghost.Mode.Frightened;
-            remaining = controller.FrightenedRemainingSeconds;
+            globalMode = "Frightened";
+            sb.AppendLine($"Global Mode: <b>{globalMode}</b>   Remaining: {controller.FrightenedRemainingSeconds:0.00}s");
+            sb.AppendLine("Frightened: <b>ON</b>");
         }
         else
         {
-            // Try to read the private currentPhaseMode and phaseTimer.RemainingSeconds
-            if (!ReflectCurrentPhaseMode(controller, out effectiveMode))
-            {
-                // Fallback: infer from any outside ghost (not Home/Eaten)
-                var inferred = InferOutsideMode(controller);
-                if (inferred.HasValue) effectiveMode = inferred.Value;
-            }
-            remaining = ReflectPhaseRemainingSeconds(controller);
-        }
-
-        sb.AppendLine(
-            $"Global Mode: <b>{effectiveMode}</b>   " +
-            $"Remaining: {(remaining > 0f ? remaining.ToString("0.00") + "s" : "—")}   " +
-            $"Frozen:{frozen}"
-        );
-
-        // Keep explicit frightened line if you like the visual cue
-        if (controller.IsFrightenedActive)
-            sb.AppendLine($"Frightened: <b>ON</b>  Remaining: {controller.FrightenedRemainingSeconds:0.00}s");
-        else
+            var inferred = InferOutsideMode(controller);
+            if (inferred.HasValue) globalMode = inferred.Value.ToString();
+            sb.AppendLine($"Global Mode: <b>{globalMode}</b>");
             sb.AppendLine("Frightened: OFF");
+        }
 
         sb.AppendLine();
 
-        // ---- Per-ghost ----
+        // Per-ghost
         var ghosts = controller.ghosts;
         if (ghosts == null || ghosts.Length == 0)
         {
@@ -152,17 +131,13 @@ public class GhostMiniHUDUI : MonoBehaviour
                 sb.Append("    (no Movement)");
             }
 
-            // Rigidbody & Home state
+            // Rigidbody & Home state (still useful for quick checks)
+            // I needed it to detect issues with Inky
             Rigidbody2D rb = mv ? mv.rb : null;
             var home = g.GetComponent<GhostHome>();
             bool exiting = home ? home.IsExiting : false;
             sb.AppendLine();
-            sb.Append("  RB: ");
-            if (rb)
-                sb.Append($"sim:{rb.simulated} type:{rb.bodyType}");
-            else
-                sb.Append("none");
-
+            sb.Append("  RB: ").Append(rb ? $"sim:{rb.simulated} type:{rb.bodyType}" : "none");
             sb.Append($"   HomeExiting:{exiting}");
 
             sb.AppendLine();
@@ -170,57 +145,6 @@ public class GhostMiniHUDUI : MonoBehaviour
 
         return sb.ToString();
     }
-
-    void CreateRuntimeUI()
-    {
-        // Find existing canvas named "DebugHUD_Canvas" if any
-        Canvas canvas = null;
-        var found = GameObject.Find("DebugHUD_Canvas");
-        if (found) canvas = found.GetComponent<Canvas>();
-
-        if (!canvas)
-        {
-            var goCanvas = new GameObject("DebugHUD_Canvas");
-            canvas = goCanvas.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            goCanvas.AddComponent<CanvasScaler>();
-            goCanvas.AddComponent<GraphicRaycaster>();
-
-            // Optional: keep through scene loads if you like
-            // DontDestroyOnLoad(goCanvas);
-        }
-
-        // Create the TMP text holder if missing
-        var goText = new GameObject("GhostMiniHUD_Text");
-        goText.transform.SetParent(canvas.transform, false);
-
-        var rect = goText.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0, 1);
-        rect.anchorMax = new Vector2(0, 1);
-        rect.pivot = new Vector2(0, 1);
-        rect.anchoredPosition = anchoredPos;
-        rect.sizeDelta = size;
-
-        var tmp = goText.AddComponent<TextMeshProUGUI>();
-        tmp.textWrappingMode = TextWrappingModes.NoWrap;
-        tmp.richText = true;
-        tmp.alignment = TextAlignmentOptions.TopLeft;
-        tmp.fontSize = fontSize;
-        tmp.text = "Ghost HUD…";
-
-        textTarget = tmp;
-    }
-
-    // Public helpers if you want to control it from elsewhere
-    public void SetVisible(bool v)
-    {
-        visible = v && AllowedToShow();
-        ApplyVisibility();
-    }
-
-    public bool IsVisible() => visible;
-
-    // ----------------- Helpers (colors & reflection) -----------------
 
     static string GetGhostHex(GhostType t)
     {
@@ -233,53 +157,6 @@ public class GhostMiniHUDUI : MonoBehaviour
             case GhostType.Clyde:  return "FFB852"; // orange
             default:               return "FFFFFF"; // fallback
         }
-    }
-
-    static bool ReflectCurrentPhaseMode(GlobalGhostModeController c, out Ghost.Mode mode)
-    {
-        mode = Ghost.Mode.Scatter;
-        if (!c) return false;
-
-        var fi = typeof(GlobalGhostModeController).GetField("currentPhaseMode",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        if (fi == null) return false;
-
-        object val = fi.GetValue(c);
-        if (val == null) return false;
-
-        mode = (Ghost.Mode)val;
-        return true;
-    }
-
-    static float ReflectPhaseRemainingSeconds(GlobalGhostModeController c)
-    {
-        if (!c) return 0f;
-
-        var fi = typeof(GlobalGhostModeController).GetField("phaseTimer",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        if (fi == null) return 0f;
-
-        var timerObj = fi.GetValue(c);
-        if (timerObj == null) return 0f;
-
-        // Timer has a public RemainingSeconds property in your codebase
-        var pi = timerObj.GetType().GetProperty("RemainingSeconds",
-            BindingFlags.Instance | BindingFlags.Public);
-        if (pi == null) return 0f;
-
-        var val = pi.GetValue(timerObj, null);
-        return val is float f ? f : 0f;
-    }
-
-    static bool ReflectTimersFrozen(GlobalGhostModeController c)
-    {
-        if (!c) return false;
-        var fi = typeof(GlobalGhostModeController).GetField("timersFrozen",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        if (fi == null) return false;
-
-        var val = fi.GetValue(c);
-        return val is bool b && b;
     }
 
     static Ghost.Mode? InferOutsideMode(GlobalGhostModeController c)
@@ -296,4 +173,13 @@ public class GhostMiniHUDUI : MonoBehaviour
         }
         return null;
     }
+
+    // Public helpers if you want to control it from elsewhere
+    public void SetVisible(bool v)
+    {
+        visible = v && AllowedToShow();
+        ApplyVisibility();
+    }
+
+    public bool IsVisible() => visible;
 }

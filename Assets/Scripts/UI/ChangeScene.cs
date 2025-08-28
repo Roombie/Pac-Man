@@ -3,8 +3,14 @@ using UnityEngine.SceneManagement;
 
 public class ChangeScene : MonoBehaviour
 {
+    public void ChangeSceneNoTransition(string sceneName)
+    {
+        SceneManager.LoadScene(sceneName);
+    }
+
     // This script can be used to load any scene
-    public void LoadScene(string sceneName) {
+    public void LoadScene(string sceneName)
+    {
         SceneTransitionManager.Instance.LoadScene(sceneName);
         // Debug.Log("New level");
     }

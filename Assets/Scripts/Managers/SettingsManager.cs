@@ -64,8 +64,8 @@ public class SettingsManager : MonoBehaviour
         Screen.fullScreen = PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, 1) == 1;
 
         // Volumes
-        float music = PlayerPrefs.GetFloat(SettingsKeys.MusicVolumeKey, 0.8f);
-        float sfx   = PlayerPrefs.GetFloat(SettingsKeys.SoundVolumeKey, 0.8f);
+        float music = PlayerPrefs.GetFloat(SettingsKeys.MusicVolumeKey, 0.6f);
+        float sfx   = PlayerPrefs.GetFloat(SettingsKeys.SoundVolumeKey, 0.6f);
         AudioManager.Instance?.SetVolume(SettingType.MusicVolumeKey, music);
         AudioManager.Instance?.SetVolume(SettingType.SoundVolumeKey, sfx);
 
@@ -75,7 +75,6 @@ public class SettingsManager : MonoBehaviour
             p.UpdateIndicatorVisibility(showIndicator);
     }
 
-    // ---------- Static convenience for any scene/UI ----------
     public static void Apply(SettingType type, bool on) => Apply(type, on ? 1 : 0);
     public static void Apply(SettingType type, int index)
     {
@@ -83,7 +82,6 @@ public class SettingsManager : MonoBehaviour
         Instance.ApplySetting(type, index);
     }
 
-    // ---------- Core application + persistence ----------
     public void ApplySetting(SettingType type, bool on) => ApplySetting(type, on ? 1 : 0);
 
     public void ApplySetting(SettingType type, int index)
