@@ -26,8 +26,6 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
             toggle.RefreshUI();
     }
 
-    // -------- ISettingsProvider --------
-
     public string[] GetOptions(SettingType type)
     {
         return type switch
@@ -63,13 +61,13 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
                 => Mathf.RoundToInt(PlayerPrefs.GetFloat(SettingsKeys.SoundVolumeKey, 0.8f) * 10f),
 
             SettingType.PacmanLivesKey
-                => PlayerPrefs.GetInt(SettingsKeys.PacmanLivesKey, 3) - 1,
+                => PlayerPrefs.GetInt(SettingsKeys.PacmanLivesKey, GameConstants.MaxLives) - 1,
 
             SettingType.FullscreenKey
                 => PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, Screen.fullScreen ? 1 : 0),
 
             SettingType.ExtraLifeThresholdKey
-                => System.Array.IndexOf(GameConstants.ExtraPoints, PlayerPrefs.GetInt(SettingsKeys.ExtraLifeThresholdKey, 0)),
+                => System.Array.IndexOf(GameConstants.ExtraPoints, PlayerPrefs.GetInt(SettingsKeys.ExtraLifeThresholdKey, GameConstants.ExtraPoints[0])),
 
             SettingType.LanguageKey
                 => LocalizationSettings.AvailableLocales.Locales
@@ -98,8 +96,6 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
         ApplySetting(type, index); // manager persists where needed
         PlayerPrefs.Save();
     }
-
-    // -------- Helpers --------
 
     private string GetLocalized(string key)
     {

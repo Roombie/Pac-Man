@@ -30,7 +30,7 @@ public class CharacterSelectorPanel : MonoBehaviour
     [SerializeField] private float moveDeadzone = 0.5f;         // how far you must tilt
     [SerializeField] private float initialRepeatDelay = 0.35f;  // delay before auto-repeat
     [SerializeField] private float repeatInterval = 0.12f;      // rate while held
-    private int   lastMoveSign = 0;                              // -1, 0, +1 (left, neutral, right)
+    private int lastMoveSign = 0;                              // -1, 0, +1 (left, neutral, right)
     private float nextRepeatTime = 0f;                           // when we’re allowed to repeat again
     // --- end new ---
 
@@ -64,12 +64,12 @@ public class CharacterSelectorPanel : MonoBehaviour
         {
             submit = playerInput.actions["Submit"];
             cancel = playerInput.actions["Cancel"];
-            move   = playerInput.actions["Move"];
+            move = playerInput.actions["Move"];
 
             submit.performed += OnSubmitPerformed;
             cancel.performed += OnCancelPerformed;
-            move.performed   += OnMovePerformed;
-            move.canceled    += OnMoveCanceled; // NEW
+            move.performed += OnMovePerformed;
+            move.canceled += OnMoveCanceled; // NEW
         }
 
         if (playerInput != null)
@@ -108,16 +108,16 @@ public class CharacterSelectorPanel : MonoBehaviour
             // Get per-player actions from this PlayerInput’s map
             submit = playerInput.actions["Submit"];
             cancel = playerInput.actions["Cancel"];
-            move   = playerInput.actions["Move"];
+            move = playerInput.actions["Move"];
 
             if (!submit.enabled) submit.Enable();
             if (!cancel.enabled) cancel.Enable();
-            if (!move.enabled)   move.Enable();
+            if (!move.enabled) move.Enable();
 
             submit.performed += OnSubmitPerformed;
             cancel.performed += OnCancelPerformed;
             move.performed += OnMovePerformed;
-            move.canceled  += OnMoveCanceled; // NEW
+            move.canceled += OnMoveCanceled; // NEW
         }
         else
         {
@@ -132,7 +132,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         if (move != null)
         {
             move.performed -= OnMovePerformed;
-            move.canceled  -= OnMoveCanceled; // NEW
+            move.canceled -= OnMoveCanceled; // NEW
         }
     }
 
@@ -291,7 +291,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         CancelSelection();
     }
 
-    // --- REPLACED: anti-spam repeat logic ---
+    // anti-spam repeat logic
     private void OnMovePerformed(InputAction.CallbackContext context)
     {
         if (!context.performed) return;
@@ -343,7 +343,6 @@ public class CharacterSelectorPanel : MonoBehaviour
         lastMoveSign = 0;
         nextRepeatTime = 0f;
     }
-    // --- end replacement ---
 
     public void ResetPanelState()
     {
@@ -448,5 +447,19 @@ public class CharacterSelectorPanel : MonoBehaviour
                 }
             }
         }
+    }
+    
+    public (string scheme, int[] deviceIds) GetInputSignature()
+    {
+        if (playerInput == null)
+            return (null, System.Array.Empty<int>());
+
+        var ids = new List<int>();
+        // ReadOnlyArray<T> is never null; just iterate it
+        foreach (var d in playerInput.devices)
+            ids.Add(d.deviceId);
+
+        var scheme = playerInput.currentControlScheme;
+        return (string.IsNullOrEmpty(scheme) ? null : scheme, ids.ToArray());
     }
 }

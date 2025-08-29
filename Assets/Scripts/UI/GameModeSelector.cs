@@ -66,6 +66,7 @@ public class GameModeSelector : MonoBehaviour
     {
         currentMode = currentMode == 1 ? 2 : 1;
         PlayerPrefs.SetInt(SettingsKeys.GameModeKey, currentMode);
+        PlayerPrefs.SetInt(SettingsKeys.PlayerCountKey, currentMode);
         PlayerPrefs.Save();
         ApplyMode();
     }

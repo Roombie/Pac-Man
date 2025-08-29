@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public static class GameConstants
 {
     public const int MaxLives = 5;

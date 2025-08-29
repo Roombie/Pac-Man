@@ -5,6 +5,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Users;
 
 public class GameManager : MonoBehaviour
 {
@@ -136,18 +138,16 @@ public class GameManager : MonoBehaviour
 
         InitializePlayerScores();
         InitializePlayers();
-
-        int extraPointsIndex = PlayerPrefs.GetInt(SettingsKeys.ExtraLifeThresholdKey, 0); // 10000
-        SetExtraPoints(extraPointsIndex);
+        InitializeExtraLifeThreshold();
+        ApplyActivePlayerInputDevices();
 
         uiManager.InitializeUI(totalPlayers);
         uiManager.UpdateHighScore(highScore);
 
         pelletManager.OnAllPelletsCollected += () => StartCoroutine(HandleAllPelletsCollected());
-        InitializeExtraLifeThreshold();
-        NewGame();
 
-        Debug.Log($"[GameManager] Game mode is {(IsTwoPlayerMode ? "2P" : "1P")} ");
+        NewGame();
+        Debug.Log($"[GM] totalPlayers={totalPlayers}, IsTwoPlayerMode={IsTwoPlayerMode}");
     }
 
     #region Game Flow
@@ -196,6 +196,49 @@ public class GameManager : MonoBehaviour
                 selectedSkins[i] = character.GetSkinByName(skinName);
             }
         }
+    }
+
+    private void ApplyActivePlayerInputDevices()
+    {
+        var pi = pacman.GetComponent<PlayerInput>();
+        if (pi == null) return;
+
+        // Don’t auto-hop to whatever device moved last
+        pi.neverAutoSwitchControlSchemes = true;
+
+        // Hard reset: unpair everything currently on Pac-Man’s user
+        var user = pi.user; // InputUser (non-nullable struct)
+        if (user.pairedDevices.Count > 0)
+            user.UnpairDevices();
+
+        // NOTE: keys were saved as P1_, P2_, ... (1-based)
+        string scheme = PlayerPrefs.GetString($"P{currentPlayer + 1}_Scheme", "");
+        string csv = PlayerPrefs.GetString($"P{currentPlayer + 1}_Devices", "");
+
+        var devices = new List<InputDevice>();
+        if (!string.IsNullOrEmpty(csv))
+        {
+            foreach (var part in csv.Split(','))
+            {
+                if (!int.TryParse(part, out var id)) continue;
+                var dev = InputSystem.GetDeviceById(id);
+                if (dev == null) continue;
+
+                // If the device is paired to some other user, unpair it safely
+                InputUser? other = InputUser.FindUserPairedToDevice(dev);
+                if (other.HasValue)
+                    other.Value.UnpairDevice(dev);
+
+                InputUser.PerformPairingWithDevice(dev, user);
+                devices.Add(dev);
+            }
+        }
+
+        // Only accept input from this exact device set
+        if (!string.IsNullOrEmpty(scheme) && devices.Count > 0)
+            pi.SwitchCurrentControlScheme(scheme, devices.ToArray());
+
+        Debug.Log($"[GM] Applied devices for P{currentPlayer + 1}: {devices.Count} device(s), scheme={scheme}");
     }
 
     private void InitializePlayerScores()
@@ -301,6 +344,7 @@ public class GameManager : MonoBehaviour
         ResetActorsState();
         bonusItemManager.DespawnBonusItem(true);
         CurrentPlayerData.level++;
+        globalGhostModeController.ApplyLevel(CurrentRound);
         globalGhostModeController.ActivateAllGhosts();
         UpdateBestRound();
         UpdateRoundsUI();
@@ -339,6 +383,7 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();
         globalGhostModeController.SetEyesAudioAllowed(true);
+        globalGhostModeController.SetHouseReleaseEnabled(true);
 
         pacman.animator.speed = 1f;
         pacman.enabled = true;
@@ -398,17 +443,25 @@ public class GameManager : MonoBehaviour
 
         pelletManager.RestorePelletsForPlayer(GetPelletIDsEatenByCurrentPlayer());
         uiManager.StartPlayerFlicker(CurrentIndex);
+
+        pacman.animator.speed = 0f;
+        pacman.enabled = false;
+        uiManager.ShowReadyText(true);
+
+        UpdateLifeIconsUI();
+
         if (IsTwoPlayerMode)
         {
             uiManager.UpdateIntroText(CurrentIndex);
+            globalGhostModeController.DeactivateAllGhosts();
+
+            yield return new WaitForSeconds(2f);
+
+            uiManager.HidePlayerIntroText();
+            globalGhostModeController.ActivateAllGhosts();
         }
-        uiManager.ShowReadyText(true);
 
         pacman.gameObject.SetActive(true);
-        pacman.animator.speed = 0f;
-        pacman.enabled = false;
-
-        UpdateLifeIconsUI();
 
         yield return new WaitForSeconds(NewRoundDelay);
 
@@ -424,6 +477,7 @@ public class GameManager : MonoBehaviour
 
         globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();
+        globalGhostModeController.SetHouseReleaseEnabled(true);
         UpdateSiren(pelletManager.RemainingPelletCount());
         pelletManager.CachePelletLayout(currentPlayer);
     }
@@ -506,7 +560,7 @@ public class GameManager : MonoBehaviour
     public void SetLives(int value)
     {
         // Clamp the lives to a maximum of the amount set in MaxLives
-        CurrentPlayerData.lives = Mathf.Clamp(value, 0, GameConstants.MaxLives);
+        CurrentPlayerData.lives = Mathf.Clamp(value, 1, GameConstants.MaxLives);
 
         Debug.Log($"[GameManager] SetLives for Player {currentPlayer}: {CurrentPlayerData.lives}");
 
@@ -606,20 +660,18 @@ public class GameManager : MonoBehaviour
 
     private void InitializeExtraLifeThreshold()
     {
-        int index = PlayerPrefs.GetInt(SettingsKeys.ExtraLifeThresholdKey, 0);
+        int[] values = GameConstants.ExtraPoints;
 
-        if (index >= 0 && index < extraPointValues.Length)
-        {
-            currentExtraPoints = extraPointValues[index];
-            nextLifeScoreThreshold = currentExtraPoints > 0 ? currentExtraPoints : -1;
-            Debug.Log($"[GameManager] Initialized extra life every {currentExtraPoints} points");
-        }
-        else
-        {
-            currentExtraPoints = 0;
-            nextLifeScoreThreshold = -1;
-            Debug.LogWarning("[GameManager] Invalid extra point index from PlayerPrefs. Extra life disabled.");
-        }
+        // Read saved value; default to first option (e.g., 10000)
+        int saved = PlayerPrefs.GetInt(SettingsKeys.ExtraLifeThresholdKey, values[0]);
+
+        // Resolve to an index (supports legacy index OR points-in-array)
+        int idx = (saved >= 0 && saved < values.Length)
+                    ? saved
+                    : System.Array.IndexOf(values, saved);
+        if (idx < 0) idx = 0;
+
+        SetExtraPoints(idx); // single source of truth
     }
 
     private void UpdateLifeIconsUI()
@@ -819,6 +871,8 @@ public class GameManager : MonoBehaviour
             GameOver(); // End the game if no players are left
             return;
         }
+
+        ApplyActivePlayerInputDevices();
 
         // Log and invoke the round change event when the turn switches
         Debug.Log($"[GameManager] Turn switched. Now it's Player {currentPlayer}");

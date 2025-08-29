@@ -65,7 +65,7 @@ public class SettingsManager : MonoBehaviour
 
         // Volumes
         float music = PlayerPrefs.GetFloat(SettingsKeys.MusicVolumeKey, 0.6f);
-        float sfx   = PlayerPrefs.GetFloat(SettingsKeys.SoundVolumeKey, 0.6f);
+        float sfx = PlayerPrefs.GetFloat(SettingsKeys.SoundVolumeKey, 0.6f);
         AudioManager.Instance?.SetVolume(SettingType.MusicVolumeKey, music);
         AudioManager.Instance?.SetVolume(SettingType.SoundVolumeKey, sfx);
 

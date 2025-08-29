@@ -252,7 +252,39 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
     {
         isSelected = false;
         EventManager<object>.TriggerEvent(EventKey.UIInteractionChanged, false);
-        
+
         SetArrowVisibility(false);
+    }
+    
+    public static bool TryCancelCurrentSelection()
+    {
+        if (currentlySelecting == null) return false;
+        currentlySelecting.CancelSelectingWithoutSave();
+        return true;
+    }
+
+    private void CancelSelectingWithoutSave()
+    {
+        if (!isSelected) return;
+
+        isSelected = false;
+        currentlySelecting = null;
+
+        // Re-enable global UI nav
+        EventManager<object>.TriggerEvent(EventKey.UIInteractionChanged, false);
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.sendNavigationEvents = true;
+            // Keep focus on this row so the EventSystem knows where to go next
+            EventSystem.current.SetSelectedGameObject(gameObject);
+        }
+
+        // Hide arrows & exit "selecting" visuals
+        SetArrowVisibility(false);
+        if (arrowSelector != null)
+        {
+            arrowSelector.SetSelecting(false);
+            StartCoroutine(DelayedMoveArrow()); // keep your existing arrow follow
+        }
     }
 }

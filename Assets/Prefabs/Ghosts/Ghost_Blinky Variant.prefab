@@ -18,11 +18,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: launchDelaySeconds
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: bounceBottomYOffset
       value: -0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: -7464493849995840156, guid: 1855884bb736be542a66a632047a1995, type: 3}
+      propertyPath: allowAutoLaunchTimer
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1466197436971015820, guid: 1855884bb736be542a66a632047a1995, type: 3}
       propertyPath: m_Sprite

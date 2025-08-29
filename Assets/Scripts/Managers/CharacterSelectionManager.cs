@@ -47,7 +47,9 @@ public class CharacterSelectionManager : MonoBehaviour
 
     public void ResetPanels()
     {
-        expectedPlayers = Mathf.Clamp(PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 1), 1, playerPanels.Length);
+        int count = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, -1);
+        if (count <= 0) count = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 1);
+        expectedPlayers = Mathf.Clamp(count, 1, playerPanels.Length);
         Debug.Log($"[CharacterSelectionManager] GameMode={expectedPlayers}P");
 
         foreach (var panel in playerPanels)
@@ -200,6 +202,11 @@ public class CharacterSelectionManager : MonoBehaviour
 
             PlayerPrefs.SetString($"SelectedCharacter_Player{i + 1}_Name", character.characterName);
             PlayerPrefs.SetString($"SelectedCharacter_Player{i + 1}_Skin", skin.skinName);
+
+            // Save input signature for hot-seat pairing
+            var sig = panel.GetInputSignature();
+            PlayerPrefs.SetString($"P{i + 1}_Scheme", sig.scheme ?? "");
+            PlayerPrefs.SetString($"P{i + 1}_Devices", string.Join(",", sig.deviceIds ?? System.Array.Empty<int>()));
         }
 
         PlayerPrefs.Save();

@@ -35,6 +35,10 @@ public class BackButtonHandler : MonoBehaviour
     private void OnCancelPressed(InputAction.CallbackContext ctx)
     {
         if (!ctx.performed) return;
+
+        if (OptionSelectorSettingHandler.TryCancelCurrentSelection())
+            return;
+            
         onCancelEvent?.Invoke();
     }
 }

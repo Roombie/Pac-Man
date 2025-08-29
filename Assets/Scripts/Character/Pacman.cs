@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
 
 public class Pacman : MonoBehaviour
 {
@@ -30,10 +29,6 @@ public class Pacman : MonoBehaviour
     private void Update()
     {
         if (isDead || isInputLocked || GameManager.Instance.CurrentGameState != GameManager.GameState.Playing) return;
-
-        // If player input is not from the correct player's index 
-        if (GameManager.Instance.CurrentIndex != playerInput.playerIndex)
-            return;
 
         // Get move input direction
         Vector2 inputDirection = playerInput.actions["Move"].ReadValue<Vector2>();
