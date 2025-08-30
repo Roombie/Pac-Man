@@ -25,14 +25,13 @@ public class CharacterSelectorPanel : MonoBehaviour
     private InputAction cancel;
     private InputAction move;
 
-    // --- Navigation tuning (new) ---
+    // Navigation tuning
     [Header("Navigation Tuning")]
     [SerializeField] private float moveDeadzone = 0.5f;         // how far you must tilt
     [SerializeField] private float initialRepeatDelay = 0.35f;  // delay before auto-repeat
     [SerializeField] private float repeatInterval = 0.12f;      // rate while held
     private int lastMoveSign = 0;                              // -1, 0, +1 (left, neutral, right)
     private float nextRepeatTime = 0f;                           // when we’re allowed to repeat again
-    // --- end new ---
 
     private CharacterData[] characters;
     private int playerIndex = -1;
@@ -69,7 +68,7 @@ public class CharacterSelectorPanel : MonoBehaviour
             submit.performed += OnSubmitPerformed;
             cancel.performed += OnCancelPerformed;
             move.performed += OnMovePerformed;
-            move.canceled += OnMoveCanceled; // NEW
+            move.canceled += OnMoveCanceled;
         }
 
         if (playerInput != null)

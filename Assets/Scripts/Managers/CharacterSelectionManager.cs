@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -193,24 +194,56 @@ public class CharacterSelectionManager : MonoBehaviour
 
     public void ConfirmAllSelections()
     {
-        foreach (var kvp in joinedPlayers)
+        // Stable ordering of the joined (0-based) indices
+        var playerIndices = joinedPlayers.Keys.OrderBy(k => k).ToArray();
+        int count = playerIndices.Length;
+
+        // Remember prior count to clean up stale players > count
+        int previousCount = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 0);
+
+        // Persist count and (for now) mirror game mode to 1 or 2
+        PlayerPrefs.SetInt(SettingsKeys.PlayerCountKey, count);
+        PlayerPrefs.SetInt(SettingsKeys.GameModeKey, Mathf.Clamp(count, 1, 2));
+
+        // Save each joined player into dense slots 1..count
+        int slot = 1; // 1-based slot we write to PlayerPrefs
+        foreach (var idx in playerIndices)
         {
-            var i = kvp.Key;
-            var panel = kvp.Value.Panel;
+            var panel = joinedPlayers[idx].Panel;
+
+            // Character + skin
             var character = panel.SelectedCharacter;
-            var skin = panel.SelectedSkin;
+            var skin      = panel.SelectedSkin;
+            if (character != null)
+                PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
+            if (skin != null)
+                PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin", skin.skinName);
 
-            PlayerPrefs.SetString($"SelectedCharacter_Player{i + 1}_Name", character.characterName);
-            PlayerPrefs.SetString($"SelectedCharacter_Player{i + 1}_Skin", skin.skinName);
+            // Input signature (scheme + device IDs)
+            var sig    = panel.GetInputSignature();                 // (scheme, int[] ids)
+            var scheme = string.IsNullOrEmpty(sig.scheme) ? "Gamepad" : sig.scheme; // <- adjust default if needed
+            var csv    = (sig.deviceIds != null && sig.deviceIds.Length > 0)
+                            ? string.Join(",", sig.deviceIds)
+                            : "";
 
-            // Save input signature for hot-seat pairing
-            var sig = panel.GetInputSignature();
-            PlayerPrefs.SetString($"P{i + 1}_Scheme", sig.scheme ?? "");
-            PlayerPrefs.SetString($"P{i + 1}_Devices", string.Join(",", sig.deviceIds ?? System.Array.Empty<int>()));
+            PlayerPrefs.SetString($"P{slot}_Scheme",  scheme);
+            PlayerPrefs.SetString($"P{slot}_Devices", csv);
+
+            slot++;
+        }
+
+        // Clear stale slots (players that were saved previously but are no longer joined)
+        // e.g., previously 4 players, now 2 → wipe P3/P4 keys + their character/skin
+        for (int stale = count + 1; stale <= previousCount; stale++)
+        {
+            PlayerPrefs.DeleteKey($"P{stale}_Scheme");
+            PlayerPrefs.DeleteKey($"P{stale}_Devices");
+            PlayerPrefs.DeleteKey($"SelectedCharacter_Player{stale}_Name");
+            PlayerPrefs.DeleteKey($"SelectedCharacter_Player{stale}_Skin");
         }
 
         PlayerPrefs.Save();
-        Debug.Log("All selections saved.");
+        Debug.Log($"All selections saved. Players={count} (previous={previousCount})");
     }
 
     public bool IsSelectionTaken(CharacterSelectorPanel requester, CharacterData character, CharacterSkin skin)

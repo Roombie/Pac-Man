@@ -3,10 +3,11 @@ using TMPro;
 using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Users;
+using System.Text.RegularExpressions;
 
 public class GameManager : MonoBehaviour
 {
@@ -101,6 +102,46 @@ public class GameManager : MonoBehaviour
         return CurrentIndex;
     }
 
+    // --- Input scheme helpers ---
+    private const string SchemeGamepad     = "Gamepad";
+    private const string SchemeKeyboardFmt = "P{0}Keyboard"; // e.g., P3Keyboard
+
+    // Saved → per-slot keyboard (if authored) → P1Keyboard → Gamepad
+    private string PickSchemeForSlot(PlayerInput pi, int slot, string savedScheme)
+    {
+        if (!string.IsNullOrEmpty(savedScheme)) return savedScheme;
+
+        // Prefer a per-slot keyboard scheme if it exists in the asset (P1Keyboard, P2Keyboard, P3Keyboard, …)
+        string perSlot = string.Format(SchemeKeyboardFmt, slot);
+        foreach (var s in pi.actions.controlSchemes)
+            if (s.name == perSlot) return perSlot;
+
+        // Fallback to P1Keyboard if you haven’t added P{N}Keyboard yet
+        foreach (var s in pi.actions.controlSchemes)
+            if (s.name == "P1Keyboard") return "P1Keyboard";
+
+        return SchemeGamepad;
+    }
+
+    // If you use action maps named P1/P2/P3..., enable only the active slot’s map.
+    // If you use a single "Player" map, this does nothing (safe no-op).
+    private void EnableOnlySlotActionMap(PlayerInput pi, int slot)
+    {
+        var rx = new Regex(@"^P(\d+)$");
+        InputActionMap winner = null;
+        foreach (var m in pi.actions.actionMaps)
+        {
+            var match = rx.Match(m.name);
+            if (match.Success)
+            {
+                int num = int.Parse(match.Groups[1].Value);
+                if (num == slot) winner = m;
+                m.Disable();
+            }
+        }
+        if (winner != null) winner.Enable();
+    }
+
     private void Awake()
     {
         if (Instance != null)
@@ -135,6 +176,7 @@ public class GameManager : MonoBehaviour
         SetState(GameState.Intro);
 
         IsTwoPlayerMode = totalPlayers > 1;
+        currentPlayer = 1;
 
         InitializePlayerScores();
         InitializePlayers();
@@ -203,42 +245,76 @@ public class GameManager : MonoBehaviour
         var pi = pacman.GetComponent<PlayerInput>();
         if (pi == null) return;
 
-        // Don’t auto-hop to whatever device moved last
         pi.neverAutoSwitchControlSchemes = true;
 
-        // Hard reset: unpair everything currently on Pac-Man’s user
-        var user = pi.user; // InputUser (non-nullable struct)
-        if (user.pairedDevices.Count > 0)
-            user.UnpairDevices();
+        // 1-based slot: in 1P always 1; with N players use current turn (already 1-based)
+        int total = Mathf.Max(1, totalPlayers);
+        int slot  = (total == 1) ? 1 : Mathf.Clamp(currentPlayer, 1, total);
 
-        // NOTE: keys were saved as P1_, P2_, ... (1-based)
-        string scheme = PlayerPrefs.GetString($"P{currentPlayer + 1}_Scheme", "");
-        string csv = PlayerPrefs.GetString($"P{currentPlayer + 1}_Devices", "");
+        // Read saved signature for this slot
+        string savedScheme = PlayerPrefs.GetString($"P{slot}_Scheme", "");
+        string csv         = PlayerPrefs.GetString($"P{slot}_Devices", "");
 
-        var devices = new List<InputDevice>();
+        // Parse desired devices (IDs saved from character select / reconnect)
+        var wantList = new List<InputDevice>();
         if (!string.IsNullOrEmpty(csv))
         {
             foreach (var part in csv.Split(','))
             {
                 if (!int.TryParse(part, out var id)) continue;
                 var dev = InputSystem.GetDeviceById(id);
-                if (dev == null) continue;
-
-                // If the device is paired to some other user, unpair it safely
-                InputUser? other = InputUser.FindUserPairedToDevice(dev);
-                if (other.HasValue)
-                    other.Value.UnpairDevice(dev);
-
-                InputUser.PerformPairingWithDevice(dev, user);
-                devices.Add(dev);
+                if (dev != null) wantList.Add(dev);
             }
         }
 
-        // Only accept input from this exact device set
-        if (!string.IsNullOrEmpty(scheme) && devices.Count > 0)
-            pi.SwitchCurrentControlScheme(scheme, devices.ToArray());
+        // Decide scheme (prefers keyboard per slot if available)
+        string scheme = PickSchemeForSlot(pi, slot, savedScheme);
 
-        Debug.Log($"[GM] Applied devices for P{currentPlayer + 1}: {devices.Count} device(s), scheme={scheme}");
+        // If keyboard scheme chosen but no devices, pair the shared Keyboard
+        if (wantList.Count == 0 && scheme.Contains("Keyboard") && Keyboard.current != null)
+            wantList.Add(Keyboard.current);
+
+        var want = wantList.ToArray();
+
+        // Hard reset: unpair all; then pair exactly the desired devices (steal from other users if needed)
+        var user = pi.user;
+        if (user.pairedDevices.Count > 0) user.UnpairDevices();
+
+        foreach (var dev in want)
+        {
+            foreach (var u in InputUser.all)
+                if (u.pairedDevices.Contains(dev)) u.UnpairDevice(dev);
+            InputUser.PerformPairingWithDevice(dev, user);
+        }
+
+        // Last-ditch fallback: first gamepad if still nothing to bind
+        if (want.Length == 0)
+        {
+            var gp = Gamepad.all.FirstOrDefault();
+            if (gp != null)
+            {
+                InputUser.PerformPairingWithDevice(gp, user);
+                want   = new[] { gp };
+                scheme = SchemeGamepad;
+            }
+        }
+
+        // Clamp actions to EXACTLY these devices and activate the scheme
+        pi.actions.Disable();
+        pi.actions.devices = want;   // ReadOnlyArray is set from array
+        pi.actions.Enable();
+
+        if (want.Length > 0)
+            pi.SwitchCurrentControlScheme(scheme, want);
+
+        // Enable only the active player's action map if you're using P1/P2/P3… maps
+        EnableOnlySlotActionMap(pi, slot);
+
+        // Debug
+        var list = (user.pairedDevices.Count > 0)
+            ? string.Join(", ", user.pairedDevices.Select(d => $"{d.displayName}#{d.deviceId}"))
+            : "(none)";
+        Debug.Log($"[HotSeat] Slot={slot}/{total} | Scheme={scheme} | Devices=[{list}]");
     }
 
     private void InitializePlayerScores()
@@ -455,7 +531,7 @@ public class GameManager : MonoBehaviour
             uiManager.UpdateIntroText(CurrentIndex);
             globalGhostModeController.DeactivateAllGhosts();
 
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(StartSequenceDelay);
 
             uiManager.HidePlayerIntroText();
             globalGhostModeController.ActivateAllGhosts();
@@ -578,15 +654,13 @@ public class GameManager : MonoBehaviour
 
     public void UpdateRoundsUI()
     {
-        if (uiManager != null)
-        {
-            int currentRound = GetRoundForPlayer(CurrentIndex + 1);
-            int bestRound = GetBestRoundForPlayer(CurrentIndex + 1);
+        if (uiManager == null || players == null || players.Length == 0) return;
 
-            uiManager.UpdateCurrentRound(currentRound);
-            uiManager.UpdateBestRound(bestRound);
-        }
+        int idx = Mathf.Clamp(CurrentIndex, 0, players.Length - 1);
+        uiManager.UpdateCurrentRound(players[idx].level);
+        uiManager.UpdateBestRound(players[idx].bestRound);
     }
+
 
     private void UpdateBestRound()
     {

@@ -109,22 +109,22 @@ public class DisconnectManager : MonoBehaviour
     private void Subscribe(PlayerInput pi)
     {
         if (!pi) return;
-        pi.onDeviceLost     -= OnDeviceLost;
+        pi.onDeviceLost -= OnDeviceLost;
         pi.onDeviceRegained -= OnDeviceRegained;
-        pi.onDeviceLost     += OnDeviceLost;
+        pi.onDeviceLost += OnDeviceLost;
         pi.onDeviceRegained += OnDeviceRegained;
     }
 
     private void Unsubscribe(PlayerInput pi)
     {
         if (!pi) return;
-        pi.onDeviceLost     -= OnDeviceLost;
+        pi.onDeviceLost -= OnDeviceLost;
         pi.onDeviceRegained -= OnDeviceRegained;
     }
 
     private void OnDeviceLost(PlayerInput pi)
     {
-        int playerNumber = pi.playerIndex + 1;
+        int playerNumber = ResolvePlayerNumber(pi);
         disconnectedSet.Add(playerNumber);
 
         UpdateMessage(playerNumber);
@@ -141,7 +141,7 @@ public class DisconnectManager : MonoBehaviour
 
     private void OnDeviceRegained(PlayerInput pi)
     {
-        int playerNumber = pi.playerIndex + 1;
+        int playerNumber = ResolvePlayerNumber(pi);
         disconnectedSet.Remove(playerNumber);
 
         if (disconnectedSet.Count == 0)
@@ -187,7 +187,7 @@ public class DisconnectManager : MonoBehaviour
         if (device == null) return;
 
         int targetPlayer = ResolveTargetSlot();
-        var targetPI = GetPlayerInputByNumber(targetPlayer);
+        var targetPI = GetPlayerInputForHotSeatOrByNumber(targetPlayer);
         if (targetPI == null) return;
 
         // Reject devices already paired to another PlayerInput
@@ -205,18 +205,46 @@ public class DisconnectManager : MonoBehaviour
                 return; // device is already in use
         }
 
-        // Pair device to the disconnected slot
+        // --- HOT-SEAT SAFE SWAP: unpair target, steal device, pair, clamp, save ---
         var user = targetPI.user;
         if (!user.valid) return;
 
+        // 1) Hard reset: unpair everything from the target user (avoid both pads controlling)
+        if (user.pairedDevices.Count > 0)
+            user.UnpairDevices();
+
+        // 2) Steal the pressed device from any other users
+        foreach (var u in InputUser.all)
+        {
+            if (u.pairedDevices.Contains(device))
+                u.UnpairDevice(device);
+        }
+
+        // 3) Pair this device to the target player
         InputUser.PerformPairingWithDevice(device, user);
 
-        // Pick a control scheme that supports this device, then switch to it
+        // 4) Choose a control scheme that supports this device
         string schemeName = FindSchemeForDevice(targetPI, device);
-        if (!string.IsNullOrEmpty(schemeName))
-            targetPI.SwitchCurrentControlScheme(schemeName, device);
+        if (string.IsNullOrEmpty(schemeName))
+            schemeName = "Gamepad"; // fallback: update to your exact scheme name if different
 
-        // Done → treat as regained
+        // 5) Clamp the action asset to EXACTLY this device
+        targetPI.actions.Disable();
+        targetPI.actions.devices = new[] { device };
+        targetPI.actions.Enable();
+
+        // 6) Activate scheme on the PlayerInput (prevents auto-hop)
+        targetPI.neverAutoSwitchControlSchemes = true;
+        targetPI.SwitchCurrentControlScheme(schemeName, device);
+
+        // 7) Persist mapping for this logical player (so it survives scenes/turns)
+        PlayerPrefs.SetString($"P{targetPlayer}_Scheme", schemeName);
+        PlayerPrefs.SetString($"P{targetPlayer}_Devices", device.deviceId.ToString());
+        PlayerPrefs.Save();
+
+        Debug.Log($"[DisconnectManager] Repaired P{targetPlayer} → {device.displayName}#{device.deviceId}, scheme={schemeName}");
+
+        // Done → treat as regained (unfreeze/hide panel if everyone is back)
         OnDeviceRegained(targetPI);
     }
 
@@ -246,6 +274,41 @@ public class DisconnectManager : MonoBehaviour
             if (s.SupportsDevice(device))
                 return s.name;
 
+        return null;
+    }
+
+    private bool IsHotSeatMode()
+    {
+    #if UNITY_2023_1_OR_NEWER
+        var all = FindObjectsByType<PlayerInput>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+    #else
+        var all = FindObjectsOfType<PlayerInput>(true);
+    #endif
+        return all != null && all.Length == 1; // one PlayerInput => hot-seat
+    }
+
+    private int ResolvePlayerNumber(PlayerInput pi)
+    {
+        // In hot-seat, the "logical player" is whoever's turn it is.
+        if (IsHotSeatMode())
+        {
+            int active = GetActivePlayerNumber(); // 1-based via GameManager
+            return active > 0 ? active : 1;
+        }
+        return pi.playerIndex + 1;
+    }
+
+    private PlayerInput GetPlayerInputForHotSeatOrByNumber(int playerNumber)
+    {
+    #if UNITY_2023_1_OR_NEWER
+        var all = FindObjectsByType<PlayerInput>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+    #else
+        var all = FindObjectsOfType<PlayerInput>(true);
+    #endif
+        if (all == null || all.Length == 0) return null;
+        if (IsHotSeatMode()) return all[0]; // the single PlayerInput that controls Pac-Man
+        foreach (var pi in all)
+            if (pi.playerIndex + 1 == playerNumber) return pi;
         return null;
     }
 

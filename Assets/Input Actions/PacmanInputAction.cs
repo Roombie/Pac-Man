@@ -138,7 +138,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""aefa3a93-e0c9-4206-9532-a5a998a6d0fb"",
-                    ""path"": ""<Keyboard>/p"",
+                    ""path"": ""<Keyboard>/space"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
