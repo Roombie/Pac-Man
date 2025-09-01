@@ -1,4 +1,3 @@
-// SettingTypeFilterDrawer.cs (Editor folder)
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;

@@ -15,9 +15,9 @@ public class MovementEditor : Editor
 
     void OnEnable()
     {
-        speed  = serializedObject.FindProperty("speed");
+        speed = serializedObject.FindProperty("speed");
         initialDirection = serializedObject.FindProperty("initialDirection");
-        obstacleLayer  = serializedObject.FindProperty("obstacleLayer");
+        obstacleLayer = serializedObject.FindProperty("obstacleLayer");
 
         corneringEnabled = serializedObject.FindProperty("corneringEnabled");
         cornerWindow = serializedObject.FindProperty("cornerWindow");

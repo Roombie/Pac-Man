@@ -10,10 +10,10 @@ public class GhostSlowZoneEditor : Editor
 
     void OnEnable()
     {
-        slowMultiplier  = serializedObject.FindProperty("slowMultiplier");
+        slowMultiplier = serializedObject.FindProperty("slowMultiplier");
         affectAllGhosts = serializedObject.FindProperty("affectAllGhosts");
-        only            = serializedObject.FindProperty("only");
-        except          = serializedObject.FindProperty("except");
+        only = serializedObject.FindProperty("only");
+        except = serializedObject.FindProperty("except");
     }
 
     public override void OnInspectorGUI()
@@ -27,7 +27,7 @@ public class GhostSlowZoneEditor : Editor
         {
             using (new EditorGUI.IndentLevelScope())
             {
-                EditorGUILayout.PropertyField(only,   new GUIContent("Only"));
+                EditorGUILayout.PropertyField(only, new GUIContent("Only"));
                 EditorGUILayout.PropertyField(except, new GUIContent("Except"));
             }
         }

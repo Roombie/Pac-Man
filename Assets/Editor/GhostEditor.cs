@@ -43,10 +43,10 @@ public class GhostEditor : Editor
             if (p.name == "m_Script" || p.name == "ghostType") continue;
 
             bool isElroyProp   = System.Array.IndexOf(ElroyProps, p.name) >= 0; // Blinky-only
-            bool isBlinkyLink  = p.name == "blinky";                             // Inky-only
+            bool isBlinkyLink  = p.name == "blinky"; // Inky-only
 
-            if (isElroyProp && !allBlinky) continue;     // hide Elroy unless ALL are Blinky
-            if (isBlinkyLink && !allInky) continue;      // hide Blinky link unless ALL are Inky
+            if (isElroyProp && !allBlinky) continue; // hide Elroy unless ALL are Blinky
+            if (isBlinkyLink && !allInky) continue; // hide Blinky link unless ALL are Inky
 
             EditorGUILayout.PropertyField(p, includeChildren: true);
         }
