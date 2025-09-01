@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
         public bool hard; // hard = Time.timeScale = 0
         public bool freezeTimers; // whether we froze controller timers
         public List<Behaviour> disabled; // components this frame disabled (soft)
-        public List<Rigidbody2D> pausedBodies;
+        public List<Rigidbody2D> pausedBodies; // pause the rigidbodies
     }
 
     private int timersCount = 0; // any timers -> timers frozen
@@ -102,9 +102,8 @@ public class GameManager : MonoBehaviour
         return CurrentIndex;
     }
 
-    // --- Input scheme helpers ---
-    private const string SchemeGamepad     = "Gamepad";
-    private const string SchemeKeyboardFmt = "P{0}Keyboard"; // e.g., P3Keyboard
+    private const string SchemeGamepad = "Gamepad";
+    private const string SchemeKeyboardFmt = "P{0}Keyboard"; // example: P1Keyboard
 
     // Saved → per-slot keyboard (if authored) → P1Keyboard → Gamepad
     private string PickSchemeForSlot(PlayerInput pi, int slot, string savedScheme)
@@ -154,7 +153,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Get the amount of allowed players based on the player count key
-        totalPlayers = Mathf.Clamp(PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1), 1, 2);
+        totalPlayers = Mathf.Max(1, PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1));
 
         pacmanAnimator = pacman.GetComponent<Animator>();
         pacmanSpriteRenderer = pacman.GetComponent<SpriteRenderer>();
@@ -354,6 +353,8 @@ public class GameManager : MonoBehaviour
 
         int[] initialScores = new int[totalPlayers];
         uiManager.UpdateScores(initialScores);
+        for (int i = 0; i < totalPlayers; i++)
+            uiManager.StopPlayerFlicker(i);
         uiManager.StartPlayerFlicker(CurrentIndex);
 
         CharacterSkin currentSkin = GetSelectedSkinForPlayer(currentPlayer);
@@ -518,6 +519,8 @@ public class GameManager : MonoBehaviour
         UpdateRoundsUI();
 
         pelletManager.RestorePelletsForPlayer(GetPelletIDsEatenByCurrentPlayer());
+        for (int i = 0; i < totalPlayers; i++)
+            uiManager.StopPlayerFlicker(i);
         uiManager.StartPlayerFlicker(CurrentIndex);
 
         pacman.animator.speed = 0f;

@@ -24,6 +24,13 @@ public class CharacterSelectionManager : MonoBehaviour
     public UnityEvent OnAnySkinDeselected;
     public UnityEvent OnPlayerCancelledBeforeSelection;
 
+    [Header("Optional: Keyboard scheme reservation order (for multiple visible panels)")]
+    [Tooltip("These must match the names of your control schemes / binding groups in the Input Actions asset.")]
+    [SerializeField] private string[] keyboardSchemesOrder = { "P1Keyboard", "P2Keyboard"};
+
+    private readonly HashSet<string> claimedKeyboardSchemes = new();
+    private readonly HashSet<int> claimedGamepadDeviceIds = new();
+
     private int expectedPlayers = 1;
     private int readyCount = 0;
     private bool allSelectedFired = false;
@@ -67,6 +74,10 @@ public class CharacterSelectionManager : MonoBehaviour
         readyCount = 0;
         allSelectedFired = false;
         allConfirmedFired = false;
+
+        // Clear reservations when resetting the screen
+        claimedKeyboardSchemes.Clear();
+        claimedGamepadDeviceIds.Clear();
 
         for (int i = 0; i < expectedPlayers; i++)
         {
@@ -180,7 +191,9 @@ public class CharacterSelectionManager : MonoBehaviour
         panel.gameObject.SetActive(true);
         panel.SetCharacterData(allCharacters);
         panel.SetPlayerIndex(index);
-        panel.ApplyGlobalPlayerStyle(globalPlayerStyles[index]);
+
+        if (globalPlayerStyles != null && index < globalPlayerStyles.Length)
+            panel.ApplyGlobalPlayerStyle(globalPlayerStyles[index]);
 
         if (joinedPlayers.ContainsKey(index) && joinedPlayers[index].HasJoined)
         {
@@ -201,9 +214,9 @@ public class CharacterSelectionManager : MonoBehaviour
         // Remember prior count to clean up stale players > count
         int previousCount = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 0);
 
-        // Persist count and (for now) mirror game mode to 1 or 2
+        // Persist the actual count and mirror into GameMode if you use it as "players count"
         PlayerPrefs.SetInt(SettingsKeys.PlayerCountKey, count);
-        PlayerPrefs.SetInt(SettingsKeys.GameModeKey, Mathf.Clamp(count, 1, 2));
+        PlayerPrefs.SetInt(SettingsKeys.GameModeKey, count); // was clamped to 2; allow N players for hot-seat
 
         // Save each joined player into dense slots 1..count
         int slot = 1; // 1-based slot we write to PlayerPrefs
@@ -213,15 +226,16 @@ public class CharacterSelectionManager : MonoBehaviour
 
             // Character + skin
             var character = panel.SelectedCharacter;
-            var skin      = panel.SelectedSkin;
+            var skin = panel.SelectedSkin;
             if (character != null)
                 PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
             if (skin != null)
                 PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin", skin.skinName);
 
             // Input signature (scheme + device IDs)
-            var sig    = panel.GetInputSignature();                 // (scheme, int[] ids)
-            var scheme = string.IsNullOrEmpty(sig.scheme) ? "Gamepad" : sig.scheme; // <- adjust default if needed
+            var sig    = panel.GetInputSignature(); // (scheme, int[] ids)
+            // default to a keyboard group if empty; change to "Gamepad" if you prefer pad-first
+            var scheme = string.IsNullOrEmpty(sig.scheme) ? "P1Keyboard" : sig.scheme;
             var csv    = (sig.deviceIds != null && sig.deviceIds.Length > 0)
                             ? string.Join(",", sig.deviceIds)
                             : "";
@@ -233,7 +247,6 @@ public class CharacterSelectionManager : MonoBehaviour
         }
 
         // Clear stale slots (players that were saved previously but are no longer joined)
-        // e.g., previously 4 players, now 2 → wipe P3/P4 keys + their character/skin
         for (int stale = count + 1; stale <= previousCount; stale++)
         {
             PlayerPrefs.DeleteKey($"P{stale}_Scheme");
@@ -296,6 +309,7 @@ public class CharacterSelectionManager : MonoBehaviour
                 var status = kvp.Value;
                 status.HasSelectedCharacter = false;
                 status.HasConfirmedSkin = false;
+                status.IsReady = false;
                 joinedPlayers[kvp.Key] = status;
                 break;
             }
@@ -348,7 +362,6 @@ public class CharacterSelectionManager : MonoBehaviour
     public void TryFireFinalConfirmation()
     {
         if (allConfirmedFired) return;
-
         if (joinedPlayers.Count < expectedPlayers) return;
 
         foreach (var kvp in joinedPlayers)
@@ -367,6 +380,58 @@ public class CharacterSelectionManager : MonoBehaviour
         Debug.Log("OnAllPlayersConfirmed fired!");
         ConfirmAllSelections();
         OnAllPlayersConfirmed?.Invoke();
+    }
+
+    public string GetKeyboardSchemeForIndex(int index)
+    {
+        if (keyboardSchemesOrder != null && index >= 0 && index < keyboardSchemesOrder.Length)
+            return keyboardSchemesOrder[index];
+        return (keyboardSchemesOrder != null && keyboardSchemesOrder.Length > 0) ? keyboardSchemesOrder[0] : null;
+    }
+    
+    /// <summary>
+    /// Reserve a unique keyboard scheme for a joining panel. If none free and allowDuplicateIfExhausted==true,
+    /// returns the first entry (hot-seat can reuse schemes).
+    /// </summary>
+    public string ReserveNextKeyboardScheme(bool allowDuplicateIfExhausted = true)
+    {
+        foreach (var s in keyboardSchemesOrder)
+            if (!claimedKeyboardSchemes.Contains(s))
+            {
+                claimedKeyboardSchemes.Add(s);
+                return s;
+            }
+
+        return allowDuplicateIfExhausted && keyboardSchemesOrder.Length > 0
+            ? keyboardSchemesOrder[0]
+            : null;
+    }
+
+    /// <summary>Free a previously reserved keyboard scheme (call if a panel is cancelled).</summary>
+    public void ReleaseKeyboardScheme(string scheme)
+    {
+        if (!string.IsNullOrEmpty(scheme))
+            claimedKeyboardSchemes.Remove(scheme);
+    }
+
+    /// <summary>
+    /// Reserve a specific gamepad for a panel so two panels don't grab the same pad in selection.
+    /// Returns false if it's already claimed.
+    /// </summary>
+    public bool TryReserveGamepad(InputDevice device)
+    {
+        if (device == null) return false;
+        int id = device.deviceId;
+        if (claimedGamepadDeviceIds.Contains(id)) return false;
+        claimedGamepadDeviceIds.Add(id);
+        return true;
+    }
+
+    /// <summary>Free reserved pads when a panel cancels.</summary>
+    public void ReleaseGamepads(params int[] deviceIds)
+    {
+        if (deviceIds == null) return;
+        foreach (var id in deviceIds) claimedGamepadDeviceIds.Remove(id);
     }
 }
 

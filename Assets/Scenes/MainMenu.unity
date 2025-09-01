@@ -212,6 +212,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
+      - m_Target: {fileID: 330400273}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: Back
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &40485120
 GameObject:
   m_ObjectHideFlags: 0
@@ -2591,6 +2603,11 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  keyboardSchemesOrder:
+  - P1Keyboard
+  - P2Keyboard
+  - P3Keyboard
+  - P4Keyboard
 --- !u!1 &290680174
 GameObject:
   m_ObjectHideFlags: 0
@@ -12587,7 +12604,7 @@ MonoBehaviour:
   m_NotificationBehavior: 0
   m_MaxPlayerCount: 2
   m_AllowJoining: 0
-  m_JoinBehavior: 0
+  m_JoinBehavior: 2
   m_PlayerJoinedEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -13382,8 +13399,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1776e7d1638fbf409696ff6b0579c57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  button1Action: {fileID: -4287174648604348133, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
-  button2Action: {fileID: 4698805216758026494, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+  button1Action: {fileID: -1577091158578443317, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+  button2Action: {fileID: -7823918736048250073, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   onComboActivated:
     m_PersistentCalls:
       m_Calls:
@@ -18564,7 +18581,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   onePlayerModeObject: {fileID: 1923332975}
   twoPlayerModeObject: {fileID: 1848438166}
-  pauseAction: {fileID: -1577091158578443317, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+  pauseAction: {fileID: -7823918736048250073, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   submitAction: {fileID: 392368643174621059, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   onSubmitEvent:
     m_PersistentCalls:

@@ -93,6 +93,7 @@ public class GlobalGhostModeController : MonoBehaviour
 
         // Initial eaten count + audio state
         eatenActiveCount = 0;
+        timersFrozen = true;
         ForEachGhost(g => { if (g && g.CurrentMode == Ghost.Mode.Eaten) eatenActiveCount++; });
         UpdateEyesAudio();
     }
