@@ -24,9 +24,12 @@ public class CharacterSelectionManager : MonoBehaviour
     public UnityEvent OnAnySkinDeselected;
     public UnityEvent OnPlayerCancelledBeforeSelection;
 
-    [Header("Optional: Keyboard scheme reservation order (for multiple visible panels)")]
-    [Tooltip("These must match the names of your control schemes / binding groups in the Input Actions asset.")]
-    [SerializeField] private string[] keyboardSchemesOrder = { "P1Keyboard", "P2Keyboard"};
+    [Header("Keyboard Schemes")]
+    [Tooltip("Must match control scheme / binding group names in your Input Actions asset.")]
+    [SerializeField] private string[] keyboardSchemesOrder = { "P1Keyboard", "P2Keyboard" };
+
+    [Tooltip("Used for 1P selection so P1 can use both clusters.")]
+    [SerializeField] private string[] bothKeyboardGroups = { "P1Keyboard", "P2Keyboard" };
 
     private readonly HashSet<string> claimedKeyboardSchemes = new();
     private readonly HashSet<int> claimedGamepadDeviceIds = new();
@@ -37,6 +40,9 @@ public class CharacterSelectionManager : MonoBehaviour
     private bool allConfirmedFired = false;
 
     private Dictionary<int, PlayerStatus> joinedPlayers = new();
+
+    public bool IsSinglePlayer => expectedPlayers <= 1;
+    public string[] BothKeyboardGroups => bothKeyboardGroups;
 
     private void Awake()
     {
@@ -63,9 +69,6 @@ public class CharacterSelectionManager : MonoBehaviour
         foreach (var panel in playerPanels)
         {
             panel.ResetPanelState();
-
-            Debug.Log($"[ResetPanels] Panel {panel.name} - hasConfirmedFinal = {panel.HasConfirmedFinal()}");
-
             panel.gameObject.SetActive(false);
             panel.SetPanelActive(false);
         }
@@ -75,14 +78,12 @@ public class CharacterSelectionManager : MonoBehaviour
         allSelectedFired = false;
         allConfirmedFired = false;
 
-        // Clear reservations when resetting the screen
         claimedKeyboardSchemes.Clear();
         claimedGamepadDeviceIds.Clear();
 
         for (int i = 0; i < expectedPlayers; i++)
         {
             SetupPanelForPlayer(i);
-
             if (!joinedPlayers.ContainsKey(i))
             {
                 var panel = playerPanels[i];
@@ -101,24 +102,17 @@ public class CharacterSelectionManager : MonoBehaviour
         readyCount = 0;
 
         var keys = new List<int>(joinedPlayers.Keys);
-
         foreach (int index in keys)
         {
             var panel = joinedPlayers[index].Panel;
 
-            bool hasSelected = panel.HasSelectedCharacter;
-            bool hasConfirmed = panel.HasConfirmedSkin;
-
             var status = joinedPlayers[index];
-            status.HasSelectedCharacter = hasSelected;
-            status.HasConfirmedSkin = hasConfirmed;
-            status.IsReady = hasSelected && hasConfirmed;
+            status.HasSelectedCharacter = panel.HasSelectedCharacter;
+            status.HasConfirmedSkin     = panel.HasConfirmedSkin;
+            status.IsReady              = status.HasSelectedCharacter && status.HasConfirmedSkin;
             joinedPlayers[index] = status;
 
-            if (status.IsReady)
-            {
-                readyCount++;
-            }
+            if (status.IsReady) readyCount++;
         }
 
         Debug.Log($"[CharacterSelectionManager] Refreshed readiness. ReadyCount: {readyCount}/{expectedPlayers}");
@@ -146,21 +140,18 @@ public class CharacterSelectionManager : MonoBehaviour
 
         if (index >= playerPanels.Length)
         {
-            Debug.LogWarning($"[CharacterSelectionManager] No panel available for player with index {index}.");
+            Debug.LogWarning($"[CharacterSelectionManager] No panel for player index {index}.");
             return;
         }
 
         SetupPanelForPlayer(index);
         input.transform.SetParent(playerPanels[index].transform, false);
-
         RegisterPlayer(index, playerPanels[index]);
     }
 
     public void OnPlayerJoinedManual(int index, CharacterSelectorPanel panel)
     {
-        if (index >= playerPanels.Length)
-            return;
-
+        if (index >= playerPanels.Length) return;
         RegisterPlayer(index, panel);
         panel.SetPanelActive(true);
     }
@@ -195,50 +186,32 @@ public class CharacterSelectionManager : MonoBehaviour
         if (globalPlayerStyles != null && index < globalPlayerStyles.Length)
             panel.ApplyGlobalPlayerStyle(globalPlayerStyles[index]);
 
-        if (joinedPlayers.ContainsKey(index) && joinedPlayers[index].HasJoined)
-        {
-            panel.SetPanelActive(true);
-        }
-        else
-        {
-            panel.SetPanelActive(false);
-        }
+        panel.SetPanelActive(joinedPlayers.ContainsKey(index) && joinedPlayers[index].HasJoined);
     }
 
     public void ConfirmAllSelections()
     {
-        // Stable ordering of the joined (0-based) indices
         var playerIndices = joinedPlayers.Keys.OrderBy(k => k).ToArray();
         int count = playerIndices.Length;
 
-        // Remember prior count to clean up stale players > count
         int previousCount = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 0);
 
-        // Persist the actual count and mirror into GameMode if you use it as "players count"
         PlayerPrefs.SetInt(SettingsKeys.PlayerCountKey, count);
-        PlayerPrefs.SetInt(SettingsKeys.GameModeKey, count); // was clamped to 2; allow N players for hot-seat
+        PlayerPrefs.SetInt(SettingsKeys.GameModeKey, count);
 
-        // Save each joined player into dense slots 1..count
-        int slot = 1; // 1-based slot we write to PlayerPrefs
+        int slot = 1;
         foreach (var idx in playerIndices)
         {
             var panel = joinedPlayers[idx].Panel;
 
-            // Character + skin
             var character = panel.SelectedCharacter;
             var skin = panel.SelectedSkin;
-            if (character != null)
-                PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
-            if (skin != null)
-                PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin", skin.skinName);
+            if (character != null) PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
+            if (skin != null)      PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin",  skin.skinName);
 
-            // Input signature (scheme + device IDs)
-            var sig    = panel.GetInputSignature(); // (scheme, int[] ids)
-            // default to a keyboard group if empty; change to "Gamepad" if you prefer pad-first
+            var sig    = panel.GetInputSignature();
             var scheme = string.IsNullOrEmpty(sig.scheme) ? "P1Keyboard" : sig.scheme;
-            var csv    = (sig.deviceIds != null && sig.deviceIds.Length > 0)
-                            ? string.Join(",", sig.deviceIds)
-                            : "";
+            var csv    = (sig.deviceIds != null && sig.deviceIds.Length > 0) ? string.Join(",", sig.deviceIds) : "";
 
             PlayerPrefs.SetString($"P{slot}_Scheme",  scheme);
             PlayerPrefs.SetString($"P{slot}_Devices", csv);
@@ -246,7 +219,6 @@ public class CharacterSelectionManager : MonoBehaviour
             slot++;
         }
 
-        // Clear stale slots (players that were saved previously but are no longer joined)
         for (int stale = count + 1; stale <= previousCount; stale++)
         {
             PlayerPrefs.DeleteKey($"P{stale}_Scheme");
@@ -265,19 +237,15 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             var panel = kvp.Value.Panel;
             if (panel == requester) continue;
-
             if (panel.SelectedCharacter == character && panel.SelectedSkin == skin)
                 return true;
         }
-
         return false;
     }
 
     public void NotifyPlayerReady(CharacterSelectorPanel panel)
     {
         readyCount++;
-        Debug.Log($"[NotifyPlayerReady] Player {panel.PlayerIndex + 1} is ready. Total ready: {readyCount}/{expectedPlayers}");
-
         foreach (var kvp in joinedPlayers)
         {
             if (kvp.Value.Panel == panel)
@@ -293,13 +261,11 @@ public class CharacterSelectionManager : MonoBehaviour
                 break;
             }
         }
-
         TryFireFinalConfirmation();
     }
 
     public void NotifyPlayerDeselected(CharacterSelectorPanel panel)
     {
-        Debug.Log($"[NotifyPlayerDeselected] Player {panel.PlayerIndex + 1} has deselected character.");
         OnAnyPlayerDeselected?.Invoke();
 
         foreach (var kvp in joinedPlayers)
@@ -323,7 +289,6 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         readyCount = Mathf.Max(readyCount - 1, 0);
         OnAnySkinDeselected?.Invoke();
-        Debug.Log($"[NotifyPlayerUnready] Player {panel.PlayerIndex + 1} is no longer ready. Total ready: {readyCount}/{expectedPlayers}");
 
         foreach (var kvp in joinedPlayers)
         {
@@ -354,7 +319,6 @@ public class CharacterSelectionManager : MonoBehaviour
         if (!allSelectedFired)
         {
             allSelectedFired = true;
-            Debug.Log("All joined players have selected and confirmed skin.");
             OnAllPlayersSelected?.Invoke();
         }
     }
@@ -368,16 +332,11 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             if (!kvp.Value.HasJoined) continue;
             var panel = kvp.Value.Panel;
-
             if (!panel.HasSelectedCharacter || !panel.HasConfirmedSkin)
-            {
-                Debug.LogWarning($"[TryFireFinalConfirmation] Player {panel.PlayerIndex + 1} missing selection. HasSelected: {panel.HasSelectedCharacter}, HasConfirmedSkin: {panel.HasConfirmedSkin}");
                 return;
-            }
         }
 
         allConfirmedFired = true;
-        Debug.Log("OnAllPlayersConfirmed fired!");
         ConfirmAllSelections();
         OnAllPlayersConfirmed?.Invoke();
     }
@@ -388,11 +347,7 @@ public class CharacterSelectionManager : MonoBehaviour
             return keyboardSchemesOrder[index];
         return (keyboardSchemesOrder != null && keyboardSchemesOrder.Length > 0) ? keyboardSchemesOrder[0] : null;
     }
-    
-    /// <summary>
-    /// Reserve a unique keyboard scheme for a joining panel. If none free and allowDuplicateIfExhausted==true,
-    /// returns the first entry (hot-seat can reuse schemes).
-    /// </summary>
+
     public string ReserveNextKeyboardScheme(bool allowDuplicateIfExhausted = true)
     {
         foreach (var s in keyboardSchemesOrder)
@@ -402,22 +357,15 @@ public class CharacterSelectionManager : MonoBehaviour
                 return s;
             }
 
-        return allowDuplicateIfExhausted && keyboardSchemesOrder.Length > 0
-            ? keyboardSchemesOrder[0]
-            : null;
+        return allowDuplicateIfExhausted && keyboardSchemesOrder.Length > 0 ? keyboardSchemesOrder[0] : null;
     }
 
-    /// <summary>Free a previously reserved keyboard scheme (call if a panel is cancelled).</summary>
     public void ReleaseKeyboardScheme(string scheme)
     {
         if (!string.IsNullOrEmpty(scheme))
             claimedKeyboardSchemes.Remove(scheme);
     }
 
-    /// <summary>
-    /// Reserve a specific gamepad for a panel so two panels don't grab the same pad in selection.
-    /// Returns false if it's already claimed.
-    /// </summary>
     public bool TryReserveGamepad(InputDevice device)
     {
         if (device == null) return false;
@@ -427,7 +375,6 @@ public class CharacterSelectionManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>Free reserved pads when a panel cancels.</summary>
     public void ReleaseGamepads(params int[] deviceIds)
     {
         if (deviceIds == null) return;

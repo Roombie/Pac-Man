@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Users;
 using System.Text.RegularExpressions;
+using UnityEngine.InputSystem.UI;
+using UnityEngine.InputSystem.LowLevel;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,6 +20,11 @@ public class GameManager : MonoBehaviour
     private SpriteRenderer pacmanSpriteRenderer;
     private Animator pacmanAnimator;
     private ArrowIndicator pacmanArrowIndicator;
+    private InputActionAsset _originalActionsAsset;
+    private InputActionAsset _singlePlayerClone;
+    private string _prevActionMapName;
+    private int _runtimeArrowCompositeIndex = -1;
+    private int _runtimeUiNavigateCompositeIndex = -1;
 
     private int[] ghostComboPoints = { 200, 400, 800, 1600 };
 
@@ -102,9 +109,10 @@ public class GameManager : MonoBehaviour
         return CurrentIndex;
     }
 
+    private bool _listeningForUnpaired = false;
+    private InputUser _pacmanUser;
     private const string SchemeGamepad = "Gamepad";
     private const string SchemeKeyboardFmt = "P{0}Keyboard"; // example: P1Keyboard
-
     // Saved → per-slot keyboard (if authored) → P1Keyboard → Gamepad
     private string PickSchemeForSlot(PlayerInput pi, int slot, string savedScheme)
     {
@@ -155,19 +163,30 @@ public class GameManager : MonoBehaviour
         // Get the amount of allowed players based on the player count key
         totalPlayers = Mathf.Max(1, PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1));
 
+        // Cache pacman's component
         pacmanAnimator = pacman.GetComponent<Animator>();
         pacmanSpriteRenderer = pacman.GetComponent<SpriteRenderer>();
         pacmanArrowIndicator = pacman.GetComponent<ArrowIndicator>();
+        var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
+        _originalActionsAsset = pi ? pi.actions : null;
+
+        if (pi != null) // This will be worth it for single player
+        {
+            _prevActionMapName = pi.currentActionMap?.name;
+            var uiMap = pi.actions.FindActionMap("UI", throwIfNotFound: false); // Find UI action map on pacman's current input action
+            if (uiMap != null) pi.SwitchCurrentActionMap(uiMap.name); // When found, switch to that action map
+
+            // make sure arrows work in the pause menu
+            if (!IsTwoPlayerMode) EnsureSinglePlayerUiNavigateComposite(pi);
+        }
 
         startingLives = PlayerPrefs.GetInt(SettingsKeys.PacmanLivesKey, GameConstants.MaxLives);
     }
 
     private void OnDestroy()
     {
-        if (Instance == this)
-        {
-            Instance = null;
-        }
+        if (Instance == this) Instance = null;
+        DisableHotSwap();
     }
 
     private void Start()
@@ -177,10 +196,16 @@ public class GameManager : MonoBehaviour
         IsTwoPlayerMode = totalPlayers > 1;
         currentPlayer = 1;
 
+        EnableHotSwap();
         InitializePlayerScores();
         InitializePlayers();
         InitializeExtraLifeThreshold();
         ApplyActivePlayerInputDevices();
+
+        // lock in the gameplay map and wire UI module to our actions
+        var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
+        ForceGameplayMap(pi);
+        WireUIToPlayerInput(pi);
 
         uiManager.InitializeUI(totalPlayers);
         uiManager.UpdateHighScore(highScore);
@@ -192,6 +217,43 @@ public class GameManager : MonoBehaviour
     }
 
     #region Game Flow
+    private void EnableHotSwap()
+    {
+        var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
+        if (pi == null) return;
+
+        _pacmanUser = pi.user;
+
+        if (!_listeningForUnpaired)
+        {
+            // Let Input System raise events when an unpaired device is used
+            InputUser.listenForUnpairedDeviceActivity++;
+            InputUser.onUnpairedDeviceUsed += OnUnpairedDeviceUsed;
+            _listeningForUnpaired = true;
+        }
+
+        // Also react to device loss/regain for the paired user
+        pi.onDeviceLost += OnPairedDeviceLost;
+        pi.onDeviceRegained += OnPairedDeviceRegained;
+    }
+
+    private void DisableHotSwap()
+    {
+        var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
+        if (pi != null)
+        {
+            pi.onDeviceLost -= OnPairedDeviceLost;
+            pi.onDeviceRegained -= OnPairedDeviceRegained;
+        }
+
+        if (_listeningForUnpaired)
+        {
+            InputUser.onUnpairedDeviceUsed -= OnUnpairedDeviceUsed;
+            InputUser.listenForUnpairedDeviceActivity--;
+            _listeningForUnpaired = false;
+        }
+    }
+
     public void SetState(GameState newState)
     {
         CurrentGameState = newState;
@@ -239,6 +301,40 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Ensure we’re on the gameplay map when the scene loads (in case something left us on "UI")
+    private void ForceGameplayMap(PlayerInput pi)
+    {
+        if (pi == null || pi.actions == null) return;
+        var gameplay = pi.actions.FindActionMap("Player", throwIfNotFound: false); // change name if different
+        if (gameplay != null)
+            pi.SwitchCurrentActionMap(gameplay.name);
+    }
+
+    // Make sure the EventSystem’s InputSystemUIInputModule uses our actions asset.
+    // This covers cases where a previous scene’s module lost its reference during load.
+    private void WireUIToPlayerInput(PlayerInput pi)
+    {
+        var es = EventSystem.current;
+        if (es == null) return;
+
+        var uiModule = es.GetComponent<InputSystemUIInputModule>();
+        if (uiModule == null) return;
+
+        // If the module isn't already using an actions asset, or it's pointing at a stale one,
+        // give it Pacman's actions. This works whether your module is set to "Actions Asset" mode
+        // or had its reference cleared by a scene switch.
+        if (uiModule.actionsAsset == null || uiModule.actionsAsset != pi.actions)
+            uiModule.actionsAsset = pi.actions;
+    }
+
+    private static InputBinding MaskByGroups(params string[] groups)
+    => InputBinding.MaskByGroup(string.Join(";", groups));
+
+    private static void EnableAllActionMaps(PlayerInput pi)
+    {
+        foreach (var m in pi.actions.actionMaps) m.Enable();
+    }
+
     private void ApplyActivePlayerInputDevices()
     {
         var pi = pacman.GetComponent<PlayerInput>();
@@ -246,15 +342,12 @@ public class GameManager : MonoBehaviour
 
         pi.neverAutoSwitchControlSchemes = true;
 
-        // 1-based slot: in 1P always 1; with N players use current turn (already 1-based)
         int total = Mathf.Max(1, totalPlayers);
-        int slot  = (total == 1) ? 1 : Mathf.Clamp(currentPlayer, 1, total);
+        int slot = (total == 1) ? 1 : Mathf.Clamp(currentPlayer, 1, total);
 
-        // Read saved signature for this slot
         string savedScheme = PlayerPrefs.GetString($"P{slot}_Scheme", "");
-        string csv         = PlayerPrefs.GetString($"P{slot}_Devices", "");
+        string csv = PlayerPrefs.GetString($"P{slot}_Devices", "");
 
-        // Parse desired devices (IDs saved from character select / reconnect)
         var wantList = new List<InputDevice>();
         if (!string.IsNullOrEmpty(csv))
         {
@@ -266,19 +359,77 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // Decide scheme (prefers keyboard per slot if available)
         string scheme = PickSchemeForSlot(pi, slot, savedScheme);
-
-        // If keyboard scheme chosen but no devices, pair the shared Keyboard
         if (wantList.Count == 0 && scheme.Contains("Keyboard") && Keyboard.current != null)
             wantList.Add(Keyboard.current);
 
-        var want = wantList.ToArray();
-
-        // Hard reset: unpair all; then pair exactly the desired devices (steal from other users if needed)
         var user = pi.user;
+
+        // ---------- SINGLE-PLAYER: allow WASD + Arrows (no mask) ----------
+        if (total == 1)
+        {
+            // Use a fresh clone so nothing lingering affects resolution
+            if (_singlePlayerClone == null && _originalActionsAsset != null)
+                _singlePlayerClone = ScriptableObject.Instantiate(_originalActionsAsset);
+
+            if (_singlePlayerClone != null && pi.actions != _singlePlayerClone)
+                pi.actions = _singlePlayerClone;
+
+            // Fully reset PlayerInput filtering and re-resolve
+            pi.DeactivateInput();
+
+            // Clear any default/current scheme so PlayerInput doesn't reapply a mask
+            pi.defaultControlScheme = null;
+            try { user.ActivateControlScheme(null); } catch { }
+
+            // Allow both keyboard and gamepad:
+            var devs = new List<InputDevice>();
+            if (Keyboard.current != null) devs.Add(Keyboard.current);
+            if (Gamepad.current != null) devs.Add(Gamepad.current);
+            pi.actions.devices = devs.ToArray();
+
+            // No mask in 1P — let everything resolve
+            pi.actions.bindingMask = default(InputBinding?);
+
+            pi.ActivateInput();
+
+            // ensure the arrow keys are always available via a neutral runtime composite
+            EnsureSinglePlayerArrowComposite(pi);
+            EnsureSinglePlayerUiNavigateComposite(pi);
+
+            // Ensure action maps are enabled
+            EnableAllActionMaps(pi);
+            // or: EnableOnlySlotActionMap(pi, 1);
+
+            // Debug (safe)
+            var move = pi.actions.FindAction("Move", throwIfNotFound: false);
+            var devsROA = pi.actions.devices;
+            string devsStr = "NONE";
+            if (devsROA.HasValue && devsROA.Value.Count > 0)
+            {
+                var sb = new System.Text.StringBuilder();
+                foreach (var d in devsROA.Value) { if (sb.Length > 0) sb.Append(","); sb.Append(d.layout); }
+                devsStr = sb.ToString();
+            }
+            Debug.Log($"[GM][1P] scheme='{(pi.currentControlScheme ?? "NONE")}', " +
+                    $"mask='{(pi.actions.bindingMask?.groups ?? "NONE")}', " +
+                    $"devices={devsStr}, bindings={move?.bindings.Count}");
+
+            return;
+        }
+
+        // ---------- MULTI-PLAYER (normal per-player schemes) ----------
+        // Restore the original asset if we swapped it in 1P
+        if (_originalActionsAsset != null && pi.actions != _originalActionsAsset)
+            pi.actions = _originalActionsAsset;
+
+        // NEW: remove the 1P runtime arrow composite so P1/P2 remain isolated
+        RemoveSinglePlayerArrowComposite(pi);
+        RemoveSinglePlayerUiNavigateComposite(pi);
+
         if (user.pairedDevices.Count > 0) user.UnpairDevices();
 
+        var want = wantList.ToArray();
         foreach (var dev in want)
         {
             foreach (var u in InputUser.all)
@@ -286,34 +437,130 @@ public class GameManager : MonoBehaviour
             InputUser.PerformPairingWithDevice(dev, user);
         }
 
-        // Last-ditch fallback: first gamepad if still nothing to bind
         if (want.Length == 0)
         {
             var gp = Gamepad.all.FirstOrDefault();
             if (gp != null)
             {
                 InputUser.PerformPairingWithDevice(gp, user);
-                want   = new[] { gp };
-                scheme = SchemeGamepad;
+                want = new[] { gp };
+                scheme = "Gamepad";
             }
         }
 
-        // Clamp actions to EXACTLY these devices and activate the scheme
         pi.actions.Disable();
-        pi.actions.devices = want;   // ReadOnlyArray is set from array
+        pi.actions.devices = want;
+        pi.actions.bindingMask = !string.IsNullOrEmpty(scheme)
+                                ? InputBinding.MaskByGroup(scheme)   // P1Keyboard / P2Keyboard, etc.
+                                : default(InputBinding?);
         pi.actions.Enable();
 
-        if (want.Length > 0)
+        if (want.Length > 0 && !string.IsNullOrEmpty(scheme))
             pi.SwitchCurrentControlScheme(scheme, want);
 
-        // Enable only the active player's action map if you're using P1/P2/P3… maps
         EnableOnlySlotActionMap(pi, slot);
+    }
 
-        // Debug
-        var list = (user.pairedDevices.Count > 0)
-            ? string.Join(", ", user.pairedDevices.Select(d => $"{d.displayName}#{d.deviceId}"))
-            : "(none)";
-        Debug.Log($"[HotSeat] Slot={slot}/{total} | Scheme={scheme} | Devices=[{list}]");
+    // Add a neutral (no group) arrow 2DVector on Player/Move at runtime for single-player.
+    private void EnsureSinglePlayerArrowComposite(PlayerInput pi)
+    {
+        var move = pi.actions.FindAction("Move", throwIfNotFound: false);
+        if (move == null || _runtimeArrowCompositeIndex >= 0) return;
+
+        bool wasEnabled = move.enabled;
+        if (wasEnabled) move.Disable();
+
+        // Add a composite that is NOT tied to any binding group
+        // so it's always available regardless of scheme/mask.
+        move.AddCompositeBinding("2DVector")
+            .With("up", "<Keyboard>/upArrow")
+            .With("down", "<Keyboard>/downArrow")
+            .With("left", "<Keyboard>/leftArrow")
+            .With("right", "<Keyboard>/rightArrow");
+
+        // The composite root + 4 parts were appended at the end
+        _runtimeArrowCompositeIndex = move.bindings.Count - 5;
+
+        if (wasEnabled) move.Enable();
+
+        Debug.Log("[GM][1P] Added runtime Arrow composite to Player/Move.");
+    }
+
+    // Remove the runtime arrow composite when leaving single-player.
+    private void RemoveSinglePlayerArrowComposite(PlayerInput pi)
+    {
+        var move = pi.actions.FindAction("Move", throwIfNotFound: false);
+        if (move == null || _runtimeArrowCompositeIndex < 0) return;
+
+        bool wasEnabled = move.enabled;
+        if (wasEnabled) move.Disable();
+
+        // Erase parts first (right-to-left), then the composite root.
+        int root = _runtimeArrowCompositeIndex;
+        for (int k = 4; k >= 0; k--)
+        {
+            int idx = root + k;
+            if (idx >= 0 && idx < move.bindings.Count)
+                move.ChangeBinding(idx).Erase();
+        }
+
+        _runtimeArrowCompositeIndex = -1;
+
+        if (wasEnabled) move.Enable();
+
+        Debug.Log("[GM] Removed runtime Arrow composite from Player/Move.");
+    }
+
+    // Add a neutral (no-group) arrow 2DVector on UI/Navigate for single-player
+    private void EnsureSinglePlayerUiNavigateComposite(PlayerInput pi)
+    {
+        if (pi == null || pi.actions == null) return;
+
+        var uiMap = pi.actions.FindActionMap("UI", throwIfNotFound: false); // change name if different
+        var navigate = uiMap != null ? uiMap.FindAction("Navigate", throwIfNotFound: false) : null;
+        if (navigate == null || _runtimeUiNavigateCompositeIndex >= 0) return;
+
+        bool wasEnabled = navigate.enabled;
+        if (wasEnabled) navigate.Disable();
+
+        navigate.AddCompositeBinding("2DVector")
+            .With("up", "<Keyboard>/upArrow")
+            .With("down", "<Keyboard>/downArrow")
+            .With("left", "<Keyboard>/leftArrow")
+            .With("right", "<Keyboard>/rightArrow");
+
+        // composite root + 4 parts appended at end
+        _runtimeUiNavigateCompositeIndex = navigate.bindings.Count - 5;
+
+        if (wasEnabled) navigate.Enable();
+
+        Debug.Log("[GM][1P] Added runtime Arrow composite to UI/Navigate.");
+    }
+
+    // Remove the runtime UI/Navigate composite when not in single-player
+    private void RemoveSinglePlayerUiNavigateComposite(PlayerInput pi)
+    {
+        if (pi == null || pi.actions == null) return;
+
+        var uiMap = pi.actions.FindActionMap("UI", throwIfNotFound: false);
+        var navigate = uiMap != null ? uiMap.FindAction("Navigate", throwIfNotFound: false) : null;
+        if (navigate == null || _runtimeUiNavigateCompositeIndex < 0) return;
+
+        bool wasEnabled = navigate.enabled;
+        if (wasEnabled) navigate.Disable();
+
+        int root = _runtimeUiNavigateCompositeIndex;
+        for (int k = 4; k >= 0; k--)
+        {
+            int idx = root + k;
+            if (idx >= 0 && idx < navigate.bindings.Count)
+                navigate.ChangeBinding(idx).Erase();
+        }
+        _runtimeUiNavigateCompositeIndex = -1;
+
+        if (wasEnabled) navigate.Enable();
+
+        Debug.Log("[GM] Removed runtime Arrow composite from UI/Navigate.");
     }
 
     private void InitializePlayerScores()
@@ -485,6 +732,17 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
         pauseUI.ShowPause();
         SetState(GameState.Paused);
+
+        // Switch to the UI action map so arrows/enter/esc work in pause menu
+        var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
+        if (pi != null)
+        {
+            _prevActionMapName = pi.currentActionMap?.name;
+
+            var uiMap = pi.actions.FindActionMap("UI", throwIfNotFound: false); // change if different
+            if (uiMap != null)
+                pi.SwitchCurrentActionMap(uiMap.name);
+        }
         Debug.Log("Game Paused");
     }
 
@@ -493,6 +751,23 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         pauseUI.HidePause();
         SetState(GameState.Playing);
+
+        // Switch back to whatever gameplay map we had before pause,
+        // or re-apply the normal device/map setup if unknown.
+        var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
+        if (pi != null)
+        {
+            if (!string.IsNullOrEmpty(_prevActionMapName) &&
+                pi.actions.FindActionMap(_prevActionMapName, throwIfNotFound: false) != null)
+            {
+                pi.SwitchCurrentActionMap(_prevActionMapName);
+            }
+            else
+            {
+                // Fallback in case we came from another scene/unknown state
+                ForceGameplayMap(pi);
+            }
+        }
         Debug.Log("Game Resumed");
     }
 
@@ -792,9 +1067,9 @@ public class GameManager : MonoBehaviour
     public void PushFreezeSoftAllowEyes()
     {
         var disabled = new List<Behaviour>();
-        var bodies   = new List<Rigidbody2D>();
+        var bodies = new List<Rigidbody2D>();
 
-        if (++timersCount == 1) 
+        if (++timersCount == 1)
             globalGhostModeController?.SetTimersFrozen(true);
 
         if (pacman)
@@ -932,7 +1207,7 @@ public class GameManager : MonoBehaviour
         SwitchPlayerTurn();
 
         // Restart the level after the turn change
-        RestartLevel(); 
+        RestartLevel();
     }
 
     private void SwitchPlayerTurn()
@@ -1016,7 +1291,7 @@ public class GameManager : MonoBehaviour
 
         // Unfreeze ghosts
         PopFreeze();
-        globalGhostModeController.SetHomeExitsPaused(false); 
+        globalGhostModeController.SetHomeExitsPaused(false);
     }
 
     private void GameOver()
@@ -1089,7 +1364,7 @@ public class GameManager : MonoBehaviour
     {
         if (CurrentGameState != GameState.Playing)
             return;
-        
+
         if (pelletsRemaining <= 0) return;
 
         if (pelletsRemaining > 170)
@@ -1152,6 +1427,67 @@ public class GameManager : MonoBehaviour
         {
             pacmanArrowIndicator.SetColor(skin.arrowIndicatorColor);
         }
+    }
+    #endregion
+
+    #region Gamepad
+    private void OnUnpairedDeviceUsed(InputControl control, InputEventPtr eventPtr)
+    {
+        // Only care about Gamepads
+        if (control?.device is not Gamepad gp) return;
+
+        // In 2P mode, don't steal a pad already paired to someone else
+        var owner = InputUser.FindUserPairedToDevice(gp);
+        if (owner.HasValue && owner.Value.valid && owner.Value != _pacmanUser)
+            return;
+
+        // Unpair any old gamepads from this user, then pair the newly-used one
+        foreach (var d in _pacmanUser.pairedDevices.ToArray())
+            if (d is Gamepad) _pacmanUser.UnpairDevice(d);
+
+        InputUser.PerformPairingWithDevice(gp, _pacmanUser);
+
+        // Switch scheme to Gamepad for this user (keep keyboard if you want)
+        var pi = pacman.GetComponent<PlayerInput>();
+        if (pi != null)
+        {
+            var devices = new List<InputDevice>();
+            if (pi.actions.devices.HasValue)
+            {
+                foreach (var d in pi.actions.devices.Value)
+                    devices.Add(d);
+            }
+            if (!devices.Contains(gp)) devices.Add(gp);
+
+            pi.actions.Disable();
+            pi.actions.devices = devices.ToArray();
+            pi.actions.bindingMask = default; // no mask in 1P; in 2P we re-assert scheme below
+            pi.actions.Enable();
+
+            if (IsTwoPlayerMode)
+                pi.SwitchCurrentControlScheme("Gamepad", devices.Where(d => d is Gamepad).ToArray());
+        }
+
+        // Persist for the active slot so scene reloads use this controller
+        int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
+        PlayerPrefs.SetString($"P{slot}_Scheme", "Gamepad");
+        PlayerPrefs.SetString($"P{slot}_Devices", gp.deviceId.ToString());
+        PlayerPrefs.Save();
+
+        Debug.Log($"[GM] Paired new gamepad {gp.displayName} to Player {slot}.");
+    }
+
+    private void OnPairedDeviceLost(PlayerInput input)
+    {
+        if (CurrentGameState == GameState.Playing)
+            PauseGame(); // you already have a pause menu
+
+        Debug.Log("[GM] Controller lost. Waiting for a new one (press any button on a controller)...");
+    }
+
+    private void OnPairedDeviceRegained(PlayerInput input)
+    {
+        Debug.Log("[GM] Controller reconnected.");
     }
     #endregion
 }

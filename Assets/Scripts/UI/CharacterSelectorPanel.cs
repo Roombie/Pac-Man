@@ -26,17 +26,15 @@ public class CharacterSelectorPanel : MonoBehaviour
     private InputAction cancel;
     private InputAction move;
 
-    // Navigation tuning
     [Header("Navigation Tuning")]
-    [SerializeField] private float moveDeadzone = 0.5f;         // how far you must tilt
-    [SerializeField] private float initialRepeatDelay = 0.35f;  // delay before auto-repeat
-    [SerializeField] private float repeatInterval = 0.12f;      // rate while held
-    private int lastMoveSign = 0;                               // -1, 0, +1 (left, neutral, right)
-    private float nextRepeatTime = 0f;                          // when we’re allowed to repeat again
+    [SerializeField] private float moveDeadzone = 0.5f;
+    [SerializeField] private float initialRepeatDelay = 0.35f;
+    [SerializeField] private float repeatInterval = 0.12f;
+    private int   lastMoveSign = 0;
+    private float nextRepeatTime = 0f;
 
     private CharacterData[] characters;
     private int playerIndex = -1;
-    private bool playerIndexSet = false;
     private int currentIndex = 0;
     private int currentSkinIndex = 0;
     private bool hasSelectedCharacter = false;
@@ -47,16 +45,19 @@ public class CharacterSelectorPanel : MonoBehaviour
     private readonly List<GameObject> instantiatedSkinIcons = new();
     private readonly List<GameObject> selectionIndicators = new();
 
-    // First-input claim state
-    private string chosenScheme;                                   // "Gamepad", "P1Keyboard", "P2Keyboard", ...
-    private int[] chosenDeviceIds = System.Array.Empty<int>();     // exact device ids present when claimed
-    private bool hasClaimedInputs = false;
+    // Claim state
+    private string chosenScheme;
+    private int[]  chosenDeviceIds = System.Array.Empty<int>();
+    private bool   hasClaimedInputs = false;
+
+    private int[]  reservedGamepadIds = System.Array.Empty<int>();
+    private string reservedKeyboardScheme;
 
     public CharacterData SelectedCharacter => characters != null && characters.Length > 0 ? characters[currentIndex] : null;
     public CharacterSkin SelectedSkin => SelectedCharacter != null && SelectedCharacter.skins.Length > 0 ? SelectedCharacter.skins[currentSkinIndex] : null;
     public bool HasSelectedCharacter => hasSelectedCharacter;
     public bool HasConfirmedSkin => hasConfirmedSkin;
-    public int PlayerIndex => playerIndex;
+    public int  PlayerIndex => playerIndex;
     public bool HasConfirmedFinal() => hasConfirmedFinal;
 
     private void Awake()
@@ -92,7 +93,6 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
 
         UpdateJoinInstructionState();
-        // NOTE: no global auto-claim here; we only auto-claim for panel index 0 inside SetPlayerIndex.
     }
 
     private void OnDisable()
@@ -110,17 +110,26 @@ public class CharacterSelectorPanel : MonoBehaviour
             playerInput.onDeviceLost     -= OnDeviceLost;
             playerInput.onDeviceRegained -= OnDeviceRegained;
         }
+
+        // release any reservations
+        if (CharacterSelectionManager.Instance != null)
+        {
+            if (!string.IsNullOrEmpty(reservedKeyboardScheme))
+                CharacterSelectionManager.Instance.ReleaseKeyboardScheme(reservedKeyboardScheme);
+            if (reservedGamepadIds is { Length: > 0 })
+                CharacterSelectionManager.Instance.ReleaseGamepads(reservedGamepadIds);
+        }
+        reservedKeyboardScheme = null;
+        reservedGamepadIds     = System.Array.Empty<int>();
     }
 
     private void OnDeviceLost(PlayerInput input)
     {
-        Debug.Log($"[CharacterSelectorPanel] Device lost on player {playerIndex + 1}");
         UpdateJoinInstructionState();
     }
 
     private void OnDeviceRegained(PlayerInput input)
     {
-        Debug.Log($"[CharacterSelectorPanel] Device regained on player {playerIndex + 1}");
         UpdateJoinInstructionState();
     }
 
@@ -134,17 +143,23 @@ public class CharacterSelectorPanel : MonoBehaviour
     public void SetPlayerIndex(int index)
     {
         playerIndex = index;
-        playerIndexSet = true;
         ApplyPlayerLabel();
-        Debug.Log($"Player {playerIndex} set: {playerIndexSet}");
 
-        // This auto-claims P1Keyboard only for panel 0 (which is player 1's panel, will not affect other players)
+        // Auto-claim for P1:
+        // - If single-player selection → mask to BOTH keyboard groups (WASD + Arrows).
+        // - Otherwise → strict per-panel scheme (P1Keyboard for panel 1).
         if (index == 0 && !hasClaimedInputs)
         {
-            string scheme = "P1Keyboard";
-            if (CharacterSelectionManager.Instance != null)
-                scheme = CharacterSelectionManager.Instance.GetKeyboardSchemeForIndex(0) ?? "P1Keyboard";
-            ForceClaimKeyboard(scheme);
+            var mgr = CharacterSelectionManager.Instance;
+            if (mgr != null && mgr.IsSinglePlayer)
+            {
+                ForceClaimKeyboardGroups(mgr.BothKeyboardGroups); // "P1Keyboard;P2Keyboard"
+            }
+            else
+            {
+                string scheme = mgr != null ? mgr.GetKeyboardSchemeForIndex(0) : "P1Keyboard";
+                ForceClaimKeyboard(scheme ?? "P1Keyboard");
+            }
         }
     }
 
@@ -186,7 +201,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         if (!hasSelectedCharacter) SelectCharacter();
         else if (!hasConfirmedSkin) ConfirmSkin();
         else if (!hasConfirmedFinal) ConfirmFinalSelection();
-        else Debug.LogWarning($"[ConfirmSelection] Player {playerIndex + 1} already confirmed final. Ignoring duplicate input.");
+        else Debug.LogWarning($"[ConfirmSelection] Player {playerIndex + 1} already confirmed final.");
     }
 
     private void SelectCharacter()
@@ -208,7 +223,6 @@ public class CharacterSelectorPanel : MonoBehaviour
 
     private void ConfirmFinalSelection()
     {
-        Debug.Log($"[ConfirmSelection] Player {playerIndex + 1} final confirmation.");
         hasConfirmedFinal = true;
         AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
         CharacterSelectionManager.Instance?.TryFireFinalConfirmation();
@@ -320,24 +334,29 @@ public class CharacterSelectorPanel : MonoBehaviour
         UpdateSkinConfirmationIndicator();
         hasConfirmedFinal = false;
 
-        // Reset claim UI
         hasClaimedInputs = false;
         chosenScheme = null;
         chosenDeviceIds = System.Array.Empty<int>();
 
-        // Clear any previous binding mask
+        if (CharacterSelectionManager.Instance != null)
+        {
+            if (!string.IsNullOrEmpty(reservedKeyboardScheme))
+                CharacterSelectionManager.Instance.ReleaseKeyboardScheme(reservedKeyboardScheme);
+            if (reservedGamepadIds is { Length: > 0 })
+                CharacterSelectionManager.Instance.ReleaseGamepads(reservedGamepadIds);
+        }
+        reservedKeyboardScheme = null;
+        reservedGamepadIds     = System.Array.Empty<int>();
+
         if (playerInput != null && playerInput.actions != null)
         {
             var asset = playerInput.actions;
             asset.Disable();
-            asset.bindingMask = default; // remove mask
+            asset.bindingMask = default;
             asset.Enable();
         }
 
         UpdateJoinInstructionState();
-
-        Debug.Log($"[ResetPanelState] Panel {playerIndex + 1}: hasConfirmedFinal = {hasConfirmedFinal}");
-
         UpdateDisplay();
         ShowSkinOptions(false);
     }
@@ -382,9 +401,27 @@ public class CharacterSelectorPanel : MonoBehaviour
     private void UpdateSkinHighlight()
     {
         for (int i = 0; i < selectionIndicators.Count; i++)
-        {
             if (selectionIndicators[i] != null)
                 selectionIndicators[i].SetActive(i == currentSkinIndex);
+    }
+
+    private void UpdateSkinConfirmationIndicator()
+    {
+        for (int i = 0; i < selectionIndicators.Count; i++)
+        {
+            if (selectionIndicators[i] != null)
+            {
+                var indicator = selectionIndicators[i].GetComponent<SelectorIndicator>();
+                var image = indicator?.GetComponent<Image>();
+
+                if (image != null)
+                {
+                    if (hasConfirmedSkin && i == currentSkinIndex)
+                        image.color = Color.yellow;
+                    else
+                        image.color = Color.white;
+                }
+            }
         }
     }
 
@@ -408,27 +445,8 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
     }
 
-    private void UpdateSkinConfirmationIndicator()
-    {
-        for (int i = 0; i < selectionIndicators.Count; i++)
-        {
-            if (selectionIndicators[i] != null)
-            {
-                var indicator = selectionIndicators[i].GetComponent<SelectorIndicator>();
-                var image = indicator?.GetComponent<Image>();
+    // ---------- Claim helpers ----------
 
-                if (image != null)
-                {
-                    if (hasConfirmedSkin && i == currentSkinIndex)
-                        image.color = Color.yellow;
-                    else
-                        image.color = Color.white;
-                }
-            }
-        }
-    }
-
-    // === Force-claim for P1 ===
     private void ForceClaimKeyboard(string scheme)
     {
         chosenScheme = scheme;
@@ -450,7 +468,27 @@ public class CharacterSelectorPanel : MonoBehaviour
         UpdateJoinInstructionState();
     }
 
-    // === Claim helpers (for everyone else) ===
+    private void ForceClaimKeyboardGroups(string[] groups)
+    {
+        // Use the first as the scheme label for saving; mask will include all.
+        chosenScheme = (groups != null && groups.Length > 0) ? groups[0] : "P1Keyboard";
+        hasClaimedInputs = true;
+
+        var kb = Keyboard.current;
+        chosenDeviceIds = (kb != null) ? new[] { kb.deviceId } : System.Array.Empty<int>();
+
+        playerInput.neverAutoSwitchControlSchemes = true;
+
+        if (playerInput.actions != null && groups != null && groups.Length > 0)
+        {
+            var asset = playerInput.actions;
+            asset.Disable();
+            asset.bindingMask = InputBinding.MaskByGroup(string.Join(";", groups)); // multi-group mask
+            asset.Enable();
+        }
+
+        UpdateJoinInstructionState();
+    }
 
     private void FinalizeClaim()
     {
@@ -475,30 +513,38 @@ public class CharacterSelectorPanel : MonoBehaviour
         var control = ctx.control;
         if (control == null) return false;
 
-        // Gamepad
         if (control.device is Gamepad)
         {
-            if (CharacterSelectionManager.Instance == null || CharacterSelectionManager.Instance.TryReserveGamepad(control.device))
+            if (CharacterSelectionManager.Instance == null ||
+                CharacterSelectionManager.Instance.TryReserveGamepad(control.device))
             {
                 chosenScheme = "Gamepad";
+                reservedGamepadIds = new[] { control.device.deviceId };
                 FinalizeClaim();
                 return true;
             }
             return false;
         }
 
-        // Keyboard: only if the binding that fired belongs to THIS panel's scheme
         if (control.device is Keyboard)
         {
-            string targetScheme = "P1Keyboard";
-            if (CharacterSelectionManager.Instance != null)
-                targetScheme = CharacterSelectionManager.Instance.GetKeyboardSchemeForIndex(playerIndex) ?? "P1Keyboard";
+            var mgr = CharacterSelectionManager.Instance;
 
+            // P1 in single-player selection: claim BOTH keyboard groups
+            if (playerIndex == 0 && mgr != null && mgr.IsSinglePlayer)
+            {
+                ForceClaimKeyboardGroups(mgr.BothKeyboardGroups);
+                return true;
+            }
+
+            // Otherwise: strict scheme per panel
+            string targetScheme = mgr != null ? mgr.GetKeyboardSchemeForIndex(playerIndex) : "P1Keyboard";
             string groups = GetGroupsForTriggeredBinding(ctx.action, control);
             if (string.IsNullOrEmpty(groups) || !groups.Contains(targetScheme))
                 return false;
 
             chosenScheme = targetScheme;
+            reservedKeyboardScheme = targetScheme;
             FinalizeClaim();
             return true;
         }
@@ -539,7 +585,6 @@ public class CharacterSelectorPanel : MonoBehaviour
         return groups;
     }
 
-    // Exposed to manager: the claimed signature
     public (string scheme, int[] deviceIds) GetInputSignature()
     {
         if (hasClaimedInputs && !string.IsNullOrEmpty(chosenScheme))

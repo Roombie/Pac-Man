@@ -453,8 +453,12 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 9caa3d8a-6b2f-4e8e-8bad-6ede561bd9be
     m_ActionName: UI/TrackedDeviceOrientation
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 9f59dd68-c830-4e66-af05-66b09eff6507
+    m_ActionName: 'Player/Select[/Keyboard/leftShift,/Keyboard/comma]'
   m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: P1Keyboard
+  m_DefaultControlScheme: 
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
