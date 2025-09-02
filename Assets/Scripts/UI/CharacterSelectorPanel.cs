@@ -81,8 +81,8 @@ public class CharacterSelectorPanel : MonoBehaviour
 
             submit.performed += OnSubmitPerformed;
             cancel.performed += OnCancelPerformed;
-            move.performed   += OnMovePerformed;
-            move.canceled    += OnMoveCanceled;
+            move.performed += OnMovePerformed;
+            move.canceled += OnMoveCanceled;
 
             playerInput.onDeviceLost     += OnDeviceLost;
             playerInput.onDeviceRegained += OnDeviceRegained;
@@ -263,6 +263,7 @@ public class CharacterSelectorPanel : MonoBehaviour
     private void OnSubmitPerformed(InputAction.CallbackContext ctx)
     {
         if (TryClaimFromContext(ctx)) return;
+        if (!hasClaimedInputs) return;
         if (!IsFromClaimedDevice(ctx)) return;
         if (!ctx.performed) return;
         ConfirmSelection();
@@ -271,6 +272,7 @@ public class CharacterSelectorPanel : MonoBehaviour
     private void OnCancelPerformed(InputAction.CallbackContext ctx)
     {
         if (TryClaimFromContext(ctx)) return;
+        if (!hasClaimedInputs) return;
         if (!IsFromClaimedDevice(ctx)) return;
         if (!ctx.performed) return;
         CancelSelection();
@@ -554,7 +556,7 @@ public class CharacterSelectorPanel : MonoBehaviour
 
     private bool IsFromClaimedDevice(InputAction.CallbackContext ctx)
     {
-        if (!hasClaimedInputs) return true;
+        if (!hasClaimedInputs) return false;
         var dev = ctx.control?.device;
         if (dev == null) return false;
         if (chosenDeviceIds == null || chosenDeviceIds.Length == 0) return true;
