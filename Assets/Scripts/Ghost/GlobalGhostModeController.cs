@@ -46,8 +46,8 @@ public class GlobalGhostModeController : MonoBehaviour
     private float exitNoDotSeconds = 4f;
 
     // Runtime counters/timer
-    private float noDotTimer = 0f;        // seconds since last dot
-    private int personalDotCounter = 0;   // counts dots toward the preferred Home ghost
+    private float noDotTimer = 0f; // seconds since last dot
+    private int personalDotCounter = 0; // counts dots toward the preferred Home ghost
 
     // Global house counter mode (after life lost)
     private bool useGlobalCounter = false;
@@ -81,6 +81,8 @@ public class GlobalGhostModeController : MonoBehaviour
             : (phaseTimer != null ? phaseTimer.RemainingSeconds : 0f);
     // Optional: expose whether timers are frozen (useful to see READY state etc.)
     public bool TimersFrozen => timersFrozen;
+    public event Action<float> OnFrightenedStarted;
+    public event Action OnFrightenedEnded;
 
     void Awake()
     {
@@ -267,7 +269,7 @@ public class GlobalGhostModeController : MonoBehaviour
         if (prev == Ghost.Mode.Eaten && next != Ghost.Mode.Eaten) eatenActiveCount = Mathf.Max(0, eatenActiveCount - 1);
         UpdateEyesAudio();
 
-        // Eyes → Home while Frightened is active ⇒ mark so we DON'T re-enter Frightened on exit
+        // Eyes to Home while Frightened is active, then mark so we DON'T re-enter Frightened on exit
         if (prev == Ghost.Mode.Eaten && next == Ghost.Mode.Home && isFrightenedActive)
             reformedFromEaten.Add(g);
     }
@@ -303,6 +305,18 @@ public class GlobalGhostModeController : MonoBehaviour
         }
     }
 
+    public bool AnyGhostInHome()
+    {
+        bool any = false;
+        ForEachGhost(g =>
+        {
+            if (g && g.CurrentMode == Ghost.Mode.Home) any = true;
+        });
+        return any;
+    }
+
+    public bool AffectHomeGhostsDuringFrightenedEnabled => affectHomeGhostsDuringFrightened;
+
     public bool AnyGhostWillFlipToFrightenedNow()
     {
         bool any = false;
@@ -335,6 +349,7 @@ public class GlobalGhostModeController : MonoBehaviour
             ReverseAll(skipHome: true);
 
         isFrightenedActive = true;
+
         if (frightenedTimer == null) frightenedTimer = new Timer(dur);
         else frightenedTimer.Reset(dur);
 
@@ -345,22 +360,19 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             if (!g) return;
 
-            // Home ghosts → slow + paint (optional), but DO NOT change mode
+            // Home ghosts: slow + paint (optional)
             if (g.CurrentMode == Ghost.Mode.Home)
             {
                 if (affectHomeGhostsDuringFrightened && g.movement)
                 {
                     g.movement.SetEnvSpeedMultiplier(frightenedMult);
                     homeFrightened.Add(g);
-
-                    // ensure visuals go blue and will flicker as time runs out
                     var vis = g.GetComponent<GhostVisuals>();
                     if (vis) vis.OnFrightenedStart();
                 }
                 return;
             }
 
-            // Outside Home: normal Frightened (skip Eyes)
             if (g.CurrentMode == Ghost.Mode.Eaten) return;
 
             g.SetMode(Ghost.Mode.Frightened);
@@ -369,6 +381,8 @@ public class GlobalGhostModeController : MonoBehaviour
             var v = g.GetComponent<GhostVisuals>();
             if (v) v.OnFrightenedStart();
         });
+
+        OnFrightenedStarted?.Invoke(dur);
     }
 
     public void ResetSchedule(GhostPhase[] newPhases)
@@ -582,7 +596,7 @@ public class GlobalGhostModeController : MonoBehaviour
                 {
                     g.movement.rb.linearVelocity = Vector2.zero;
                     g.movement.rb.bodyType = RigidbodyType2D.Dynamic;
-                    g.movement.rb.simulated = false;   
+                    g.movement.rb.simulated = false;
                 }
                 g.movement.enabled = false;
             }
@@ -634,7 +648,6 @@ public class GlobalGhostModeController : MonoBehaviour
         isFrightenedActive = false;
         frightenedTimer = null;
 
-        // restore Home slowdowns (optional feature)
         foreach (var g in homeFrightened)
             if (g && g.movement) g.movement.SetEnvSpeedMultiplier(1f);
 
@@ -642,6 +655,8 @@ public class GlobalGhostModeController : MonoBehaviour
         reformedFromEaten.Clear();
 
         SetAll(currentPhaseMode);
+
+        OnFrightenedEnded?.Invoke();
     }
 
     public void OnGhostExitedHomeDoor(Ghost g)

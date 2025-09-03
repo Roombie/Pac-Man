@@ -157,8 +157,9 @@ public class Pacman : MonoBehaviour
     private IEnumerator DieSequence()
     {
         isDead = true;
-        
+    
         GameManager.Instance.globalGhostModeController.StopAllGhosts();
+        GameManager.Instance.globalGhostModeController.SetTimersFrozen(true);
         GameManager.Instance.globalGhostModeController.SetEyesAudioAllowed(false);
         AudioManager.Instance.StopAll();
         movement.rb.constraints = RigidbodyConstraints2D.FreezeAll;

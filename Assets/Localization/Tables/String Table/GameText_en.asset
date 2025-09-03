@@ -200,6 +200,10 @@ MonoBehaviour:
     m_Localized: Service Menu
     m_Metadata:
       m_Items: []
+  - m_Id: 14453436949819392
+    m_Localized: Credits
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

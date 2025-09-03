@@ -204,6 +204,10 @@ MonoBehaviour:
     m_Localized: "Men\xFA de Servicio"
     m_Metadata:
       m_Items: []
+  - m_Id: 14453436949819392
+    m_Localized: "Cr\xE9ditos"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

@@ -202,7 +202,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""aefa3a93-e0c9-4206-9532-a5a998a6d0fb"",
-                    ""path"": ""<Keyboard>/tab"",
+                    ""path"": ""<Keyboard>/escape"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""P1Keyboard"",
@@ -224,7 +224,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""dcde096e-2104-431a-ab94-23ced4dd8332"",
-                    ""path"": ""<Keyboard>/rightShift"",
+                    ""path"": ""<Keyboard>/escape"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";P2Keyboard"",

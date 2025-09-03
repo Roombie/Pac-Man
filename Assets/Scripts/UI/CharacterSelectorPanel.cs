@@ -30,7 +30,8 @@ public class CharacterSelectorPanel : MonoBehaviour
     [SerializeField] private float moveDeadzone = 0.5f;
     [SerializeField] private float initialRepeatDelay = 0.35f;
     [SerializeField] private float repeatInterval = 0.12f;
-    private int   lastMoveSign = 0;
+    [SerializeField] private bool allowSchemeSwapResets = true;
+    private int lastMoveSign = 0;
     private float nextRepeatTime = 0f;
 
     private CharacterData[] characters;
@@ -63,6 +64,11 @@ public class CharacterSelectorPanel : MonoBehaviour
     private void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
+        if (playerInput != null)
+        {
+            playerInput.neverAutoSwitchControlSchemes = true;
+            playerInput.defaultControlScheme = null; 
+        }
     }
 
     private void OnEnable()
@@ -71,6 +77,11 @@ public class CharacterSelectorPanel : MonoBehaviour
 
         if (playerInput != null)
         {
+            var asset = playerInput.actions;
+            asset.Disable();
+            asset.bindingMask = default;
+            asset.Enable();
+
             submit = playerInput.actions["Submit"];
             cancel = playerInput.actions["Cancel"];
             move   = playerInput.actions["Move"];
@@ -447,7 +458,6 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
     }
 
-    // ---------- Claim helpers ----------
 
     private void ForceClaimKeyboard(string scheme)
     {
@@ -511,7 +521,27 @@ public class CharacterSelectorPanel : MonoBehaviour
 
     private bool TryClaimFromContext(InputAction.CallbackContext ctx)
     {
-        if (hasClaimedInputs) return false;
+        // Already claimed? If a different scheme/device is used, reset back to join.
+        if (hasClaimedInputs && allowSchemeSwapResets)
+        {
+            var dev = ctx.control?.device;
+            if (dev != null)
+            {
+                bool differentSchemeOrDevice =
+                    (dev is Gamepad   && (chosenScheme != "Gamepad" || (chosenDeviceIds == null || !chosenDeviceIds.Contains(dev.deviceId)))) ||
+                    (dev is Keyboard  && (chosenScheme == "Gamepad" || (chosenDeviceIds == null || !chosenDeviceIds.Contains(dev.deviceId))));
+
+                if (differentSchemeOrDevice)
+                {
+                    // Drop selection & require explicit re-join with the new scheme
+                    ResetToJoinAndShowPrompt();
+                    return true; // consume this input; next press will claim
+                }
+            }
+        }
+
+        // If not claimed yet, normal first-press-to-claim logic follows ↓
+        if (hasClaimedInputs) return false; // (unchanged guard for same scheme/device)
         var control = ctx.control;
         if (control == null) return false;
 
@@ -532,14 +562,12 @@ public class CharacterSelectorPanel : MonoBehaviour
         {
             var mgr = CharacterSelectionManager.Instance;
 
-            // P1 in single-player selection: claim BOTH keyboard groups
             if (playerIndex == 0 && mgr != null && mgr.IsSinglePlayer)
             {
-                ForceClaimKeyboardGroups(mgr.BothKeyboardGroups);
+                ForceClaimKeyboardGroups(mgr.BothKeyboardGroups); // P1: WASD+Arrows
                 return true;
             }
 
-            // Otherwise: strict scheme per panel
             string targetScheme = mgr != null ? mgr.GetKeyboardSchemeForIndex(playerIndex) : "P1Keyboard";
             string groups = GetGroupsForTriggeredBinding(ctx.action, control);
             if (string.IsNullOrEmpty(groups) || !groups.Contains(targetScheme))
@@ -552,6 +580,12 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void ResetToJoinAndShowPrompt()
+    {
+        ResetPanelState();
+        UpdateJoinInstructionState();
     }
 
     private bool IsFromClaimedDevice(InputAction.CallbackContext ctx)

@@ -191,6 +191,10 @@ MonoBehaviour:
     m_Key: ServiceMenu_Title
     m_Metadata:
       m_Items: []
+  - m_Id: 14453436949819392
+    m_Key: CreditsMenu_CreditsTitle
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

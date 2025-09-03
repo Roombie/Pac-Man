@@ -20,9 +20,9 @@ public class GameManager : MonoBehaviour
     private SpriteRenderer pacmanSpriteRenderer;
     private Animator pacmanAnimator;
     private ArrowIndicator pacmanArrowIndicator;
-    private InputActionAsset _originalActionsAsset;
-    private InputActionAsset _singlePlayerClone;
-    private string _prevActionMapName;
+    private InputActionAsset originalActionsAsset;
+    private InputActionAsset singlePlayerClone;
+    private string prevActionMapName;
     private int _runtimeArrowCompositeIndex = -1;
     private int _runtimeUiNavigateCompositeIndex = -1;
 
@@ -109,8 +109,8 @@ public class GameManager : MonoBehaviour
         return CurrentIndex;
     }
 
-    private bool _listeningForUnpaired = false;
-    private InputUser _pacmanUser;
+    private bool listeningForUnpaired = false;
+    private InputUser pacmanUser;
     private const string SchemeGamepad = "Gamepad";
     private const string SchemeKeyboardFmt = "P{0}Keyboard"; // example: P1Keyboard
     // Saved → per-slot keyboard (if authored) → P1Keyboard → Gamepad
@@ -168,11 +168,11 @@ public class GameManager : MonoBehaviour
         pacmanSpriteRenderer = pacman.GetComponent<SpriteRenderer>();
         pacmanArrowIndicator = pacman.GetComponent<ArrowIndicator>();
         var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
-        _originalActionsAsset = pi ? pi.actions : null;
+        originalActionsAsset = pi ? pi.actions : null;
 
         if (pi != null) // This will be worth it for single player
         {
-            _prevActionMapName = pi.currentActionMap?.name;
+            prevActionMapName = pi.currentActionMap?.name;
             var uiMap = pi.actions.FindActionMap("UI", throwIfNotFound: false); // Find UI action map on pacman's current input action
             if (uiMap != null) pi.SwitchCurrentActionMap(uiMap.name); // When found, switch to that action map
 
@@ -211,6 +211,8 @@ public class GameManager : MonoBehaviour
         uiManager.UpdateHighScore(highScore);
 
         pelletManager.OnAllPelletsCollected += () => StartCoroutine(HandleAllPelletsCollected());
+        globalGhostModeController.OnFrightenedStarted += HandleFrightenedStarted;
+        globalGhostModeController.OnFrightenedEnded   += HandleFrightenedEnded;
 
         NewGame();
         Debug.Log($"[GM] totalPlayers={totalPlayers}, IsTwoPlayerMode={IsTwoPlayerMode}");
@@ -222,14 +224,14 @@ public class GameManager : MonoBehaviour
         var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
         if (pi == null) return;
 
-        _pacmanUser = pi.user;
+        pacmanUser = pi.user;
 
-        if (!_listeningForUnpaired)
+        if (!listeningForUnpaired)
         {
             // Let Input System raise events when an unpaired device is used
             InputUser.listenForUnpairedDeviceActivity++;
             InputUser.onUnpairedDeviceUsed += OnUnpairedDeviceUsed;
-            _listeningForUnpaired = true;
+            listeningForUnpaired = true;
         }
 
         // Also react to device loss/regain for the paired user
@@ -246,11 +248,11 @@ public class GameManager : MonoBehaviour
             pi.onDeviceRegained -= OnPairedDeviceRegained;
         }
 
-        if (_listeningForUnpaired)
+        if (listeningForUnpaired)
         {
             InputUser.onUnpairedDeviceUsed -= OnUnpairedDeviceUsed;
             InputUser.listenForUnpairedDeviceActivity--;
-            _listeningForUnpaired = false;
+            listeningForUnpaired = false;
         }
     }
 
@@ -365,15 +367,15 @@ public class GameManager : MonoBehaviour
 
         var user = pi.user;
 
-        // ---------- SINGLE-PLAYER: allow WASD + Arrows (no mask) ----------
+        // On singleplayer, allow WASD + Arrows (no mask)
         if (total == 1)
         {
             // Use a fresh clone so nothing lingering affects resolution
-            if (_singlePlayerClone == null && _originalActionsAsset != null)
-                _singlePlayerClone = ScriptableObject.Instantiate(_originalActionsAsset);
+            if (singlePlayerClone == null && originalActionsAsset != null)
+                singlePlayerClone = ScriptableObject.Instantiate(originalActionsAsset);
 
-            if (_singlePlayerClone != null && pi.actions != _singlePlayerClone)
-                pi.actions = _singlePlayerClone;
+            if (singlePlayerClone != null && pi.actions != singlePlayerClone)
+                pi.actions = singlePlayerClone;
 
             // Fully reset PlayerInput filtering and re-resolve
             pi.DeactivateInput();
@@ -418,12 +420,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // ---------- MULTI-PLAYER (normal per-player schemes) ----------
+        // On multiplayer, use normal per-player schemes
         // Restore the original asset if we swapped it in 1P
-        if (_originalActionsAsset != null && pi.actions != _originalActionsAsset)
-            pi.actions = _originalActionsAsset;
+        if (originalActionsAsset != null && pi.actions != originalActionsAsset)
+            pi.actions = originalActionsAsset;
 
-        // NEW: remove the 1P runtime arrow composite so P1/P2 remain isolated
+        // remove the 1P runtime arrow composite so P1/P2 remain isolated
         RemoveSinglePlayerArrowComposite(pi);
         RemoveSinglePlayerUiNavigateComposite(pi);
 
@@ -451,7 +453,7 @@ public class GameManager : MonoBehaviour
         pi.actions.Disable();
         pi.actions.devices = want;
         pi.actions.bindingMask = !string.IsNullOrEmpty(scheme)
-                                ? InputBinding.MaskByGroup(scheme)   // P1Keyboard / P2Keyboard, etc.
+                                ? InputBinding.MaskByGroup(scheme) // P1Keyboard / P2Keyboard, etc.
                                 : default(InputBinding?);
         pi.actions.Enable();
 
@@ -733,15 +735,12 @@ public class GameManager : MonoBehaviour
         pauseUI.ShowPause();
         SetState(GameState.Paused);
 
-        // Switch to the UI action map so arrows/enter/esc work in pause menu
         var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
         if (pi != null)
         {
-            _prevActionMapName = pi.currentActionMap?.name;
-
-            var uiMap = pi.actions.FindActionMap("UI", throwIfNotFound: false); // change if different
-            if (uiMap != null)
-                pi.SwitchCurrentActionMap(uiMap.name);
+            // DON'T SwitchCurrentActionMap("UI");
+            var uiMap = pi.actions.FindActionMap("UI", throwIfNotFound: false);
+            if (uiMap != null) uiMap.Enable();   // enable UI alongside Player
         }
         Debug.Log("Game Paused");
     }
@@ -752,21 +751,12 @@ public class GameManager : MonoBehaviour
         pauseUI.HidePause();
         SetState(GameState.Playing);
 
-        // Switch back to whatever gameplay map we had before pause,
-        // or re-apply the normal device/map setup if unknown.
         var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
         if (pi != null)
         {
-            if (!string.IsNullOrEmpty(_prevActionMapName) &&
-                pi.actions.FindActionMap(_prevActionMapName, throwIfNotFound: false) != null)
-            {
-                pi.SwitchCurrentActionMap(_prevActionMapName);
-            }
-            else
-            {
-                // Fallback in case we came from another scene/unknown state
-                ForceGameplayMap(pi);
-            }
+            // Turn UI back off; keep Player map active so Pause still works
+            var uiMap = pi.actions.FindActionMap("UI", throwIfNotFound: false);
+            if (uiMap != null) uiMap.Disable();
         }
         Debug.Log("Game Resumed");
     }
@@ -778,7 +768,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator RestartLevelSequence()
     {
-        globalGhostModeController.SetTimersFrozen(true);
+        globalGhostModeController.SetTimersFrozen(true); // Just in case, no proof but no doubts
         bonusItemManager.DespawnBonusItem(true);
 
         yield return new WaitForSeconds(1f);
@@ -1151,14 +1141,6 @@ public class GameManager : MonoBehaviour
             globalGhostModeController?.SetTimersFrozen(false);
     }
 
-    // Safety if you change scenes/states
-    public void ClearAllFreezes()
-    {
-        freeze.Clear();
-        Time.timeScale = 1f;
-        globalGhostModeController?.SetTimersFrozen(false);
-    }
-
     public void ResetActorsState()
     {
         pacman.ResetState();
@@ -1319,40 +1301,41 @@ public class GameManager : MonoBehaviour
         SceneTransitionManager.Instance.LoadScene("MainMenu");
     }
 
+    private void HandleFrightenedStarted(float duration)
+    {
+        // Reset combo on each new/extended frightened
+        ghostMultiplier = 1;
+
+        // Start/ensure frightened music; it will loop until the controller says it ended
+        AudioManager.Instance.Play(AudioManager.Instance.frightenedMusic, SoundCategory.Music, 1f, 1f, true);
+    }
+
+    private void HandleFrightenedEnded()
+    {
+        // Snap music back to siren appropriate for what’s left
+        UpdateSiren(pelletManager.RemainingPelletCount());
+        ResetGhostMultiplier();
+    }
+
     public void PowerPelletEaten(PowerPellet pellet)
     {
-        // If no ghost would actually flip into Frightened right now,
-        // do NOTHING except award pellet points.
-        if (!globalGhostModeController.AnyGhostWillFlipToFrightenedNow())
+        bool canFlipNow    = globalGhostModeController.AnyGhostWillFlipToFrightenedNow();
+        bool alreadyActive = globalGhostModeController.IsFrightenedActive;
+        bool homeCase      = globalGhostModeController.AffectHomeGhostsDuringFrightenedEnabled
+                            && globalGhostModeController.AnyGhostInHome();
+
+        // Truly nothing to do? (no flips now, not active, no home ghosts to affect)
+        if (!canFlipNow && !alreadyActive && !homeCase)
         {
-            PelletEaten(pellet);  // just points, no music/timers/speed changes
+            PelletEaten(pellet); // just points
             return;
         }
 
-        // Normal frightened flow
-        AudioManager.Instance.Play(AudioManager.Instance.frightenedMusic, SoundCategory.Music, 1f, 1f, true);
-
-        ghostMultiplier = 1;
-
+        // Controller owns timers/visuals; this (re)starts or extends frightened
         globalGhostModeController.TriggerFrightened(pellet.duration);
 
+        // still score the pellet
         PelletEaten(pellet);
-
-        CancelInvoke(nameof(ResetGhostMultiplier));
-        Invoke(nameof(ResetGhostMultiplier), pellet.duration);
-
-        CancelInvoke(nameof(EndPowerPellet));
-        Invoke(nameof(EndPowerPellet), pellet.duration);
-    }
-
-
-    private void EndPowerPellet()
-    {
-        // Update the siren to normal mode (or according to remaining pellets)
-        UpdateSiren(pelletManager.RemainingPelletCount());
-
-        // Reset the ghost multiplier and any other necessary resets
-        ResetGhostMultiplier();
     }
 
     private void ResetGhostMultiplier()
@@ -1438,14 +1421,14 @@ public class GameManager : MonoBehaviour
 
         // In 2P mode, don't steal a pad already paired to someone else
         var owner = InputUser.FindUserPairedToDevice(gp);
-        if (owner.HasValue && owner.Value.valid && owner.Value != _pacmanUser)
+        if (owner.HasValue && owner.Value.valid && owner.Value != pacmanUser)
             return;
 
         // Unpair any old gamepads from this user, then pair the newly-used one
-        foreach (var d in _pacmanUser.pairedDevices.ToArray())
-            if (d is Gamepad) _pacmanUser.UnpairDevice(d);
+        foreach (var d in pacmanUser.pairedDevices.ToArray())
+            if (d is Gamepad) pacmanUser.UnpairDevice(d);
 
-        InputUser.PerformPairingWithDevice(gp, _pacmanUser);
+        InputUser.PerformPairingWithDevice(gp, pacmanUser);
 
         // Switch scheme to Gamepad for this user (keep keyboard if you want)
         var pi = pacman.GetComponent<PlayerInput>();
