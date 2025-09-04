@@ -505,7 +505,23 @@ public class CharacterSelectorPanel : MonoBehaviour
     private void FinalizeClaim()
     {
         hasClaimedInputs = true;
-        chosenDeviceIds = playerInput.devices.Select(d => d.deviceId).ToArray();
+
+        // Record the device(s) properly so re-presses don't look like a scheme/device swap.
+        if (chosenScheme == "Gamepad")
+        {
+            chosenDeviceIds = playerInput.devices
+                .OfType<Gamepad>()
+                .Select(d => d.deviceId)
+                .ToArray();
+        }
+        else
+        {
+            // Keyboard scheme (P1Keyboard / P2Keyboard)
+            chosenDeviceIds = (Keyboard.current != null)
+                ? new[] { Keyboard.current.deviceId }
+                : System.Array.Empty<int>();
+        }
+
         playerInput.neverAutoSwitchControlSchemes = true;
 
         if (!string.IsNullOrEmpty(chosenScheme) && playerInput.actions != null)

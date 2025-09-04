@@ -208,6 +208,18 @@ MonoBehaviour:
     m_Localized: "Cr\xE9ditos"
     m_Metadata:
       m_Items: []
+  - m_Id: 14781496756629504
+    m_Localized: Pausa
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14782164590489600
+    m_Localized: Jugador 1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14782220508950528
+    m_Localized: Jugador 2
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

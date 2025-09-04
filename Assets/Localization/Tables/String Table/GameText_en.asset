@@ -204,6 +204,18 @@ MonoBehaviour:
     m_Localized: Credits
     m_Metadata:
       m_Items: []
+  - m_Id: 14781496756629504
+    m_Localized: Pause Menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14782164590489600
+    m_Localized: Player 1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14782220508950528
+    m_Localized: Player 2
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

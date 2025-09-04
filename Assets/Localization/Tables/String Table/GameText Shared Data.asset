@@ -195,6 +195,18 @@ MonoBehaviour:
     m_Key: CreditsMenu_CreditsTitle
     m_Metadata:
       m_Items: []
+  - m_Id: 14781496756629504
+    m_Key: PauseMenu_Title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14782164590489600
+    m_Key: PlayerOne_Label
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14782220508950528
+    m_Key: PlayerTwo_Label
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
