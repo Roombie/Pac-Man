@@ -171,6 +171,10 @@ MonoBehaviour:
     m_Key: Instruction_Cancel
     m_Metadata:
       m_Items: []
+  - m_Id: 19153768585981952
+    m_Key: Instruction_Deselect
+    m_Metadata:
+      m_Items: []
   - m_Id: 4684778635620352
     m_Key: JoinInstruction_Text
     m_Metadata:

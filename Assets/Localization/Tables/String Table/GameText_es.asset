@@ -220,6 +220,10 @@ MonoBehaviour:
     m_Localized: Jugador 2
     m_Metadata:
       m_Items: []
+  - m_Id: 19153768585981952
+    m_Localized: <sprite name="bulletList">Presiiona {0} para deseleccionar un personaje.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

@@ -66,9 +66,10 @@ public class CharacterSelectionManager : MonoBehaviour
         expectedPlayers = Mathf.Clamp(count, 1, playerPanels.Length);
         Debug.Log($"[CharacterSelectionManager] GameMode={expectedPlayers}P");
 
+        // Clear state
         foreach (var panel in playerPanels)
         {
-            panel.ResetPanelState();
+            panel.ResetPanelState();        // always neutral
             panel.gameObject.SetActive(false);
             panel.SetPanelActive(false);
         }
@@ -81,6 +82,7 @@ public class CharacterSelectionManager : MonoBehaviour
         claimedKeyboardSchemes.Clear();
         claimedGamepadDeviceIds.Clear();
 
+        // Set up only the needed panels
         for (int i = 0; i < expectedPlayers; i++)
         {
             SetupPanelForPlayer(i);
@@ -88,14 +90,17 @@ public class CharacterSelectionManager : MonoBehaviour
             {
                 var panel = playerPanels[i];
                 RegisterPlayer(i, panel);
-                panel.SetPanelActive(true);
+
+                // do NOT force claim keyboard/gamepad
+                panel.ResetPanelState();
+                panel.SetPanelActive(true);  // shows "Press a button to join"
             }
         }
 
         RefreshReadinessFromPanelState();
         CheckAllPlayersSelected();
         TryFireFinalConfirmation();
-    }
+    }   
 
     private void RefreshReadinessFromPanelState()
     {
@@ -153,6 +158,7 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         if (index >= playerPanels.Length) return;
         RegisterPlayer(index, panel);
+        panel.ResetPanelState();
         panel.SetPanelActive(true);
     }
 
@@ -207,13 +213,13 @@ public class CharacterSelectionManager : MonoBehaviour
             var character = panel.SelectedCharacter;
             var skin = panel.SelectedSkin;
             if (character != null) PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
-            if (skin != null)      PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin",  skin.skinName);
+            if (skin != null) PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin",  skin.skinName);
 
-            var sig    = panel.GetInputSignature();
+            var sig = panel.GetInputSignature(); // Now calling GetInputSignature()
             var scheme = string.IsNullOrEmpty(sig.scheme) ? "P1Keyboard" : sig.scheme;
-            var csv    = (sig.deviceIds != null && sig.deviceIds.Length > 0) ? string.Join(",", sig.deviceIds) : "";
+            var csv = (sig.deviceIds != null && sig.deviceIds.Length > 0) ? string.Join(",", sig.deviceIds) : "";
 
-            PlayerPrefs.SetString($"P{slot}_Scheme",  scheme);
+            PlayerPrefs.SetString($"P{slot}_Scheme", scheme);
             PlayerPrefs.SetString($"P{slot}_Devices", csv);
 
             slot++;
@@ -366,12 +372,37 @@ public class CharacterSelectionManager : MonoBehaviour
             claimedKeyboardSchemes.Remove(scheme);
     }
 
+    public bool TryReserveKeyboardScheme(string scheme)
+    {
+        if (string.IsNullOrEmpty(scheme)) return false;
+
+        // ensure the scheme is one of the configured keyboard schemes
+        if (keyboardSchemesOrder != null && keyboardSchemesOrder.Length > 0 &&
+            !keyboardSchemesOrder.Contains(scheme))
+        {
+            Debug.LogWarning($"[CharacterSelectionManager] Unknown keyboard scheme '{scheme}'. " +
+                            $"Expected one of: {string.Join(", ", keyboardSchemesOrder)}");
+            // You can return false here if you want to block unknown schemes.
+            // For now we allow it:
+        }
+
+        if (claimedKeyboardSchemes.Contains(scheme))
+            return false; // already taken by another panel
+
+        claimedKeyboardSchemes.Add(scheme);
+        Debug.Log($"[CharacterSelectionManager] Keyboard scheme reserved: {scheme}");
+        return true;
+    }
+
     public bool TryReserveGamepad(InputDevice device)
     {
         if (device == null) return false;
         int id = device.deviceId;
         if (claimedGamepadDeviceIds.Contains(id)) return false;
+
+        // Reserve gamepad if it's not already reserved
         claimedGamepadDeviceIds.Add(id);
+        Debug.Log($"Gamepad reserved: {device.displayName}");
         return true;
     }
 

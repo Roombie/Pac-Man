@@ -25,15 +25,17 @@ public class CharacterSelectorPanel : MonoBehaviour
     private InputAction submit;
     private InputAction cancel;
     private InputAction move;
+    private InputAction dejoin;
+    private PlayerInput playerInput;
 
     [Header("Navigation Tuning")]
     [SerializeField] private float moveDeadzone = 0.5f;
     [SerializeField] private float initialRepeatDelay = 0.35f;
     [SerializeField] private float repeatInterval = 0.12f;
-    [SerializeField] private bool allowSchemeSwapResets = true;
     private int lastMoveSign = 0;
     private float nextRepeatTime = 0f;
 
+    // Character state
     private CharacterData[] characters;
     private int playerIndex = -1;
     private int currentIndex = 0;
@@ -42,23 +44,21 @@ public class CharacterSelectorPanel : MonoBehaviour
     private bool hasConfirmedSkin = false;
     private bool hasConfirmedFinal = false;
 
-    private PlayerInput playerInput;
     private readonly List<GameObject> instantiatedSkinIcons = new();
     private readonly List<GameObject> selectionIndicators = new();
 
     // Claim state
     private string chosenScheme;
-    private int[]  chosenDeviceIds = System.Array.Empty<int>();
-    private bool   hasClaimedInputs = false;
-
-    private int[]  reservedGamepadIds = System.Array.Empty<int>();
+    private int[] chosenDeviceIds = System.Array.Empty<int>();
+    private bool hasClaimedInputs = false;
+    private int[] reservedGamepadIds = System.Array.Empty<int>();
     private string reservedKeyboardScheme;
 
     public CharacterData SelectedCharacter => characters != null && characters.Length > 0 ? characters[currentIndex] : null;
     public CharacterSkin SelectedSkin => SelectedCharacter != null && SelectedCharacter.skins.Length > 0 ? SelectedCharacter.skins[currentSkinIndex] : null;
     public bool HasSelectedCharacter => hasSelectedCharacter;
     public bool HasConfirmedSkin => hasConfirmedSkin;
-    public int  PlayerIndex => playerIndex;
+    public int PlayerIndex => playerIndex;
     public bool HasConfirmedFinal() => hasConfirmedFinal;
 
     private void Awake()
@@ -66,118 +66,88 @@ public class CharacterSelectorPanel : MonoBehaviour
         playerInput = GetComponent<PlayerInput>();
         if (playerInput != null)
         {
+            playerInput.defaultControlScheme = null;
             playerInput.neverAutoSwitchControlSchemes = true;
-            playerInput.defaultControlScheme = null; 
         }
     }
 
     private void OnEnable()
     {
         if (playerInput == null) playerInput = GetComponent<PlayerInput>();
+        if (playerInput == null) return;
 
-        if (playerInput != null)
-        {
-            var asset = playerInput.actions;
-            asset.Disable();
-            asset.bindingMask = default;
-            asset.Enable();
+        var asset = playerInput.actions;
+        asset.Disable();
+        asset.bindingMask = null; // neutral
+        asset.Enable();
 
-            submit = playerInput.actions["Submit"];
-            cancel = playerInput.actions["Cancel"];
-            move   = playerInput.actions["Move"];
+        submit = asset["Submit"];
+        cancel = asset["Cancel"];
+        move = asset["Move"];
+        dejoin = asset["Select"];
 
-            if (!submit.enabled) submit.Enable();
-            if (!cancel.enabled) cancel.Enable();
-            if (!move.enabled)   move.Enable();
-
-            submit.performed += OnSubmitPerformed;
-            cancel.performed += OnCancelPerformed;
-            move.performed += OnMovePerformed;
-            move.canceled += OnMoveCanceled;
-
-            playerInput.onDeviceLost     += OnDeviceLost;
-            playerInput.onDeviceRegained += OnDeviceRegained;
-        }
-        else
-        {
-            Debug.LogError($"[CharacterSelectorPanel] No PlayerInput on {gameObject.name}");
-        }
-
-        UpdateJoinInstructionState();
+        submit.performed += OnSubmitPerformed;
+        cancel.performed += OnCancelPerformed;
+        move.performed += OnMovePerformed;
+        move.canceled += OnMoveCanceled;
+        dejoin.performed += OnDejoinPerformed;
     }
 
     private void OnDisable()
     {
         if (submit != null) submit.performed -= OnSubmitPerformed;
         if (cancel != null) cancel.performed -= OnCancelPerformed;
-        if (move != null)
-        {
-            move.performed -= OnMovePerformed;
-            move.canceled  -= OnMoveCanceled;
-        }
+        if (move != null) move.performed   -= OnMovePerformed;
+        if (dejoin != null) dejoin.performed -= OnDejoinPerformed;
 
-        if (playerInput != null)
-        {
-            playerInput.onDeviceLost     -= OnDeviceLost;
-            playerInput.onDeviceRegained -= OnDeviceRegained;
-        }
-
-        // release any reservations
-        if (CharacterSelectionManager.Instance != null)
-        {
-            if (!string.IsNullOrEmpty(reservedKeyboardScheme))
-                CharacterSelectionManager.Instance.ReleaseKeyboardScheme(reservedKeyboardScheme);
-            if (reservedGamepadIds is { Length: > 0 })
-                CharacterSelectionManager.Instance.ReleaseGamepads(reservedGamepadIds);
-        }
-        reservedKeyboardScheme = null;
-        reservedGamepadIds     = System.Array.Empty<int>();
+        ReleaseReservations();
     }
 
-    private void OnDeviceLost(PlayerInput input)
-    {
-        UpdateJoinInstructionState();
-    }
-
-    private void OnDeviceRegained(PlayerInput input)
-    {
-        UpdateJoinInstructionState();
-    }
-
-    private void UpdateJoinInstructionState()
-    {
-        bool hasControl = hasClaimedInputs;
-        if (joinInstruction) joinInstruction.SetActive(!hasControl);
-        if (characterData)   characterData.SetActive(hasControl);
-    }
-
+    // Panel state handle
     public void SetPlayerIndex(int index)
     {
         playerIndex = index;
         ApplyPlayerLabel();
-
-        // Auto-claim for P1:
-        // - If single-player selection → mask to BOTH keyboard groups (WASD + Arrows).
-        // - Otherwise → strict per-panel scheme (P1Keyboard for panel 1).
-        if (index == 0 && !hasClaimedInputs)
-        {
-            var mgr = CharacterSelectionManager.Instance;
-            if (mgr != null && mgr.IsSinglePlayer)
-            {
-                ForceClaimKeyboardGroups(mgr.BothKeyboardGroups); // "P1Keyboard;P2Keyboard"
-            }
-            else
-            {
-                string scheme = mgr != null ? mgr.GetKeyboardSchemeForIndex(0) : "P1Keyboard";
-                ForceClaimKeyboard(scheme ?? "P1Keyboard");
-            }
-        }
+        NeutralizeInput();
     }
 
-    public void ApplyGlobalPlayerStyle(PlayerStyle style)
+    private void NeutralizeInput()
     {
-        if (backgroundImage != null) backgroundImage.color = style.backgroundColor;
-        if (playerLabelText != null) playerLabelText.color = style.playerTextColor;
+        hasClaimedInputs = false;
+        chosenScheme = null;
+        chosenDeviceIds = System.Array.Empty<int>();
+
+        ReleaseReservations();
+
+        if (playerInput != null && playerInput.actions != null)
+        {
+            playerInput.actions.Disable();
+            playerInput.actions.bindingMask = null;
+            playerInput.actions.Enable();
+        }
+
+        UpdateJoinInstructionState();
+    }
+
+    private void ReleaseReservations()
+    {
+        if (CharacterSelectionManager.Instance != null)
+        {
+            if (!string.IsNullOrEmpty(reservedKeyboardScheme))
+                CharacterSelectionManager.Instance.ReleaseKeyboardScheme(reservedKeyboardScheme);
+
+            if (reservedGamepadIds.Length > 0)
+                CharacterSelectionManager.Instance.ReleaseGamepads(reservedGamepadIds);
+        }
+
+        reservedKeyboardScheme = null;
+        reservedGamepadIds = System.Array.Empty<int>();
+    }
+
+    private void UpdateJoinInstructionState()
+    {
+        if (joinInstruction) joinInstruction.SetActive(!hasClaimedInputs);
+        if (characterData) characterData.SetActive(hasClaimedInputs);
     }
 
     private void ApplyPlayerLabel()
@@ -185,117 +155,32 @@ public class CharacterSelectorPanel : MonoBehaviour
         if (playerLabelText != null)
         {
             playerLabelLocalized.Arguments = new object[] { playerIndex + 1 };
-            playerLabelLocalized.StringChanged += (localizedValue) => playerLabelText.text = localizedValue;
+            playerLabelLocalized.StringChanged += (val) => playerLabelText.text = val;
             playerLabelLocalized.RefreshString();
         }
     }
 
-    public void SetCharacterData(CharacterData[] characterData)
-    {
-        characters = characterData;
-        currentIndex = 0;
-        currentSkinIndex = 0;
-        hasSelectedCharacter = false;
-        hasConfirmedSkin = false;
-        UpdateSkinConfirmationIndicator();
-        ShowSkinOptions(false);
-
-        if (gameObject.activeInHierarchy)
-        {
-            UpdateDisplay();
-            InitializeSkins();
-        }
-    }
-
-    public void ConfirmSelection()
-    {
-        if (!hasSelectedCharacter) SelectCharacter();
-        else if (!hasConfirmedSkin) ConfirmSkin();
-        else if (!hasConfirmedFinal) ConfirmFinalSelection();
-        else Debug.LogWarning($"[ConfirmSelection] Player {playerIndex + 1} already confirmed final.");
-    }
-
-    private void SelectCharacter()
-    {
-        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
-        hasSelectedCharacter = true;
-        ShowSkinOptions(true);
-        InitializeSkins();
-        UpdateSkinHighlight();
-    }
-
-    private void ConfirmSkin()
-    {
-        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
-        hasConfirmedSkin = true;
-        UpdateSkinConfirmationIndicator();
-        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
-    }
-
-    private void ConfirmFinalSelection()
-    {
-        hasConfirmedFinal = true;
-        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
-        CharacterSelectionManager.Instance?.TryFireFinalConfirmation();
-    }
-
-    public void CancelSelection()
-    {
-        if (!hasSelectedCharacter && !hasConfirmedSkin)
-        {
-            CharacterSelectionManager.Instance?.OnPlayerCancelledBeforeSelection?.Invoke();
-            return;
-        }
-
-        if (hasConfirmedSkin) HandleSkinDeselection();
-        else                  HandleCharacterDeselection();
-
-        UpdateDisplay();
-    }
-
-    private void HandleSkinDeselection()
-    {
-        hasConfirmedSkin = false;
-        UpdateSkinConfirmationIndicator();
-        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
-        CharacterSelectionManager.Instance?.NotifyPlayerUnready(this);
-        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
-    }
-
-    private void HandleCharacterDeselection()
-    {
-        hasSelectedCharacter = false;
-        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
-        ShowSkinOptions(false);
-        CharacterSelectionManager.Instance?.NotifyPlayerDeselected(this);
-        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
-    }
-
+    // Input
     private void OnSubmitPerformed(InputAction.CallbackContext ctx)
     {
         if (TryClaimFromContext(ctx)) return;
-        if (!hasClaimedInputs) return;
-        if (!IsFromClaimedDevice(ctx)) return;
-        if (!ctx.performed) return;
+        if (!hasClaimedInputs || !IsFromClaimedDevice(ctx)) return;
         ConfirmSelection();
     }
 
     private void OnCancelPerformed(InputAction.CallbackContext ctx)
     {
         if (TryClaimFromContext(ctx)) return;
-        if (!hasClaimedInputs) return;
-        if (!IsFromClaimedDevice(ctx)) return;
-        if (!ctx.performed) return;
+        if (!hasClaimedInputs || !IsFromClaimedDevice(ctx)) return;
         CancelSelection();
     }
 
-    private void OnMovePerformed(InputAction.CallbackContext context)
+    private void OnMovePerformed(InputAction.CallbackContext ctx)
     {
-        if (TryClaimFromContext(context)) return;
-        if (!IsFromClaimedDevice(context)) return;
-        if (!context.performed || !hasClaimedInputs) return;
+        if (TryClaimFromContext(ctx)) return;
+        if (!hasClaimedInputs || !IsFromClaimedDevice(ctx)) return;
 
-        Vector2 v = context.ReadValue<Vector2>();
+        Vector2 v = ctx.ReadValue<Vector2>();
         float x = v.x;
 
         if (Mathf.Abs(x) < moveDeadzone)
@@ -331,11 +216,103 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
     }
 
-    private void OnMoveCanceled(InputAction.CallbackContext context)
+    private void OnMoveCanceled(InputAction.CallbackContext ctx)
     {
-        if (!IsFromClaimedDevice(context)) return;
+        if (!IsFromClaimedDevice(ctx)) return;
         lastMoveSign = 0;
         nextRepeatTime = 0f;
+    }
+
+    private void OnDejoinPerformed(InputAction.CallbackContext ctx)
+    {
+        ResetPanelState();
+        Debug.Log($"Player {playerIndex + 1} dejoined, waiting for rejoin.");
+    }
+
+    // Claim logic
+    private bool TryClaimFromContext(InputAction.CallbackContext ctx)
+    {
+        if (hasClaimedInputs) return false;
+
+        var mgr = CharacterSelectionManager.Instance;
+        var control = ctx.control;
+        if (control == null) return false;
+
+        // Gamepad
+        if (control.device is Gamepad gamepad)
+        {
+            if (mgr.TryReserveGamepad(gamepad))
+            {
+                chosenScheme = "Gamepad";
+                reservedGamepadIds = new[] { gamepad.deviceId };
+                FinalizeClaim();
+                return true;
+            }
+            return false;
+        }
+
+        // Keyboard
+        if (control.device is Keyboard)
+        {
+            string groups = GetGroupsForTriggeredBinding(ctx.action, control);
+            string[] known = mgr?.BothKeyboardGroups ?? new[] { "P1Keyboard", "P2Keyboard" };
+
+            if (mgr.IsSinglePlayer)
+            {
+                var match = FirstMatch(groups, known);
+                if (!string.IsNullOrEmpty(match) && mgr.TryReserveKeyboardScheme(match))
+                {
+                    chosenScheme = match;
+                    reservedKeyboardScheme = match;
+                    FinalizeClaim();
+                    return true;
+                }
+            }
+            else
+            {
+                string target = mgr.GetKeyboardSchemeForIndex(playerIndex);
+                if (GroupsContain(groups, target) && mgr.TryReserveKeyboardScheme(target))
+                {
+                    chosenScheme = target;
+                    reservedKeyboardScheme = target;
+                    FinalizeClaim();
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void FinalizeClaim()
+    {
+        hasClaimedInputs = true;
+
+        if (chosenScheme == "Gamepad")
+        {
+            chosenDeviceIds = playerInput.devices.OfType<Gamepad>().Select(d => d.deviceId).ToArray();
+        }
+        else
+        {
+            chosenDeviceIds = (Keyboard.current != null) ? new[] { Keyboard.current.deviceId } : System.Array.Empty<int>();
+        }
+
+        if (!string.IsNullOrEmpty(chosenScheme) && playerInput.actions != null)
+        {
+            var asset = playerInput.actions;
+            asset.Disable();
+            asset.bindingMask = InputBinding.MaskByGroup(chosenScheme); // lock scheme
+            asset.Enable();
+        }
+
+        UpdateJoinInstructionState();
+        Debug.Log($"[Panel {playerIndex}] Claimed {chosenScheme}");
+    }
+
+    public void SetPanelActive(bool active)
+    {
+        gameObject.SetActive(active);
+        UpdateJoinInstructionState();
     }
 
     public void ResetPanelState()
@@ -344,34 +321,132 @@ public class CharacterSelectorPanel : MonoBehaviour
         currentSkinIndex = 0;
         hasSelectedCharacter = false;
         hasConfirmedSkin = false;
-        UpdateSkinConfirmationIndicator();
         hasConfirmedFinal = false;
 
-        hasClaimedInputs = false;
-        chosenScheme = null;
-        chosenDeviceIds = System.Array.Empty<int>();
-
-        if (CharacterSelectionManager.Instance != null)
-        {
-            if (!string.IsNullOrEmpty(reservedKeyboardScheme))
-                CharacterSelectionManager.Instance.ReleaseKeyboardScheme(reservedKeyboardScheme);
-            if (reservedGamepadIds is { Length: > 0 })
-                CharacterSelectionManager.Instance.ReleaseGamepads(reservedGamepadIds);
-        }
-        reservedKeyboardScheme = null;
-        reservedGamepadIds     = System.Array.Empty<int>();
-
-        if (playerInput != null && playerInput.actions != null)
-        {
-            var asset = playerInput.actions;
-            asset.Disable();
-            asset.bindingMask = default;
-            asset.Enable();
-        }
-
-        UpdateJoinInstructionState();
+        NeutralizeInput();
         UpdateDisplay();
         ShowSkinOptions(false);
+    }
+
+    // Allows manager to push character data array into the panel
+    public void SetCharacterData(CharacterData[] characterData)
+    {
+        characters = characterData;
+        currentIndex = 0;
+        currentSkinIndex = 0;
+        hasSelectedCharacter = false;
+        hasConfirmedSkin = false;
+        hasConfirmedFinal = false;
+
+        UpdateSkinConfirmationIndicator();
+        ShowSkinOptions(false);
+
+        if (gameObject.activeInHierarchy)
+        {
+            UpdateDisplay();
+            InitializeSkins();
+        }
+    }
+
+    // Allows manager to apply a style (colors etc.)
+    public void ApplyGlobalPlayerStyle(PlayerStyle style)
+    {
+        if (backgroundImage != null) backgroundImage.color = style.backgroundColor;
+        if (playerLabelText != null) playerLabelText.color = style.playerTextColor;
+    }
+
+    // Allows manager to read the reserved scheme & devices for saving
+    public (string scheme, int[] deviceIds) GetInputSignature()
+    {
+        if (hasClaimedInputs && !string.IsNullOrEmpty(chosenScheme))
+            return (chosenScheme, chosenDeviceIds ?? System.Array.Empty<int>());
+
+        if (playerInput == null)
+            return (null, System.Array.Empty<int>());
+
+        var ids = new List<int>();
+        foreach (var d in playerInput.devices) ids.Add(d.deviceId);
+        var scheme = playerInput.currentControlScheme;
+        return (string.IsNullOrEmpty(scheme) ? null : scheme, ids.ToArray());
+    }
+
+    private bool IsFromClaimedDevice(InputAction.CallbackContext ctx)
+    {
+        if (!hasClaimedInputs) return false;
+        var dev = ctx.control?.device;
+        if (dev == null) return false;
+        return chosenDeviceIds.Contains(dev.deviceId);
+    }
+
+    private static string GetGroupsForTriggeredBinding(InputAction action, InputControl control)
+    {
+        if (action == null || control == null) return null;
+        int idx = action.GetBindingIndexForControl(control);
+        return idx >= 0 ? action.bindings[idx].groups : null;
+    }
+
+    // ---------------- CHARACTER LOGIC ----------------
+    public void ConfirmSelection()
+    {
+        if (!hasSelectedCharacter) SelectCharacter();
+        else if (!hasConfirmedSkin) ConfirmSkin();
+        else if (!hasConfirmedFinal) ConfirmFinalSelection();
+    }
+
+    private void SelectCharacter()
+    {
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+        hasSelectedCharacter = true;
+        ShowSkinOptions(true);
+        InitializeSkins();
+        UpdateSkinHighlight();
+    }
+
+    private void ConfirmSkin()
+    {
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+        hasConfirmedSkin = true;
+        UpdateSkinConfirmationIndicator();
+        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
+    }
+
+    private void ConfirmFinalSelection()
+    {
+        hasConfirmedFinal = true;
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+        CharacterSelectionManager.Instance?.TryFireFinalConfirmation();
+    }
+
+    public void CancelSelection()
+    {
+        if (!hasSelectedCharacter && !hasConfirmedSkin)
+        {
+            CharacterSelectionManager.Instance?.OnPlayerCancelledBeforeSelection?.Invoke();
+            return;
+        }
+
+        if (hasConfirmedSkin) HandleSkinDeselection();
+        else HandleCharacterDeselection();
+
+        UpdateDisplay();
+    }
+
+    private void HandleSkinDeselection()
+    {
+        hasConfirmedSkin = false;
+        UpdateSkinConfirmationIndicator();
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+        CharacterSelectionManager.Instance?.NotifyPlayerUnready(this);
+        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
+    }
+
+    private void HandleCharacterDeselection()
+    {
+        hasSelectedCharacter = false;
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+        ShowSkinOptions(false);
+        CharacterSelectionManager.Instance?.NotifyPlayerDeselected(this);
+        CharacterSelectionManager.Instance?.CheckAllPlayersSelected();
     }
 
     public void InitializeSkins()
@@ -405,11 +480,6 @@ public class CharacterSelectorPanel : MonoBehaviour
     }
 
     private void ShowSkinOptions(bool visible) => skinIconContainer.gameObject.SetActive(visible);
-
-    public void SetPanelActive(bool active)
-    {
-        UpdateJoinInstructionState();
-    }
 
     private void UpdateSkinHighlight()
     {
@@ -458,196 +528,18 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
     }
 
-
-    private void ForceClaimKeyboard(string scheme)
+    // ---------------- HELPERS ----------------
+    private static bool GroupsContain(string groups, string candidate)
     {
-        chosenScheme = scheme;
-        hasClaimedInputs = true;
-
-        var kb = Keyboard.current;
-        chosenDeviceIds = (kb != null) ? new[] { kb.deviceId } : System.Array.Empty<int>();
-
-        playerInput.neverAutoSwitchControlSchemes = true;
-
-        if (!string.IsNullOrEmpty(chosenScheme) && playerInput.actions != null)
-        {
-            var asset = playerInput.actions;
-            asset.Disable();
-            asset.bindingMask = InputBinding.MaskByGroup(chosenScheme);
-            asset.Enable();
-        }
-
-        UpdateJoinInstructionState();
+        if (string.IsNullOrEmpty(groups) || string.IsNullOrEmpty(candidate)) return false;
+        return groups.IndexOf(candidate, System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
-    private void ForceClaimKeyboardGroups(string[] groups)
+    private static string FirstMatch(string groups, string[] candidates)
     {
-        // Use the first as the scheme label for saving; mask will include all.
-        chosenScheme = (groups != null && groups.Length > 0) ? groups[0] : "P1Keyboard";
-        hasClaimedInputs = true;
-
-        var kb = Keyboard.current;
-        chosenDeviceIds = (kb != null) ? new[] { kb.deviceId } : System.Array.Empty<int>();
-
-        playerInput.neverAutoSwitchControlSchemes = true;
-
-        if (playerInput.actions != null && groups != null && groups.Length > 0)
-        {
-            var asset = playerInput.actions;
-            asset.Disable();
-            asset.bindingMask = InputBinding.MaskByGroup(string.Join(";", groups)); // multi-group mask
-            asset.Enable();
-        }
-
-        UpdateJoinInstructionState();
-    }
-
-    private void FinalizeClaim()
-    {
-        hasClaimedInputs = true;
-
-        // Record the device(s) properly so re-presses don't look like a scheme/device swap.
-        if (chosenScheme == "Gamepad")
-        {
-            chosenDeviceIds = playerInput.devices
-                .OfType<Gamepad>()
-                .Select(d => d.deviceId)
-                .ToArray();
-        }
-        else
-        {
-            // Keyboard scheme (P1Keyboard / P2Keyboard)
-            chosenDeviceIds = (Keyboard.current != null)
-                ? new[] { Keyboard.current.deviceId }
-                : System.Array.Empty<int>();
-        }
-
-        playerInput.neverAutoSwitchControlSchemes = true;
-
-        if (!string.IsNullOrEmpty(chosenScheme) && playerInput.actions != null)
-        {
-            var asset = playerInput.actions;
-            asset.Disable();
-            asset.bindingMask = InputBinding.MaskByGroup(chosenScheme);
-            asset.Enable();
-        }
-
-        UpdateJoinInstructionState();
-    }
-
-    private bool TryClaimFromContext(InputAction.CallbackContext ctx)
-    {
-        // Already claimed? If a different scheme/device is used, reset back to join.
-        if (hasClaimedInputs && allowSchemeSwapResets)
-        {
-            var dev = ctx.control?.device;
-            if (dev != null)
-            {
-                bool differentSchemeOrDevice =
-                    (dev is Gamepad   && (chosenScheme != "Gamepad" || (chosenDeviceIds == null || !chosenDeviceIds.Contains(dev.deviceId)))) ||
-                    (dev is Keyboard  && (chosenScheme == "Gamepad" || (chosenDeviceIds == null || !chosenDeviceIds.Contains(dev.deviceId))));
-
-                if (differentSchemeOrDevice)
-                {
-                    // Drop selection & require explicit re-join with the new scheme
-                    ResetToJoinAndShowPrompt();
-                    return true; // consume this input; next press will claim
-                }
-            }
-        }
-
-        // If not claimed yet, normal first-press-to-claim logic follows ↓
-        if (hasClaimedInputs) return false; // (unchanged guard for same scheme/device)
-        var control = ctx.control;
-        if (control == null) return false;
-
-        if (control.device is Gamepad)
-        {
-            if (CharacterSelectionManager.Instance == null ||
-                CharacterSelectionManager.Instance.TryReserveGamepad(control.device))
-            {
-                chosenScheme = "Gamepad";
-                reservedGamepadIds = new[] { control.device.deviceId };
-                FinalizeClaim();
-                return true;
-            }
-            return false;
-        }
-
-        if (control.device is Keyboard)
-        {
-            var mgr = CharacterSelectionManager.Instance;
-
-            if (playerIndex == 0 && mgr != null && mgr.IsSinglePlayer)
-            {
-                ForceClaimKeyboardGroups(mgr.BothKeyboardGroups); // P1: WASD+Arrows
-                return true;
-            }
-
-            string targetScheme = mgr != null ? mgr.GetKeyboardSchemeForIndex(playerIndex) : "P1Keyboard";
-            string groups = GetGroupsForTriggeredBinding(ctx.action, control);
-            if (string.IsNullOrEmpty(groups) || !groups.Contains(targetScheme))
-                return false;
-
-            chosenScheme = targetScheme;
-            reservedKeyboardScheme = targetScheme;
-            FinalizeClaim();
-            return true;
-        }
-
-        return false;
-    }
-
-    private void ResetToJoinAndShowPrompt()
-    {
-        ResetPanelState();
-        UpdateJoinInstructionState();
-    }
-
-    private bool IsFromClaimedDevice(InputAction.CallbackContext ctx)
-    {
-        if (!hasClaimedInputs) return false;
-        var dev = ctx.control?.device;
-        if (dev == null) return false;
-        if (chosenDeviceIds == null || chosenDeviceIds.Length == 0) return true;
-        return chosenDeviceIds.Contains(dev.deviceId);
-    }
-
-    private static string GetGroupsForTriggeredBinding(InputAction action, InputControl control)
-    {
-        if (action == null || control == null) return null;
-
-        int idx = action.GetBindingIndexForControl(control);
-        if (idx < 0) return null;
-
-        var bindings = action.bindings;
-        var groups = bindings[idx].groups;
-
-        if (string.IsNullOrEmpty(groups) && bindings[idx].isPartOfComposite)
-        {
-            for (int i = idx - 1; i >= 0; i--)
-            {
-                if (bindings[i].isComposite)
-                {
-                    groups = bindings[i].groups;
-                    break;
-                }
-            }
-        }
-        return groups;
-    }
-
-    public (string scheme, int[] deviceIds) GetInputSignature()
-    {
-        if (hasClaimedInputs && !string.IsNullOrEmpty(chosenScheme))
-            return (chosenScheme, chosenDeviceIds ?? System.Array.Empty<int>());
-
-        if (playerInput == null)
-            return (null, System.Array.Empty<int>());
-
-        var ids = new List<int>();
-        foreach (var d in playerInput.devices) ids.Add(d.deviceId);
-        var scheme = playerInput.currentControlScheme;
-        return (string.IsNullOrEmpty(scheme) ? null : scheme, ids.ToArray());
+        if (string.IsNullOrEmpty(groups) || candidates == null) return null;
+        foreach (var c in candidates)
+            if (GroupsContain(groups, c)) return c;
+        return null;
     }
 }
