@@ -67,10 +67,6 @@ MonoBehaviour:
     m_Key: OptionsMenu_FullscreenTitle
     m_Metadata:
       m_Items: []
-  - m_Id: 3963431514112
-    m_Key: ServiceMenu_ReturnTitle
-    m_Metadata:
-      m_Items: []
   - m_Id: 3982838558720
     m_Key: ServiceMenu_PacmanTitle
     m_Metadata:

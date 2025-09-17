@@ -71,10 +71,6 @@ MonoBehaviour:
     m_Localized: Fullscreen
     m_Metadata:
       m_Items: []
-  - m_Id: 3963431514112
-    m_Localized: Return
-    m_Metadata:
-      m_Items: []
   - m_Id: 3982838558720
     m_Localized: Pacman
     m_Metadata:
@@ -217,7 +213,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 19153768585981952
-    m_Localized: <sprite name="bulletList">Press {0} to deselect a character.
+    m_Localized: <sprite name="bulletList">Press {0} to leave panel
     m_Metadata:
       m_Items: []
   references:

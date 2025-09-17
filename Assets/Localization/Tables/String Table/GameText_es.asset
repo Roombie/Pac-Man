@@ -71,10 +71,6 @@ MonoBehaviour:
     m_Localized: Pant. Completa
     m_Metadata:
       m_Items: []
-  - m_Id: 3963431514112
-    m_Localized: Volver
-    m_Metadata:
-      m_Items: []
   - m_Id: 3982838558720
     m_Localized: Pacman
     m_Metadata:
@@ -221,7 +217,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 19153768585981952
-    m_Localized: <sprite name="bulletList">Presiiona {0} para deseleccionar un personaje.
+    m_Localized: <sprite name="bulletList">Pulsa {0} para salir del panel
     m_Metadata:
       m_Items: []
   references:

@@ -4,6 +4,8 @@ This project is a **fan-made remake** of the classic arcade game **Pac-Man**, or
 
 > **Disclaimer:** This repository is not affiliated with or endorsed by Bandai Namco Entertainment.
 
+![](./Assets/Images/mainMenu.png)
+
 ## Features
 
 - **Classic loop:** pellets, power pellets, fruit, lives, score, and the iconic ghost pressure curve.
@@ -17,6 +19,8 @@ This project is a **fan-made remake** of the classic arcade game **Pac-Man**, or
 - **Polished UI:**
   - Player labels, **flicker** highlight for the current player, and clean turn swaps.
 - **Modular code:** clear separation of game flow (`GameManager`), UI (`UIManager`), selection (`CharacterSelectionManager` / `CharacterSelectorPanel`), and character logic (`Pacman`).
+
+ ![](./Assets/Images/gameplay.png)  ![](./Assets/Images/characterSkinSelection.png)
 
 ## Controls
 

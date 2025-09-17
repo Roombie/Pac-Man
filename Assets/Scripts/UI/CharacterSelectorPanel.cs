@@ -385,7 +385,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         return idx >= 0 ? action.bindings[idx].groups : null;
     }
 
-    // ---------------- CHARACTER LOGIC ----------------
+    // Character Selection
     public void ConfirmSelection()
     {
         if (!hasSelectedCharacter) SelectCharacter();
@@ -528,7 +528,7 @@ public class CharacterSelectorPanel : MonoBehaviour
         }
     }
 
-    // ---------------- HELPERS ----------------
+    // Helpers
     private static bool GroupsContain(string groups, string candidate)
     {
         if (string.IsNullOrEmpty(groups) || string.IsNullOrEmpty(candidate)) return false;
