@@ -4,7 +4,7 @@ This project is a **fan-made remake** of the classic arcade game **Pac-Man**, or
 
 > **Disclaimer:** This repository is not affiliated with or endorsed by Bandai Namco Entertainment.
 
-![](./Assets/Images/mainMenu.png)
+![](./Assets/Images/mainMenu.PNG)
 
 ## Features
 
@@ -20,7 +20,7 @@ This project is a **fan-made remake** of the classic arcade game **Pac-Man**, or
   - Player labels, **flicker** highlight for the current player, and clean turn swaps.
 - **Modular code:** clear separation of game flow (`GameManager`), UI (`UIManager`), selection (`CharacterSelectionManager` / `CharacterSelectorPanel`), and character logic (`Pacman`).
 
- ![](./Assets/Images/gameplay.png)  ![](./Assets/Images/characterSkinSelection.png)
+ ![](./Assets/Images/gameplay.PNG)  ![](./Assets/Images/characterSkinSelection.PNG)
 
 ## Controls
 
