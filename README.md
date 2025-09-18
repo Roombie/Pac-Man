@@ -4,7 +4,7 @@ This project is a **fan-made remake** of the classic arcade game **Pac-Man**, or
 
 > **Disclaimer:** This repository is not affiliated with or endorsed by Bandai Namco Entertainment.
 
-![](./Assets/Images/mainMenu.png)
+![](./Assets/Images/mainMenu.PNG)
 
 ## Features
 
