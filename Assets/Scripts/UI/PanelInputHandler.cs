@@ -124,6 +124,8 @@ public class PanelInputHandler : MonoBehaviour
                 chosenDeviceIds = new[] { gamepad.deviceId };
                 hasJoined = true;
 
+                LockActionsToScheme(chosenScheme);
+
                 Debug.Log($"[PanelInputHandler] Player {playerIndex} joined with Gamepad");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
             }
@@ -133,13 +135,18 @@ public class PanelInputHandler : MonoBehaviour
         // ⌨️ Keyboard
         if (control.device is Keyboard)
         {
-            var scheme = PlayerDeviceManager.Instance.GetKeyboardSchemeForControl(
-                ctx.action, control,
-                isSinglePlayer: CharacterSelectionManager.Instance.IsSinglePlayer
+            string scheme = PlayerDeviceManager.Instance.GetKeyboardSchemeForControl(
+                ctx.action,
+                control,
+                CharacterSelectionManager.Instance.IsSinglePlayer,
+                playerIndex
             );
 
-            if (string.IsNullOrEmpty(scheme))
+            // fallback in singleplayer
+            if (string.IsNullOrEmpty(scheme) && CharacterSelectionManager.Instance.IsSinglePlayer)
+            {
                 scheme = PlayerDeviceManager.Instance.ReserveNextKeyboardScheme();
+            }
 
             if (!string.IsNullOrEmpty(scheme) && PlayerDeviceManager.Instance.TryReserveKeyboardScheme(scheme))
             {
@@ -148,10 +155,24 @@ public class PanelInputHandler : MonoBehaviour
                 chosenDeviceIds = new[] { control.device.deviceId };
                 hasJoined = true;
 
+                LockActionsToScheme(chosenScheme);
+
                 Debug.Log($"[PanelInputHandler] Player {playerIndex} joined with {scheme}");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
             }
         }
+    }
+
+    private void LockActionsToScheme(string scheme)
+    {
+        if (string.IsNullOrEmpty(scheme) || playerInput == null) return;
+
+        var actions = playerInput.actions;
+        actions.Disable();
+        actions.bindingMask = InputBinding.MaskByGroup(scheme); // 🔒 lock actions
+        actions.Enable();
+
+        Debug.Log($"[PanelInputHandler] Player {playerIndex} locked to scheme {scheme}");
     }
 
     private void ReleaseReservations()

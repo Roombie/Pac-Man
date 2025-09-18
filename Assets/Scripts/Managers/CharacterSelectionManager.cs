@@ -237,6 +237,8 @@ public class CharacterSelectionManager : MonoBehaviour
         readyCount = Mathf.Max(readyCount - 1, 0);
 
         panelRenderers[index].ShowJoinPrompt();
+        allSelectedFired = false;
+        allConfirmedFired = false;
 
         // finalize input state here
         panelInputs[index].ConfirmDejoin();
