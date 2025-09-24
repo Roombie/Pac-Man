@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -7,115 +6,106 @@ public class CharacterSelectionManager : MonoBehaviour
 {
     public static CharacterSelectionManager Instance { get; private set; }
 
-    [Header("Panels")]
-    public PanelUIRenderer[] panelRenderers;
-    public PanelInputHandler[] panelInputs;
-
     [Header("Characters")]
-    public CharacterData[] allCharacters;
+    [SerializeField] private CharacterData[] allCharacters;
+
+    [Header("Panels")]
+    [SerializeField] private PanelUIRenderer[] panelRenderers;
+    [SerializeField] private PanelInputHandler[] panelInputs;
+
+    [Header("Navigation Settings")]
+    [SerializeField] private float moveDeadzone = 0.5f;
+    [SerializeField] private float initialRepeatDelay = 0.35f;
+    [SerializeField] private float repeatInterval = 0.12f;
+    [SerializeField] private bool allowHoldRepeat = true;
 
     [Header("Events")]
-    public UnityEvent OnAllPlayersSelected;
-    public UnityEvent OnAllPlayersConfirmed;
-    public UnityEvent OnAnyPlayerDeselected;
-    public UnityEvent OnAnySkinDeselected;
-    public UnityEvent OnPlayerCancelledBeforeSelection;
-
     public UnityEvent<CharacterData> OnCharacterSelected;
     public UnityEvent<CharacterSkin> OnSkinSelected;
+    public UnityEvent OnAnyPlayerDeselected;
+    public UnityEvent OnAnySkinDeselected;
+    public UnityEvent OnAllPlayersSelected;   // fired when all expected players are joined + skin-confirmed
+    public UnityEvent OnAllPlayersConfirmed;  // fired by one extra Submit from ANY player after the above
+    public UnityEvent OnPlayerCancelledBeforeSelection;
 
-    private readonly Dictionary<int, PanelState> states = new();
+    private PanelState[] states;
+    private readonly Dictionary<int, PanelState> joinedPlayers = new();
 
-    private int readyCount = 0;
-    private bool allSelectedFired = false;
-    private bool allConfirmedFired = false;
+    // Expected players comes from your preceding menu via PlayerPrefs
+    private int expectedPlayers = 1;
 
-    public bool IsSinglePlayer
-    {
-        get
-        {
-            int expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, -1);
-            if (expectedPlayers <= 0)
-                expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 1);
+    private bool allSelectedFired;
+    private bool allConfirmedFired;
 
-            return expectedPlayers <= 1;
-        }
-    }
+    public bool IsSinglePlayer => expectedPlayers == 1;
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) Destroy(gameObject);
-        else Instance = this;
+        Instance = this;
+        expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1);
     }
 
-    private void OnEnable()
-    {
-        ResetPanels();
-    }
+    private void OnEnable() => ResetPanels();
 
     private void OnDisable()
     {
-        // clear state so next OnEnable starts fresh
-        foreach (var renderer in panelRenderers)
-            renderer.gameObject.SetActive(false);
-        
+        if (panelInputs == null) return;
         foreach (var input in panelInputs)
         {
-            if (input != null)
-                input.ForceDejoin();
+            if (input != null) UnsubscribeFromInput(input);
         }
-
-        states.Clear();
-        
-        readyCount = 0;
-        allSelectedFired = false;
-        allConfirmedFired = false;
     }
 
+    private void Start() => ResetPanels();
+
+    /// <summary>
+    /// Initialize only the active panels (0..expectedPlayers-1) and subscribe inputs for them.
+    /// Extra panels are left unsubscribed and not initialized to avoid interfering with state.
+    /// </summary>
     private void ResetPanels()
     {
-        int expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, -1);
-        if (expectedPlayers <= 0)
-            expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 1);
-
-        expectedPlayers = Mathf.Clamp(expectedPlayers, 1, panelRenderers.Length);
-
-        for (int i = 0; i < panelRenderers.Length; i++)
-        {
-            var state = states.ContainsKey(i) ? states[i] : new PanelState { PlayerIndex = i };
-            state.Reset();
-            states[i] = state;
-
-            panelRenderers[i].Initialize(state, i, allCharacters, panelInputs[i]);
-            panelInputs[i].Initialize(i);
-
-            panelRenderers[i].gameObject.SetActive(i < expectedPlayers);
-        }
-
-        readyCount = 0;
+        joinedPlayers.Clear();
         allSelectedFired = false;
         allConfirmedFired = false;
-    }
 
-    private void Start()
-    {
-        // detect expected players from PlayerPrefs
-        int expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, -1);
-        if (expectedPlayers <= 0)
-            expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 1);
+        int count = Mathf.Min(panelRenderers.Length, panelInputs.Length);
+        states = new PanelState[count];
 
-        expectedPlayers = Mathf.Clamp(expectedPlayers, 1, panelRenderers.Length);
-
-        for (int i = 0; i < panelRenderers.Length; i++)
+        for (int i = 0; i < count; i++)
         {
-            var state = new PanelState { PlayerIndex = i };
-            states[i] = state;
+            states[i] = new PanelState();
 
-            panelRenderers[i].Initialize(state, i, allCharacters, panelInputs[i]);
-            panelInputs[i].Initialize(i);
-            SubscribeToInput(panelInputs[i]);
+            bool isActive = i < expectedPlayers;
 
-            panelRenderers[i].gameObject.SetActive(i < expectedPlayers);
+            // Always set renderer active state according to expected players
+            if (panelRenderers[i] != null)
+                panelRenderers[i].gameObject.SetActive(isActive);
+
+            // Unsubscribe defensively (in case ResetPanels is called more than once)
+            if (panelInputs[i] != null)
+                UnsubscribeFromInput(panelInputs[i]);
+
+            if (isActive)
+            {
+                // Initialize renderer & input ONLY for active panels
+                if (panelRenderers[i] != null)
+                {
+                     panelInputs[i].ResetJoinCompletely(true);
+                    panelRenderers[i].Initialize(states[i], i, allCharacters, panelInputs[i]);
+                    panelRenderers[i].ShowJoinPrompt();
+                }
+                if (panelInputs[i] != null)
+                {
+                    panelInputs[i].Initialize(i, moveDeadzone, initialRepeatDelay, repeatInterval, allowHoldRepeat);
+                    SubscribeToInput(panelInputs[i]);
+                }
+            }
+            else
+            {
+                // For non-active panels, also clean state so they don't hold reservations
+                if (panelInputs[i] != null)
+                    panelInputs[i].ResetJoinCompletely(true);
+            }
         }
     }
 
@@ -127,53 +117,45 @@ public class CharacterSelectionManager : MonoBehaviour
         input.OnDejoin += HandleDejoin;
     }
 
-    private bool TryGetValidState(int index, out PanelState state)
+    private void UnsubscribeFromInput(PanelInputHandler input)
     {
-        state = null;
-
-        if (!states.TryGetValue(index, out var s))
-        {
-            Debug.LogWarning($"[CharacterSelectionManager] Input ignored: index {index} has no state.");
-            return false;
-        }
-
-        if (!panelInputs[index].HasJoined)
-        {
-            Debug.Log($"[CharacterSelectionManager] Input ignored: player {index} not joined.");
-            return false;
-        }
-
-        state = s;
-        return true;
+        input.OnSubmit -= HandleSubmit;
+        input.OnCancel -= HandleCancel;
+        input.OnMove -= HandleMove;
+        input.OnDejoin -= HandleDejoin;
     }
+
+    #region Input Handlers
 
     private void HandleSubmit(int index)
     {
         if (!TryGetValidState(index, out var state)) return;
 
+        // If not joined yet, claim this panel and show joined UI
+        if (!panelInputs[index].HasJoined)
+        {
+            panelInputs[index].TryClaimFromContext(default);
+            panelRenderers[index].ShowJoinedState();
+            NotifyPanelJoined(index);
+            return;
+        }
+
+        // Selection flow: Character -> Skin -> Final Confirmation (extra Submit)
         if (!state.HasSelectedCharacter)
         {
-            state.HasSelectedCharacter = true;
-            panelRenderers[index].ShowSkinOptions(true);
-            OnCharacterSelected?.Invoke(allCharacters[state.CharacterIndex]);
-            AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+            SelectCharacter(index, state);
         }
         else if (!state.HasConfirmedSkin)
         {
-            state.HasConfirmedSkin = true;
-            panelRenderers[index].UpdateSkinIndicators();
-            OnSkinSelected?.Invoke(allCharacters[state.CharacterIndex].skins[state.SkinIndex]);
-            AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+            ConfirmSkin(index, state);
         }
-        else if (!state.HasConfirmedFinal)
+        else if (allSelectedFired && !allConfirmedFired)
         {
-            state.HasConfirmedFinal = true;
-            readyCount++;
-            AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+            // One extra Submit from ANY player after all selected → finalize
+            FinalConfirmation();
         }
 
         CheckAllPlayersSelected();
-        TryFireFinalConfirmation();
     }
 
     private void HandleCancel(int index)
@@ -182,174 +164,192 @@ public class CharacterSelectionManager : MonoBehaviour
 
         if (!state.HasSelectedCharacter)
         {
+            // User cancelled before selecting a character
             OnPlayerCancelledBeforeSelection?.Invoke();
         }
         else if (state.HasConfirmedSkin)
         {
+            // Back from skin confirmed → back to skin selection (unconfirm)
             state.HasConfirmedSkin = false;
-            readyCount = Mathf.Max(readyCount - 1, 0);
-            panelRenderers[index].UpdateSkinIndicators();
+
+            panelRenderers[index].ShowSkinOptions(true);
+            panelRenderers[index].UpdateSkinConfirmationIndicator(state.SkinIndex, false);
+            panelRenderers[index].UpdateSkinHighlight(state.SkinIndex);
+
             OnAnySkinDeselected?.Invoke();
             AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+
+            // Allow recomputation of "all selected"
+            allConfirmedFired = false;
+            allSelectedFired = false;
         }
         else
         {
+            // Back from skin selection → back to character selection
             state.HasSelectedCharacter = false;
-            readyCount = Mathf.Max(readyCount - 1, 0);
+
             panelRenderers[index].ShowSkinOptions(false);
             OnAnyPlayerDeselected?.Invoke();
             AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+
+            // Allow recomputation of "all selected"
+            allConfirmedFired = false;
+            allSelectedFired = false;
         }
 
-        allSelectedFired = false;
-        allConfirmedFired = false;
+        panelInputs[index].ResetMoveRepeat();
+        CheckAllPlayersSelected();
     }
 
     private void HandleMove(int index, int dir)
     {
         if (!TryGetValidState(index, out var state)) return;
 
+        // Extra safety: if a move sneaks in before join, claim and show joined UI
+        if (!panelInputs[index].HasJoined)
+        {
+            panelInputs[index].TryClaimFromContext(default);
+            panelRenderers[index].ShowJoinedState();
+            NotifyPanelJoined(index);
+            // Continue to handle the move below if you want immediate navigation after join
+        }
+
         if (!state.HasSelectedCharacter)
         {
-            state.CharacterIndex = (state.CharacterIndex + dir + allCharacters.Length) % allCharacters.Length;
-            state.SkinIndex = 0; // Reset skin index to the first one when changing character
-            panelRenderers[index].UpdateDisplay();
-            panelRenderers[index].SetupSkins();
-            AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+            // Navigate characters
+            ChangeCharacter(index, state, dir);
         }
         else if (!state.HasConfirmedSkin)
         {
-            var character = allCharacters[state.CharacterIndex];
-            state.SkinIndex = (state.SkinIndex + dir + character.skins.Length) % character.skins.Length;
-            panelRenderers[index].UpdateDisplay();
-            AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
+            // Navigate skins
+            ChangeSkin(index, state, dir);
         }
+
+        CheckAllPlayersSelected();
     }
 
     private void HandleDejoin(int index)
     {
-        if (!states.ContainsKey(index)) return;
+        if (!joinedPlayers.ContainsKey(index)) return;
 
-        var state = states[index];
-        state.Reset();
-        states[index] = state;
-
-        readyCount = Mathf.Max(readyCount - 1, 0);
-
+        joinedPlayers.Remove(index);
+        states[index].Reset();
         panelRenderers[index].ShowJoinPrompt();
+        panelInputs[index].ConfirmDejoin();
+
+        // Reset global flags so the group must re-confirm
         allSelectedFired = false;
         allConfirmedFired = false;
 
-        // finalize input state here
-        panelInputs[index].ConfirmDejoin();
-
-        AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
-        Debug.Log($"[CharacterSelectionManager] Player {index + 1} dejoined -> ShowJoinPrompt()");
+        Debug.Log($"[CharacterSelectionManager] Player {index} dejoined");
     }
 
-    // ---------------- Events and persistence ----------------
+    #endregion
+
+    #region Actions
+
+    private void SelectCharacter(int index, PanelState state)
+    {
+        state.HasSelectedCharacter = true;
+        panelRenderers[index].ShowSkinOptions(true);
+
+        OnCharacterSelected?.Invoke(allCharacters[state.CharacterIndex]);
+
+        panelInputs[index].ResetMoveRepeat();
+        AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+    }
+
+    private void ConfirmSkin(int index, PanelState state)
+    {
+        state.HasConfirmedSkin = true;
+        var skin = allCharacters[state.CharacterIndex].skins[state.SkinIndex];
+
+        OnSkinSelected?.Invoke(skin);
+        panelRenderers[index].UpdateSkinConfirmationIndicator(state.SkinIndex, true);
+
+        panelInputs[index].ResetMoveRepeat();
+        AudioManager.Instance?.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
+    }
+
+    private void ChangeCharacter(int index, PanelState state, int dir)
+    {
+        state.CharacterIndex = (state.CharacterIndex + dir + allCharacters.Length) % allCharacters.Length;
+        state.SkinIndex = 0;
+
+        panelRenderers[index].UpdateCharacterAndSkins(allCharacters[state.CharacterIndex], state.SkinIndex);
+        OnCharacterSelected?.Invoke(allCharacters[state.CharacterIndex]);
+    }
+
+    private void ChangeSkin(int index, PanelState state, int dir)
+    {
+        var skins = allCharacters[state.CharacterIndex].skins;
+        state.SkinIndex = (state.SkinIndex + dir + skins.Length) % skins.Length;
+
+        panelRenderers[index].UpdateSkinOnly(allCharacters[state.CharacterIndex], state.SkinIndex);
+        OnSkinSelected?.Invoke(skins[state.SkinIndex]);
+    }
+
+    private void FinalConfirmation()
+    {
+        OnAllPlayersConfirmed?.Invoke();
+        allConfirmedFired = true;
+        Debug.Log("[CharacterSelectionManager] Final confirmation triggered.");
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private bool TryGetValidState(int index, out PanelState state)
+    {
+        state = (index >= 0 && index < states.Length) ? states[index] : null;
+        return state != null;
+    }
+
+    /// <summary>
+    /// Multiplayer rule: exactly "expectedPlayers" must be joined AND confirmed.
+    /// Singleplayer rule: at least 1 joined AND confirmed.
+    /// Only panels [0..expectedPlayers-1] are considered.
+    /// </summary>
     private void CheckAllPlayersSelected()
     {
-        // Only check joined players
-        foreach (var kv in states)
-        {
-            var s = kv.Value;
-            if (!panelInputs[s.PlayerIndex].HasJoined) continue;
+        int joined = 0, confirmed = 0;
 
-            if (!s.HasSelectedCharacter || !s.HasConfirmedSkin)
-                return;
+        int limit = Mathf.Min(expectedPlayers, panelInputs.Length);
+        for (int i = 0; i < limit; i++)
+        {
+            var input = panelInputs[i];
+            if (input == null || !input.HasJoined) continue;
+
+            joined++;
+            if (states[i].HasConfirmedSkin) confirmed++;
         }
 
-        if (HasDuplicateSelections()) return;
+        bool allReady = IsSinglePlayer
+            ? (joined >= 1 && confirmed >= 1)
+            : (joined == expectedPlayers && confirmed == expectedPlayers);
 
-        if (!allSelectedFired)
+        if (allReady && !allSelectedFired)
         {
-            allSelectedFired = true;
             OnAllPlayersSelected?.Invoke();
+            allSelectedFired = true;
+            Debug.Log("[CharacterSelectionManager] All players selected (expected-players rule).");
         }
-    }
-
-    private void TryFireFinalConfirmation()
-    {
-        foreach (var kv in states)
+        else if (!allReady)
         {
-            var s = kv.Value;
-            if (!panelInputs[s.PlayerIndex].HasJoined) continue;
-
-            if (!s.HasConfirmedFinal) return;
+            allSelectedFired = false;
+            allConfirmedFired = false;
         }
-
-        if (!allConfirmedFired)
-        {
-            allConfirmedFired = true;
-            ConfirmAllSelections();
-            OnAllPlayersConfirmed?.Invoke();
-        }
-    }
-
-    private void ConfirmAllSelections()
-    {
-        var joinedStates = states.Values.Where(s => panelInputs[s.PlayerIndex].HasJoined).ToList();
-        int count = joinedStates.Count;
-        int previousCount = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 0);
-
-        PlayerPrefs.SetInt(SettingsKeys.PlayerCountKey, count);
-        PlayerPrefs.SetInt(SettingsKeys.GameModeKey, count);
-
-        int slot = 1;
-        foreach (var s in joinedStates.OrderBy(s => s.PlayerIndex))
-        {
-            var character = allCharacters[s.CharacterIndex];
-            var skin = character.skins[s.SkinIndex];
-
-            PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
-            PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin", skin.skinName);
-
-            var sig = panelRenderers[s.PlayerIndex].GetInputSignature();
-            var scheme = string.IsNullOrEmpty(sig.scheme) ? "P1Keyboard" : sig.scheme;
-            var csv = (sig.deviceIds != null && sig.deviceIds.Length > 0) ? string.Join(",", sig.deviceIds) : "";
-
-            PlayerPrefs.SetString($"P{slot}_Scheme", scheme);
-            PlayerPrefs.SetString($"P{slot}_Devices", csv);
-
-            slot++;
-        }
-
-        for (int stale = count + 1; stale <= previousCount; stale++)
-        {
-            PlayerPrefs.DeleteKey($"P{stale}_Scheme");
-            PlayerPrefs.DeleteKey($"P{stale}_Devices");
-            PlayerPrefs.DeleteKey($"SelectedCharacter_Player{stale}_Name");
-            PlayerPrefs.DeleteKey($"SelectedCharacter_Player{stale}_Skin");
-        }
-
-        PlayerPrefs.Save();
-        Debug.Log($"All selections saved. Players={count} (previous={previousCount})");
-    }
-
-    private bool HasDuplicateSelections()
-    {
-        var taken = new HashSet<string>();
-        foreach (var kv in states)
-        {
-            var s = kv.Value;
-            if (!panelInputs[s.PlayerIndex].HasJoined) continue;
-
-            var c = allCharacters[s.CharacterIndex];
-            var skin = c.skins[s.SkinIndex];
-            string key = $"{c.characterName}:{skin.skinName}";
-
-            if (taken.Contains(key)) return true;
-            taken.Add(key);
-        }
-        return false;
     }
 
     public void NotifyPanelJoined(int index)
     {
-        if (index >= 0 && index < panelRenderers.Length)
-        {
-            panelRenderers[index].ShowJoinedState();
-        }
+        if (!joinedPlayers.ContainsKey(index))
+            joinedPlayers[index] = states[index];
+
+        panelRenderers[index].ShowJoinedState();
+        OnCharacterSelected?.Invoke(allCharacters[states[index].CharacterIndex]);
     }
+
+    #endregion
 }

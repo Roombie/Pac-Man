@@ -21,24 +21,70 @@ public class PanelInputHandler : MonoBehaviour
     private InputAction move;
     private InputAction dejoin;
 
-    // Reservation tracking
+    // -------- Navigation tuning (provided by CharacterSelectionManager) --------
+    private float moveDeadzone;
+    private float initialRepeatDelay;
+    private float repeatInterval;
+    private bool allowHoldRepeat;
+
+    private int lastMoveSign = 0;                 // -1, 0, +1
+    private float nextRepeatTime = 0f;            // time when next repeat can fire
+    private Vector2 lastMoveValue = Vector2.zero; // current move axis (for hold repeat)
+
+    // -------- Reservation tracking --------
     private string reservedKeyboardScheme;
     private Gamepad reservedGamepad;
 
     private bool hasJoined = false;
-
-    // Fresh press control: prevents instant re-join after dejoin
     private bool waitForFreshPress = false;
+
+    // NEW: After joining via Move, require axis to go neutral once before allowing navigation
+    private bool requireNeutralAfterJoinViaMove = false;
 
     private void OnEnable()
     {
         waitForFreshPress = false; // reset when menu opens
+        if (playerInput != null && playerInput.actions != null)
+            playerInput.actions.Enable();
     }
 
-    public void Initialize(int index)
+    private void Update()
     {
+        // Block hold-to-repeat if we still require neutral after join-via-move
+        if (requireNeutralAfterJoinViaMove) return;
+
+        // Hold-to-repeat loop: only when joined, allowed, and after an initial press
+        if (!hasJoined) return;
+        if (!allowHoldRepeat) return;
+        if (lastMoveSign == 0) return;
+
+        // Still holding past deadzone?
+        int currentSign = Mathf.Abs(lastMoveValue.x) > moveDeadzone ? (int)Mathf.Sign(lastMoveValue.x) : 0;
+        if (currentSign == 0)
+        {
+            // Back to neutral -> stop repeating
+            lastMoveSign = 0;
+            return;
+        }
+
+        if (Time.time >= nextRepeatTime)
+        {
+            nextRepeatTime = Time.time + repeatInterval;
+            OnMove?.Invoke(playerIndex, currentSign);
+        }
+    }
+
+    public void Initialize(int index, float deadzone, float repeatDelay, float repeatInterval, bool allowRepeat)
+    {
+        ResetJoinCompletely(requireFreshPressOnRejoin: false);
         playerIndex = index;
         playerInput = GetComponent<PlayerInput>();
+
+        // Apply tuning from manager
+        moveDeadzone = deadzone;
+        initialRepeatDelay = repeatDelay;
+        this.repeatInterval = repeatInterval;
+        allowHoldRepeat = allowRepeat;
 
         var actions = playerInput.actions;
         submit = actions["Submit"];
@@ -46,75 +92,140 @@ public class PanelInputHandler : MonoBehaviour
         move = actions["Move"];
         dejoin = actions["Select"];
 
-        submit.performed += ctx =>
-        {
-            if (!hasJoined)
-            {
-                TryClaimFromContext(ctx);
-                return; // first press only joins
-            }
-            OnSubmit?.Invoke(playerIndex);
-        };
+        submit.performed += OnSubmitPerformed;
+        cancel.performed += OnCancelPerformed;
+        move.performed += OnMovePerformed;
+        move.canceled += OnMoveCanceled;
+        dejoin.performed += OnDejoinPerformed;
+        dejoin.canceled += OnDejoinCanceled;
 
-        cancel.performed += ctx =>
-        {
-            if (!hasJoined)
-            {
-                TryClaimFromContext(ctx);
-                return;
-            }
-            OnCancel?.Invoke(playerIndex);
-        };
-
-        move.performed += ctx =>
-        {
-            var x = ctx.ReadValue<Vector2>().x;
-            if (Mathf.Abs(x) <= 0.5f) return;
-
-            if (!hasJoined)
-            {
-                TryClaimFromContext(ctx);
-                return;
-            }
-            OnMove?.Invoke(playerIndex, x > 0 ? +1 : -1);
-        };
-
-        // Notify intent to dejoin, but don't finalize here
-        dejoin.performed += ctx =>
-        {
-            if (hasJoined)
-            {
-                OnDejoin?.Invoke(playerIndex);
-                Debug.Log($"[PanelInputHandler] Player {playerIndex} requested dejoin");
-            }
-        };
-
-        // Fresh press reset when button is released
-        dejoin.canceled += ctx =>
-        {
-            if (waitForFreshPress)
-            {
-                waitForFreshPress = false;
-                Debug.Log($"[PanelInputHandler] Player {playerIndex} fresh press reset, can rejoin");
-            }
-        };
+        actions.Enable();
     }
 
     private void OnDisable()
     {
+        if (submit != null) submit.performed -= OnSubmitPerformed;
+        if (cancel != null) cancel.performed -= OnCancelPerformed;
+        if (move != null)
+        {
+            move.performed -= OnMovePerformed;
+            move.canceled -= OnMoveCanceled;
+        }
+        if (dejoin != null)
+        {
+            dejoin.performed -= OnDejoinPerformed;
+            dejoin.canceled -= OnDejoinCanceled;
+        }
+
+        if (playerInput != null && playerInput.actions != null)
+            playerInput.actions.Disable();
+
         ReleaseReservations();
-        waitForFreshPress = false; // allow joining next time
+        waitForFreshPress = false;
+        requireNeutralAfterJoinViaMove = false;
+        lastMoveSign = 0;
+        lastMoveValue = Vector2.zero;
+
+        // Ensure we don't stay joined if this GO is deactivated between menus
+        ResetJoinCompletely(requireFreshPressOnRejoin: true);
+    }
+
+    // ---------------- Input Handlers ----------------
+    private void OnSubmitPerformed(InputAction.CallbackContext ctx)
+    {
+        if (!hasJoined)
+        {
+            TryClaimFromContext(ctx);
+            return;
+        }
+        OnSubmit?.Invoke(playerIndex);
+    }
+
+    private void OnCancelPerformed(InputAction.CallbackContext ctx)
+    {
+        if (!hasJoined)
+        {
+            TryClaimFromContext(ctx);
+            return;
+        }
+        OnCancel?.Invoke(playerIndex);
+    }
+
+    private void OnMovePerformed(InputAction.CallbackContext ctx)
+    {
+        // Allow join via Move if not yet joined.
+        // IMPORTANT: do NOT navigate on this same press; require a neutral first.
+        if (!hasJoined)
+        {
+            TryClaimFromContext(ctx);
+            if (hasJoined)
+            {
+                // Consume this first move: navigation is blocked until axis returns to neutral once
+                requireNeutralAfterJoinViaMove = true;
+                lastMoveSign = 0;
+                lastMoveValue = Vector2.zero;
+            }
+            return;
+        }
+
+        Vector2 mv = ctx.ReadValue<Vector2>();
+        lastMoveValue = mv;
+
+        // If we just joined via Move and haven't gone neutral yet, ignore navigation
+        if (requireNeutralAfterJoinViaMove)
+            return;
+
+        int sign = Mathf.Abs(mv.x) > moveDeadzone ? (int)Mathf.Sign(mv.x) : 0;
+
+        // Fire once on fresh press; hold-to-repeat handled in Update()
+        if (sign != 0 && lastMoveSign == 0)
+        {
+            lastMoveSign = sign;
+            nextRepeatTime = Time.time + initialRepeatDelay;
+            OnMove?.Invoke(playerIndex, sign);
+            Debug.Log("Move fired once: " + sign);
+        }
+    }
+
+    private void OnMoveCanceled(InputAction.CallbackContext ctx)
+    {
+        lastMoveSign = 0;             // allow next press
+        lastMoveValue = Vector2.zero; // stop hold-to-repeat
+
+        // If we were waiting for neutral after join-via-move, this is the neutral.
+        if (requireNeutralAfterJoinViaMove)
+        {
+            requireNeutralAfterJoinViaMove = false;
+            // After this cancel, the next Move press will navigate normally.
+        }
+    }
+
+    private void OnDejoinPerformed(InputAction.CallbackContext ctx)
+    {
+        if (hasJoined)
+        {
+            OnDejoin?.Invoke(playerIndex);
+            Debug.Log($"[PanelInputHandler] Player {playerIndex} requested dejoin");
+        }
+    }
+
+    private void OnDejoinCanceled(InputAction.CallbackContext ctx)
+    {
+        if (waitForFreshPress)
+        {
+            waitForFreshPress = false;
+            Debug.Log($"[PanelInputHandler] Player {playerIndex} fresh press reset, can rejoin");
+        }
     }
 
     // ---------------- Claim Logic ----------------
-    private void TryClaimFromContext(InputAction.CallbackContext ctx)
+    public void TryClaimFromContext(InputAction.CallbackContext ctx)
     {
         if (waitForFreshPress) return;
-
         var control = ctx.control;
         if (control == null) return;
 
-        // 🎮 Gamepad
+        // Gamepad
         if (control.device is Gamepad gamepad)
         {
             if (PlayerDeviceManager.Instance.TryReserveGamepad(gamepad))
@@ -124,29 +235,23 @@ public class PanelInputHandler : MonoBehaviour
                 chosenDeviceIds = new[] { gamepad.deviceId };
                 hasJoined = true;
 
-                LockActionsToScheme(chosenScheme);
-
                 Debug.Log($"[PanelInputHandler] Player {playerIndex} joined with Gamepad");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
             }
             return;
         }
 
-        // ⌨️ Keyboard
+        // Keyboard
         if (control.device is Keyboard)
         {
-            string scheme = PlayerDeviceManager.Instance.GetKeyboardSchemeForControl(
+            var scheme = PlayerDeviceManager.Instance.GetKeyboardSchemeForControl(
                 ctx.action,
                 control,
-                CharacterSelectionManager.Instance.IsSinglePlayer,
-                playerIndex
+                isSinglePlayer: CharacterSelectionManager.Instance.IsSinglePlayer
             );
 
-            // fallback in singleplayer
-            if (string.IsNullOrEmpty(scheme) && CharacterSelectionManager.Instance.IsSinglePlayer)
-            {
+            if (string.IsNullOrEmpty(scheme))
                 scheme = PlayerDeviceManager.Instance.ReserveNextKeyboardScheme();
-            }
 
             if (!string.IsNullOrEmpty(scheme) && PlayerDeviceManager.Instance.TryReserveKeyboardScheme(scheme))
             {
@@ -155,24 +260,10 @@ public class PanelInputHandler : MonoBehaviour
                 chosenDeviceIds = new[] { control.device.deviceId };
                 hasJoined = true;
 
-                LockActionsToScheme(chosenScheme);
-
                 Debug.Log($"[PanelInputHandler] Player {playerIndex} joined with {scheme}");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
             }
         }
-    }
-
-    private void LockActionsToScheme(string scheme)
-    {
-        if (string.IsNullOrEmpty(scheme) || playerInput == null) return;
-
-        var actions = playerInput.actions;
-        actions.Disable();
-        actions.bindingMask = InputBinding.MaskByGroup(scheme); // 🔒 lock actions
-        actions.Enable();
-
-        Debug.Log($"[PanelInputHandler] Player {playerIndex} locked to scheme {scheme}");
     }
 
     private void ReleaseReservations()
@@ -202,29 +293,52 @@ public class PanelInputHandler : MonoBehaviour
     public int PlayerIndex => playerIndex;
     public bool HasJoined => hasJoined;
 
-    /// <summary>
-    /// Called by CharacterSelectionManager to finalize a dejoin.
-    /// </summary>
     public void ConfirmDejoin()
     {
         if (!hasJoined) return;
-
         ReleaseReservations();
         hasJoined = false;
         waitForFreshPress = true;
-
+        requireNeutralAfterJoinViaMove = false;
+        lastMoveSign = 0;
+        lastMoveValue = Vector2.zero;
         Debug.Log($"[PanelInputHandler] Player {playerIndex} dejoined confirmed");
     }
 
     public void ForceDejoin()
     {
         if (!hasJoined) return;
-
         ReleaseReservations();
         hasJoined = false;
         waitForFreshPress = true;
+        requireNeutralAfterJoinViaMove = false;
+        lastMoveSign = 0;
+        lastMoveValue = Vector2.zero;
         OnDejoin?.Invoke(playerIndex);
-
         Debug.Log($"[PanelInputHandler] Player {playerIndex} force-dejoined");
+    }
+
+    // Helper to reset move repeat state
+    public void ResetMoveRepeat()
+    {
+        lastMoveSign = 0;
+        nextRepeatTime = 0f;
+        lastMoveValue = Vector2.zero;
+    }
+
+    public void ResetJoinCompletely(bool requireFreshPressOnRejoin = true)
+    {
+        // Release any device reservations (keyboard scheme / gamepad)
+        ReleaseReservations();
+
+        // Clear join-related flags
+        hasJoined = false;
+        waitForFreshPress = requireFreshPressOnRejoin;
+        requireNeutralAfterJoinViaMove = false;
+
+        // Clear move-repeat state
+        lastMoveSign = 0;
+        lastMoveValue = Vector2.zero;
+        nextRepeatTime = 0f;
     }
 }
