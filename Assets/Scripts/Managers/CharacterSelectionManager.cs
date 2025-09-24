@@ -230,16 +230,40 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         if (!joinedPlayers.ContainsKey(index)) return;
 
+        // Snapshot previous phase to emit the right “deselected” event
+        var prevPhase = states[index].Phase;
+        bool hadSelected = states[index].HasSelectedCharacter;
+        bool hadConfirmed = states[index].HasConfirmedSkin;
+
+        // Forget this player
         joinedPlayers.Remove(index);
+
+        // Clear persisted selection if any
+        ClearSelectionForPlayer(index);
+        PlayerPrefs.Save();
+
+        // Reset panel state & UI
         states[index].Reset();
+        panelRenderers[index].ShowSkinOptions(false);
         panelRenderers[index].ShowJoinPrompt();
+
+        // Tell input to actually dejoin (releases reservations, requires fresh press)
         panelInputs[index].ConfirmDejoin();
 
-        // Reset global flags so the group must re-confirm
+        // Emit deselect events in correct order
+        if (hadConfirmed)
+            OnAnySkinDeselected?.Invoke();     // was at SkinConfirmed -> now none
+        else if (hadSelected)
+            OnAnyPlayerDeselected?.Invoke();   // was at CharacterSelected -> now none
+
+        // Invalidate group-level “all ready / confirmed” flags
         allSelectedFired = false;
         allConfirmedFired = false;
 
-        Debug.Log($"[CharacterSelectionManager] Player {index} dejoined");
+        // Recompute readiness (will be false now)
+        CheckAllPlayersSelected();
+
+        Debug.Log($"[CharacterSelectionManager] Player {index} dejoined (prevPhase={prevPhase}).");
     }
 
     #endregion
@@ -263,6 +287,10 @@ public class CharacterSelectionManager : MonoBehaviour
         state.HasConfirmedSkin = true;
         state.Phase = PanelJoinState.SkinConfirmed;
         var skin = allCharacters[state.CharacterIndex].skins[state.SkinIndex];
+
+        // Persist selection for this player
+        SaveSelectionForPlayer(index);
+        PlayerPrefs.Save();
 
         OnSkinSelected?.Invoke(skin);
         panelRenderers[index].UpdateSkinConfirmationIndicator(state.SkinIndex, true);
@@ -291,6 +319,11 @@ public class CharacterSelectionManager : MonoBehaviour
 
     private void FinalConfirmation()
     {
+        int limit = Mathf.Min(expectedPlayers, panelInputs.Length);
+        for (int i = 0; i < limit; i++)
+            if (states[i].Phase == PanelJoinState.SkinConfirmed)
+                SaveSelectionForPlayer(i);
+
         OnAllPlayersConfirmed?.Invoke();
         allConfirmedFired = true;
         Debug.Log("[CharacterSelectionManager] Final confirmation triggered.");
@@ -368,6 +401,25 @@ public class CharacterSelectionManager : MonoBehaviour
         }
 
         return -1; // none free
+    }
+
+    private void SaveSelectionForPlayer(int index)
+    {
+        // index is 0-based; PlayerPrefs keys expect 1-based
+        int slot = index + 1;
+
+        var character = allCharacters[states[index].CharacterIndex];
+        var skin = character.skins[states[index].SkinIndex];
+
+        PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
+        PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin", skin.skinName);
+    }
+
+    private void ClearSelectionForPlayer(int index)
+    {
+        int slot = index + 1;
+        PlayerPrefs.DeleteKey($"SelectedCharacter_Player{slot}_Name");
+        PlayerPrefs.DeleteKey($"SelectedCharacter_Player{slot}_Skin");
     }
     #endregion
 }
