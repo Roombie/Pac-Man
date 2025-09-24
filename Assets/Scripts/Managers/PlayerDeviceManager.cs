@@ -1,179 +1,256 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Utilities;
+
 
 public class PlayerDeviceManager : MonoBehaviour
 {
     public static PlayerDeviceManager Instance { get; private set; }
 
-    private readonly HashSet<string> reservedKeyboardSchemes = new();
-    private readonly HashSet<int> reservedGamepads = new();
+    [Header("Keyboard schemes (order defines which panel gets which scheme)")]
+    [Tooltip("Example: [\"P1Keyboard\", \"P2Keyboard\", \"P3Keyboard\", \"P4Keyboard\"]")]
+    [SerializeField] private string[] keyboardSchemes = { "P1Keyboard", "P2Keyboard" };
 
-    public string[] BothKeyboardGroups => new[] { "P1Keyboard", "P2Keyboard" };
+    // --- Reservations ---
+    // Reserve keyboard "schemes" logically by name (NOT by device id). This allows sharing a single physical keyboard.
+    private readonly HashSet<string> reservedKeyboardSchemes = new HashSet<string>();
+    // Reserve gamepads exclusively by device id.
+    private readonly HashSet<int> reservedGamepads = new HashSet<int>();
 
-    [SerializeField] private bool singlePlayer = false;
-    public bool IsSinglePlayer => singlePlayer;
+    // --- Claim debounce (prevents two panels from claiming simultaneously on the same frame) ---
+    [Header("Claim Debounce")]
+    [SerializeField, Tooltip("Seconds to wait after a successful claim before another panel can claim")]
+    private float claimDebounceSeconds = 0.2f;
+    private float lastClaimTime = -999f;
+
+    // Reusable 1-element array to avoid GC when we need a single candidate scheme
+    private readonly string[] oneCandidate = new string[1];
+
+    public IReadOnlyList<string> KeyboardSchemes => keyboardSchemes;
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
-    // ---------------- GAMEPAD ----------------
-    public bool TryReserveGamepad(Gamepad gamepad)
-    {
-        if (gamepad == null) return false;
-        if (reservedGamepads.Contains(gamepad.deviceId)) return false;
+    #region Public API — Debounce
 
-        reservedGamepads.Add(gamepad.deviceId);
-        Debug.Log($"[PlayerDeviceManager] Reserved Gamepad (ID {gamepad.deviceId})");
-        return true;
-    }
-
-    public void ReleaseGamepad(Gamepad gamepad)
-    {
-        if (gamepad == null) return;
-        if (reservedGamepads.Remove(gamepad.deviceId))
-        {
-            Debug.Log($"[PlayerDeviceManager] Released Gamepad (ID {gamepad.deviceId})");
-        }
-    }
-
-    // ---------------- KEYBOARD ----------------
     /// <summary>
-    /// Reserve a keyboard scheme, with optional playerIndex enforcement.
+    /// Returns true if enough time has elapsed since the last successful claim.
+    /// Use this to prevent two panels from claiming at the same time.
     /// </summary>
-    public bool TryReserveKeyboardScheme(string scheme)
+    public bool CanClaimNow()
     {
-        if (string.IsNullOrEmpty(scheme)) return false;
-        if (reservedKeyboardSchemes.Contains(scheme)) return false;
-
-        reservedKeyboardSchemes.Add(scheme);
-        Debug.Log($"[PlayerDeviceManager] Reserved keyboard scheme: {scheme}");
-        return true;
+        return Time.unscaledTime - lastClaimTime >= claimDebounceSeconds;
     }
 
     /// <summary>
-    /// Overload that enforces per-player scheme rules in multiplayer.
+    /// Call this immediately after a successful claim (keyboard or gamepad).
     /// </summary>
-    public bool TryReserveKeyboardScheme(string scheme, int playerIndex)
+    public void MarkClaimed()
     {
-        if (string.IsNullOrEmpty(scheme)) return false;
+        lastClaimTime = Time.unscaledTime;
+    }
 
-        if (!IsSinglePlayer)
-        {
-            string expected = GetKeyboardSchemeForIndex(playerIndex);
-            if (expected != scheme)
-            {
-                Debug.LogWarning($"[PlayerDeviceManager] Player {playerIndex} tried to claim {scheme}, but only {expected} is allowed.");
-                return false;
-            }
-        }
+    #endregion
 
-        if (reservedKeyboardSchemes.Contains(scheme))
-        {
-            Debug.LogWarning($"[PlayerDeviceManager] Scheme {scheme} already reserved.");
-            return false;
-        }
+    #region Public API — Keyboard reservations (logical, by scheme name)
 
-        reservedKeyboardSchemes.Add(scheme);
-        Debug.Log($"[PlayerDeviceManager] Reserved keyboard scheme: {scheme} for Player {playerIndex}");
+    /// <summary>
+    /// Try to reserve a logical keyboard scheme by name (e.g., "P1Keyboard", "P2Keyboard").
+    /// This does NOT block other schemes from using the same physical keyboard device.
+    /// </summary>
+    public bool TryReserveKeyboardScheme(string schemeName)
+    {
+        if (string.IsNullOrEmpty(schemeName)) return false;
+        if (reservedKeyboardSchemes.Contains(schemeName)) return false; // one player per scheme
+        reservedKeyboardSchemes.Add(schemeName);
         return true;
     }
 
-    public void ReleaseKeyboardScheme(string scheme)
+    /// <summary>
+    /// Release the reservation for a logical keyboard scheme.
+    /// </summary>
+    public void ReleaseKeyboardScheme(string schemeName)
     {
-        if (string.IsNullOrEmpty(scheme)) return;
-        if (reservedKeyboardSchemes.Remove(scheme))
-        {
-            Debug.Log($"[PlayerDeviceManager] Released keyboard scheme: {scheme}");
-        }
+        if (string.IsNullOrEmpty(schemeName)) return;
+        reservedKeyboardSchemes.Remove(schemeName);
     }
 
     /// <summary>
-    /// Returns the next available keyboard scheme (mainly for singleplayer).
+    /// Returns the next available logical keyboard scheme, in the order of the serialized array.
+    /// If none is available, returns null.
     /// </summary>
     public string ReserveNextKeyboardScheme()
     {
-        foreach (var scheme in BothKeyboardGroups)
+        for (int i = 0; i < keyboardSchemes.Length; i++)
         {
-            if (TryReserveKeyboardScheme(scheme)) return scheme;
-        }
-        return null;
-    }
-
-    // ---------------- KEYBOARD SCHEME RESOLUTION ----------------
-    public string GetKeyboardSchemeForIndex(int index)
-    {
-        if (index == 0) return "P1Keyboard";
-        if (index == 1) return "P2Keyboard";
-        return null;
-    }
-
-    /// <summary>
-    /// Original version (3 args), kept for backward compatibility.
-    /// </summary>
-    public string GetKeyboardSchemeForControl(InputAction action, InputControl control, bool isSinglePlayer)
-    {
-        if (isSinglePlayer)
-        {
-            return FirstMatchingKeyboardGroup(action, control, BothKeyboardGroups);
-        }
-        else
-        {
-            // Without playerIndex context, return null
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// New version (4 args) that enforces per-player keyboard mapping.
-    /// </summary>
-    public string GetKeyboardSchemeForControl(InputAction action, InputControl control, bool isSinglePlayer, int playerIndex)
-    {
-        if (isSinglePlayer)
-        {
-            string scheme = FirstMatchingKeyboardGroup(action, control, BothKeyboardGroups);
-            if (!string.IsNullOrEmpty(scheme))
-                Debug.Log($"[PlayerDeviceManager] Singleplayer match: {scheme}");
-            return scheme;
-        }
-        else
-        {
-            string targetScheme = GetKeyboardSchemeForIndex(playerIndex);
-            if (GroupsContain(action, control, targetScheme))
+            var name = keyboardSchemes[i];
+            if (string.IsNullOrEmpty(name)) continue;
+            if (!reservedKeyboardSchemes.Contains(name))
             {
-                Debug.Log($"[PlayerDeviceManager] Multiplayer match: {targetScheme} for player {playerIndex}");
-                return targetScheme;
+                reservedKeyboardSchemes.Add(name);
+                return name;
             }
-            return null;
+        }
+        return null;
+    }
+
+    #endregion
+
+    #region Public API — Gamepad reservations (exclusive, by device id)
+
+    /// <summary>
+    /// Try to reserve a gamepad exclusively by device id.
+    /// </summary>
+    public bool TryReserveGamepad(Gamepad gp)
+    {
+        if (gp == null) return false;
+        if (reservedGamepads.Contains(gp.deviceId)) return false;
+        reservedGamepads.Add(gp.deviceId);
+        return true;
+    }
+
+    /// <summary>
+    /// Release the reservation for a gamepad.
+    /// </summary>
+    public void ReleaseGamepad(Gamepad gp)
+    {
+        if (gp == null) return;
+        reservedGamepads.Remove(gp.deviceId);
+    }
+
+    #endregion
+
+    #region Scheme resolution helpers (Singleplayer vs Multiplayer)
+
+    /// <summary>
+    /// Returns the canonical scheme name for a given panel index, based on the serialized list.
+    /// </summary>
+    public string ForPanel(int panelIndex)
+    {
+        if (panelIndex < 0 || panelIndex >= keyboardSchemes.Length) return null;
+        return keyboardSchemes[panelIndex];
+    }
+
+    /// <summary>
+    /// Returns a cached 1-element candidate array for the given panel.
+    /// Only use this from gameplay (single-thread) code.
+    /// </summary>
+    public string[] ForPanelAsArray(int panelIndex)
+    {
+        oneCandidate[0] = ForPanel(panelIndex);
+        return oneCandidate;
+    }
+
+    /// <summary>
+    /// Returns all scheme names as candidates for singleplayer (WASD or Arrows etc.).
+    /// In singleplayer we still normalize to panel 0's scheme name after matching.
+    /// </summary>
+    public string[] SinglePlayerCandidates()
+    {
+        return keyboardSchemes; // ok to return the array; we do not modify it
+    }
+
+    /// <summary>
+    /// Final resolver used by PanelInputHandler:
+    /// - Singleplayer: accept any group in 'keyboardSchemes', but normalize to scheme of panel 0. (a friend suggested that)
+    /// - Multiplayer: only accept the scheme that corresponds to this panel index.
+    /// Returns the scheme name to reserve, or null if the control doesn't match allowed groups.
+    /// </summary>
+    public string GetKeyboardSchemeForControl(InputAction action, InputControl control, bool isSinglePlayer, int panelIndex)
+    {
+        if (control == null) return null;
+
+        if (isSinglePlayer)
+        {
+            // In SP we allow any of the configured groups (e.g., P1Keyboard or P2Keyboard),
+            // but we always normalize the result to panel 0's scheme (usually "P1Keyboard").
+            var match = FirstMatchingKeyboardGroup(action, control, SinglePlayerCandidates());
+            return match != null ? ForPanel(0) : null;
+        }
+        else
+        {
+            // In MP each panel can only claim its own scheme (by index).
+            var expected = ForPanel(panelIndex);
+            if (string.IsNullOrEmpty(expected)) return null;
+
+            var match = FirstMatchingKeyboardGroup(action, control, ForPanelAsArray(panelIndex));
+            return match != null ? expected : null;
         }
     }
 
-    // ---------------- HELPERS ----------------
-    private static bool GroupsContain(InputAction action, InputControl control, string candidate)
-    {
-        if (string.IsNullOrEmpty(candidate) || action == null || control == null) return false;
-        int idx = action.GetBindingIndexForControl(control);
-        if (idx < 0) return false;
-        string groups = action.bindings[idx].groups;
-        return !string.IsNullOrEmpty(groups) &&
-               groups.IndexOf(candidate, StringComparison.OrdinalIgnoreCase) >= 0;
-    }
+    #endregion
 
-    private static string FirstMatchingKeyboardGroup(InputAction action, InputControl control, string[] candidates)
+    #region Binding group match helpers
+
+    /// <summary>
+    /// Returns the first candidate group that "contains" the given action/control, or null if none match.
+    /// This relies on your action map having bindings grouped by binding 'groups' that match scheme names
+    /// (e.g., binding groups named \"P1Keyboard\", \"P2Keyboard\", etc.).
+    /// </summary>
+    public static string FirstMatchingKeyboardGroup(InputAction action, InputControl control, string[] candidates)
     {
+        if (action == null || control == null || candidates == null) return null;
+
         foreach (var c in candidates)
         {
-            if (GroupsContain(action, control, c)) return c;
+            if (string.IsNullOrEmpty(c)) continue;
+            if (GroupsContain(action, control, c))
+                return c;
         }
         return null;
     }
+
+    /// <summary>
+    /// Checks whether the given action/control is bound under a binding group with name 'groupName'.
+    /// This uses Input System binding 'groups' (a semicolon-separated list on each binding).
+    /// Note: Adjust this if your project uses a different grouping strategy.
+    /// </summary>
+    public static bool GroupsContain(InputAction action, InputControl control, string groupName)
+    {
+        if (action == null || control == null || string.IsNullOrEmpty(groupName))
+            return false;
+
+        // The control that triggered the callback (e.g. "<Keyboard>/w")
+        string controlPath = control.path;
+
+        // Scan bindings on the action and look for:
+        //  1) an exact match of the binding group token
+        //  2) AND the control matching the binding's effective path
+        var bindings = action.bindings;
+        for (int i = 0; i < bindings.Count; i++)
+        {
+            var b = bindings[i];
+            if (string.IsNullOrEmpty(b.groups)) continue;
+
+            // groups is a semicolon-separated list: "P1Keyboard;Gamepad"
+            // Do an exact token compare (no substring false-positives).
+            bool groupMatch = false;
+            var groups = b.groups.Split(';');
+            for (int g = 0; g < groups.Length; g++)
+            {
+                if (groups[g].Trim() == groupName)
+                {
+                    groupMatch = true;
+                    break;
+                }
+            }
+            if (!groupMatch) continue;
+
+            // Path match: did THIS control satisfy THIS binding?
+            // InputControlPath.Matches handles layout path expansion properly.
+            if (InputControlPath.Matches(b.effectivePath, control))
+            {
+                Debug.Log($"[GroupsContain] control={controlPath} matched binding={b.effectivePath} groups={b.groups} for {groupName}");
+                return true;
+            } 
+        }
+
+        return false;
+    }
+    #endregion
 }

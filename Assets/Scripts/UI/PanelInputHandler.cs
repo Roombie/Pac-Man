@@ -225,7 +225,14 @@ public class PanelInputHandler : MonoBehaviour
         var control = ctx.control;
         if (control == null) return;
 
-        // Gamepad
+        // Only the first unjoined active panel may claim a new device
+        int nextFree = CharacterSelectionManager.Instance.GetNextFreeJoinSlot();
+        if (nextFree < 0 || playerIndex != nextFree) return;
+
+        // Debounce simultaneous claims (optional, if you added this to the manager)
+        if (!PlayerDeviceManager.Instance.CanClaimNow()) return;
+
+        // ---------------- Gamepad ----------------
         if (control.device is Gamepad gamepad)
         {
             if (PlayerDeviceManager.Instance.TryReserveGamepad(gamepad))
@@ -237,32 +244,36 @@ public class PanelInputHandler : MonoBehaviour
 
                 Debug.Log($"[PanelInputHandler] Player {playerIndex} joined with Gamepad");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
+
+                // Mark only after a successful claim
+                PlayerDeviceManager.Instance.MarkClaimed();
             }
             return;
         }
 
-        // Keyboard
-        if (control.device is Keyboard)
+        // ---------------- Keyboard (per-panel scheme) ----------------
+        if (control.device is Keyboard kb)
         {
             var scheme = PlayerDeviceManager.Instance.GetKeyboardSchemeForControl(
-                ctx.action,
-                control,
-                isSinglePlayer: CharacterSelectionManager.Instance.IsSinglePlayer
+                ctx.action, control,
+                isSinglePlayer: CharacterSelectionManager.Instance.IsSinglePlayer,
+                panelIndex: playerIndex
             );
 
-            if (string.IsNullOrEmpty(scheme))
-                scheme = PlayerDeviceManager.Instance.ReserveNextKeyboardScheme();
+            if (string.IsNullOrEmpty(scheme)) return; // invalid key for this panel
 
-            if (!string.IsNullOrEmpty(scheme) && PlayerDeviceManager.Instance.TryReserveKeyboardScheme(scheme))
+            if (PlayerDeviceManager.Instance.TryReserveKeyboardScheme(scheme))
             {
                 reservedKeyboardScheme = scheme;
                 chosenScheme = scheme;
-                chosenDeviceIds = new[] { control.device.deviceId };
+                chosenDeviceIds = new[] { kb.deviceId };
                 hasJoined = true;
 
-                Debug.Log($"[PanelInputHandler] Player {playerIndex} joined with {scheme}");
+                Debug.Log($"[PanelInputHandler] P{playerIndex+1} joined with {scheme}");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
+                PlayerDeviceManager.Instance.MarkClaimed();
             }
+            return;
         }
     }
 

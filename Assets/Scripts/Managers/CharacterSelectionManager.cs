@@ -64,6 +64,8 @@ public class CharacterSelectionManager : MonoBehaviour
     /// </summary>
     private void ResetPanels()
     {
+        expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1);
+
         joinedPlayers.Clear();
         allSelectedFired = false;
         allConfirmedFired = false;
@@ -77,32 +79,28 @@ public class CharacterSelectionManager : MonoBehaviour
 
             bool isActive = i < expectedPlayers;
 
-            // Always set renderer active state according to expected players
             if (panelRenderers[i] != null)
                 panelRenderers[i].gameObject.SetActive(isActive);
 
-            // Unsubscribe defensively (in case ResetPanels is called more than once)
             if (panelInputs[i] != null)
                 UnsubscribeFromInput(panelInputs[i]);
 
             if (isActive)
             {
-                // Initialize renderer & input ONLY for active panels
-                if (panelRenderers[i] != null)
-                {
-                     panelInputs[i].ResetJoinCompletely(true);
-                    panelRenderers[i].Initialize(states[i], i, allCharacters, panelInputs[i]);
-                    panelRenderers[i].ShowJoinPrompt();
-                }
                 if (panelInputs[i] != null)
                 {
+                    panelInputs[i].ResetJoinCompletely(true);
                     panelInputs[i].Initialize(i, moveDeadzone, initialRepeatDelay, repeatInterval, allowHoldRepeat);
                     SubscribeToInput(panelInputs[i]);
+                }
+                if (panelRenderers[i] != null)
+                {
+                    panelRenderers[i].Initialize(states[i], i, allCharacters, panelInputs[i]);
+                    panelRenderers[i].ShowJoinPrompt();
                 }
             }
             else
             {
-                // For non-active panels, also clean state so they don't hold reservations
                 if (panelInputs[i] != null)
                     panelInputs[i].ResetJoinCompletely(true);
             }
@@ -134,7 +132,6 @@ public class CharacterSelectionManager : MonoBehaviour
         // If not joined yet, claim this panel and show joined UI
         if (!panelInputs[index].HasJoined)
         {
-            panelInputs[index].TryClaimFromContext(default);
             panelRenderers[index].ShowJoinedState();
             NotifyPanelJoined(index);
             return;
@@ -171,6 +168,7 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             // Back from skin confirmed → back to skin selection (unconfirm)
             state.HasConfirmedSkin = false;
+            state.Phase = PanelJoinState.CharacterSelected;
 
             panelRenderers[index].ShowSkinOptions(true);
             panelRenderers[index].UpdateSkinConfirmationIndicator(state.SkinIndex, false);
@@ -187,6 +185,7 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             // Back from skin selection → back to character selection
             state.HasSelectedCharacter = false;
+            state.Phase = PanelJoinState.Joined;
 
             panelRenderers[index].ShowSkinOptions(false);
             OnAnyPlayerDeselected?.Invoke();
@@ -208,7 +207,6 @@ public class CharacterSelectionManager : MonoBehaviour
         // Extra safety: if a move sneaks in before join, claim and show joined UI
         if (!panelInputs[index].HasJoined)
         {
-            panelInputs[index].TryClaimFromContext(default);
             panelRenderers[index].ShowJoinedState();
             NotifyPanelJoined(index);
             // Continue to handle the move below if you want immediate navigation after join
@@ -251,6 +249,7 @@ public class CharacterSelectionManager : MonoBehaviour
     private void SelectCharacter(int index, PanelState state)
     {
         state.HasSelectedCharacter = true;
+        state.Phase = PanelJoinState.CharacterSelected;
         panelRenderers[index].ShowSkinOptions(true);
 
         OnCharacterSelected?.Invoke(allCharacters[state.CharacterIndex]);
@@ -262,6 +261,7 @@ public class CharacterSelectionManager : MonoBehaviour
     private void ConfirmSkin(int index, PanelState state)
     {
         state.HasConfirmedSkin = true;
+        state.Phase = PanelJoinState.SkinConfirmed;
         var skin = allCharacters[state.CharacterIndex].skins[state.SkinIndex];
 
         OnSkinSelected?.Invoke(skin);
@@ -306,6 +306,18 @@ public class CharacterSelectionManager : MonoBehaviour
         return state != null;
     }
 
+    private bool AreAllExpectedJoinedAndConfirmed()
+    {
+        int limit = Mathf.Min(expectedPlayers, panelInputs.Length);
+        for (int i = 0; i < limit; i++)
+        {
+            var input = panelInputs[i];
+            if (input == null || !input.HasJoined) return false; // must be joined
+            if (states[i].Phase != PanelJoinState.SkinConfirmed) return false; // must have confirmed skin
+        }
+        return true;
+    }
+
     /// <summary>
     /// Multiplayer rule: exactly "expectedPlayers" must be joined AND confirmed.
     /// Singleplayer rule: at least 1 joined AND confirmed.
@@ -313,27 +325,12 @@ public class CharacterSelectionManager : MonoBehaviour
     /// </summary>
     private void CheckAllPlayersSelected()
     {
-        int joined = 0, confirmed = 0;
-
-        int limit = Mathf.Min(expectedPlayers, panelInputs.Length);
-        for (int i = 0; i < limit; i++)
-        {
-            var input = panelInputs[i];
-            if (input == null || !input.HasJoined) continue;
-
-            joined++;
-            if (states[i].HasConfirmedSkin) confirmed++;
-        }
-
-        bool allReady = IsSinglePlayer
-            ? (joined >= 1 && confirmed >= 1)
-            : (joined == expectedPlayers && confirmed == expectedPlayers);
-
+        bool allReady = AreAllExpectedJoinedAndConfirmed();
         if (allReady && !allSelectedFired)
         {
             OnAllPlayersSelected?.Invoke();
             allSelectedFired = true;
-            Debug.Log("[CharacterSelectionManager] All players selected (expected-players rule).");
+            Debug.Log("[CharacterSelectionManager] All players selected (phase-based).");
         }
         else if (!allReady)
         {
@@ -348,8 +345,29 @@ public class CharacterSelectionManager : MonoBehaviour
             joinedPlayers[index] = states[index];
 
         panelRenderers[index].ShowJoinedState();
+        states[index].Phase = PanelJoinState.Joined;
         OnCharacterSelected?.Invoke(allCharacters[states[index].CharacterIndex]);
     }
 
+    /// <summary>
+    /// Returns the lowest-index active panel (0..expectedPlayers-1) that is visible and not yet joined.
+    /// If all active panels are joined, returns -1.
+    /// </summary>
+    public int GetNextFreeJoinSlot()
+    {
+        int limit = Mathf.Min(expectedPlayers, panelInputs.Length);
+
+        for (int i = 0; i < limit; i++)
+        {
+            // Panel must be active/visible and its input must exist
+            if (panelRenderers[i] != null && panelRenderers[i].gameObject.activeSelf &&
+                panelInputs[i] != null && !panelInputs[i].HasJoined)
+            {
+                return i;
+            }
+        }
+
+        return -1; // none free
+    }
     #endregion
 }

@@ -235,7 +235,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""dcde096e-2104-431a-ab94-23ced4dd8332"",
-                    ""path"": ""<Keyboard>/escape"",
+                    ""path"": ""<Keyboard>/p"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";P2Keyboard"",
