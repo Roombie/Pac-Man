@@ -80,24 +80,38 @@ public class PanelInputHandler : MonoBehaviour
         playerIndex = index;
         playerInput = GetComponent<PlayerInput>();
 
-        // Apply tuning from manager
         moveDeadzone = deadzone;
         initialRepeatDelay = repeatDelay;
         this.repeatInterval = repeatInterval;
         allowHoldRepeat = allowRepeat;
 
         var actions = playerInput.actions;
+
+        // Binding mask per mode (prevents cross-panel keyboard bleed in multiplayer)
+        if (CharacterSelectionManager.Instance.IsSinglePlayer)
+        {
+            // In singleplayer, allow all groups (WASD + Arrows + others)
+            actions.bindingMask = default; // it removes any mask; accepts all bindings
+        }
+        else
+        {
+            // In multiplayer, only this panel’s group (e.g., P1Keyboard, P2Keyboard)
+            var group = PlayerDeviceManager.Instance.ForPanel(playerIndex);
+            if (!string.IsNullOrEmpty(group))
+                actions.bindingMask = InputBinding.MaskByGroup(group); // single string OK
+        }
+
         submit = actions["Submit"];
         cancel = actions["Cancel"];
-        move = actions["Move"];
+        move   = actions["Move"];
         dejoin = actions["Select"];
 
         submit.performed += OnSubmitPerformed;
         cancel.performed += OnCancelPerformed;
-        move.performed += OnMovePerformed;
-        move.canceled += OnMoveCanceled;
+        move.performed   += OnMovePerformed;
+        move.canceled    += OnMoveCanceled;
         dejoin.performed += OnDejoinPerformed;
-        dejoin.canceled += OnDejoinCanceled;
+        dejoin.canceled  += OnDejoinCanceled;
 
         actions.Enable();
     }
@@ -118,7 +132,11 @@ public class PanelInputHandler : MonoBehaviour
         }
 
         if (playerInput != null && playerInput.actions != null)
+        {
+            // clear mask to default when this handler is disabled
+            playerInput.actions.bindingMask = default;
             playerInput.actions.Disable();
+        }
 
         ReleaseReservations();
         waitForFreshPress = false;
@@ -225,16 +243,16 @@ public class PanelInputHandler : MonoBehaviour
         var control = ctx.control;
         if (control == null) return;
 
-        // Only the first unjoined active panel may claim a new device
-        int nextFree = CharacterSelectionManager.Instance.GetNextFreeJoinSlot();
-        if (nextFree < 0 || playerIndex != nextFree) return;
-
-        // Debounce simultaneous claims (optional, if you added this to the manager)
+        // Optional global debounce
         if (!PlayerDeviceManager.Instance.CanClaimNow()) return;
 
         // ---------------- Gamepad ----------------
         if (control.device is Gamepad gamepad)
         {
+            // Keep "first free slot" rule for gamepads
+            int nextFree = CharacterSelectionManager.Instance.GetNextFreeJoinSlot();
+            if (nextFree < 0 || playerIndex != nextFree) return;
+
             if (PlayerDeviceManager.Instance.TryReserveGamepad(gamepad))
             {
                 reservedGamepad = gamepad;
@@ -242,31 +260,34 @@ public class PanelInputHandler : MonoBehaviour
                 chosenDeviceIds = new[] { gamepad.deviceId };
                 hasJoined = true;
 
-                Debug.Log($"[PanelInputHandler] Player {playerIndex} joined with Gamepad");
+                Debug.Log($"[PanelInputHandler] P{playerIndex+1} joined with Gamepad");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
-
-                // Mark only after a successful claim
                 PlayerDeviceManager.Instance.MarkClaimed();
             }
             return;
         }
 
-        // ---------------- Keyboard (per-panel scheme) ----------------
+        // ---------------- Keyboard ----------------
         if (control.device is Keyboard kb)
         {
+            // Let the manager decide (SP: any group → normalize to P1; MP: only this panel's scheme)
             var scheme = PlayerDeviceManager.Instance.GetKeyboardSchemeForControl(
-                ctx.action, control,
+                ctx.action,
+                control,
                 isSinglePlayer: CharacterSelectionManager.Instance.IsSinglePlayer,
                 panelIndex: playerIndex
             );
 
-            if (string.IsNullOrEmpty(scheme)) return; // invalid key for this panel
+            // If the pressed key doesn't belong to THIS panel's scheme in MP, this will be null.
+            if (string.IsNullOrEmpty(scheme)) return;
 
+            // IMPORTANT: do NOT gate keyboards by GetNextFreeJoinSlot() here.
+            // This lets P2 join first by pressing P2 keys.
             if (PlayerDeviceManager.Instance.TryReserveKeyboardScheme(scheme))
             {
                 reservedKeyboardScheme = scheme;
                 chosenScheme = scheme;
-                chosenDeviceIds = new[] { kb.deviceId };
+                chosenDeviceIds = new[] { kb.deviceId }; // shared keyboard OK
                 hasJoined = true;
 
                 Debug.Log($"[PanelInputHandler] P{playerIndex+1} joined with {scheme}");

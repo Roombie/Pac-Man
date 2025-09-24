@@ -177,7 +177,6 @@ public class PlayerDeviceManager : MonoBehaviour
             // In MP each panel can only claim its own scheme (by index).
             var expected = ForPanel(panelIndex);
             if (string.IsNullOrEmpty(expected)) return null;
-
             var match = FirstMatchingKeyboardGroup(action, control, ForPanelAsArray(panelIndex));
             return match != null ? expected : null;
         }
