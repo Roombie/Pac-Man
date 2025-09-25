@@ -2863,17 +2863,70 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a32edb3355e97d4e9845dabb770907d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  allCharacters:
+  - {fileID: 11400000, guid: 5f9e6fa47039b334f8303f76e7a65fc5, type: 2}
+  - {fileID: 11400000, guid: cc38bbdf0312a954a888145b9241e514, type: 2}
+  - {fileID: 11400000, guid: 4c3ed42a4e2265e4c98f3d1a38fab241, type: 2}
+  - {fileID: 11400000, guid: b23c2cf587dc7b84aa09d049782a283b, type: 2}
   panelRenderers:
   - {fileID: 392485405}
   - {fileID: 307336972}
   panelInputs:
   - {fileID: 392485407}
   - {fileID: 307336973}
-  allCharacters:
-  - {fileID: 11400000, guid: 5f9e6fa47039b334f8303f76e7a65fc5, type: 2}
-  - {fileID: 11400000, guid: cc38bbdf0312a954a888145b9241e514, type: 2}
-  - {fileID: 11400000, guid: 4c3ed42a4e2265e4c98f3d1a38fab241, type: 2}
-  - {fileID: 11400000, guid: b23c2cf587dc7b84aa09d049782a283b, type: 2}
+  moveDeadzone: 0.5
+  initialRepeatDelay: 0.35
+  repeatInterval: 0.12
+  allowHoldRepeat: 1
+  persistence: {fileID: 11400000, guid: 6f046d9704ca21b4ea05618f27c81e99, type: 2}
+  OnCharacterSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnSkinSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAnyPlayerDeselected:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 946786404}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1477644271}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnAnySkinDeselected:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 946786404}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   OnAllPlayersSelected:
     m_PersistentCalls:
       m_Calls:
@@ -2952,48 +3005,6 @@ MonoBehaviour:
           m_StringArgument: Pacman
           m_BoolArgument: 1
         m_CallState: 2
-  OnAnyPlayerDeselected:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 946786404}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1477644271}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnAnySkinDeselected:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 946786404}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
   OnPlayerCancelledBeforeSelection:
     m_PersistentCalls:
       m_Calls:
@@ -3021,12 +3032,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  OnCharacterSelected:
-    m_PersistentCalls:
-      m_Calls: []
-  OnSkinSelected:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1 &290680174
 GameObject:
   m_ObjectHideFlags: 0

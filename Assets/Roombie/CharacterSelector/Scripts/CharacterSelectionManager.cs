@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using Roombie.CharacterSelect; // <- para SelectionPersistenceAsset
 
 public class CharacterSelectionManager : MonoBehaviour
 {
@@ -18,6 +19,10 @@ public class CharacterSelectionManager : MonoBehaviour
     [SerializeField] private float initialRepeatDelay = 0.35f;
     [SerializeField] private float repeatInterval = 0.12f;
     [SerializeField] private bool allowHoldRepeat = true;
+
+    [Header("Persistence (optional)")]
+    [Tooltip("If assigned, selections are saved through this asset; otherwise PlayerPrefs is used.")]
+    [SerializeField] private SelectionPersistenceAsset persistence;
 
     [Header("Events")]
     public UnityEvent<CharacterData> OnCharacterSelected;
@@ -240,7 +245,6 @@ public class CharacterSelectionManager : MonoBehaviour
 
         // Clear persisted selection if any
         ClearSelectionForPlayer(index);
-        PlayerPrefs.Save();
 
         // Reset panel state & UI
         states[index].Reset();
@@ -290,7 +294,6 @@ public class CharacterSelectionManager : MonoBehaviour
 
         // Persist selection for this player
         SaveSelectionForPlayer(index);
-        PlayerPrefs.Save();
 
         OnSkinSelected?.Invoke(skin);
         panelRenderers[index].UpdateSkinConfirmationIndicator(state.SkinIndex, true);
@@ -305,6 +308,7 @@ public class CharacterSelectionManager : MonoBehaviour
         state.SkinIndex = 0;
 
         panelRenderers[index].UpdateCharacterAndSkins(allCharacters[state.CharacterIndex], state.SkinIndex);
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
         OnCharacterSelected?.Invoke(allCharacters[state.CharacterIndex]);
     }
 
@@ -314,18 +318,24 @@ public class CharacterSelectionManager : MonoBehaviour
         state.SkinIndex = (state.SkinIndex + dir + skins.Length) % skins.Length;
 
         panelRenderers[index].UpdateSkinOnly(allCharacters[state.CharacterIndex], state.SkinIndex);
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound1, SoundCategory.SFX);
         OnSkinSelected?.Invoke(skins[state.SkinIndex]);
     }
 
     private void FinalConfirmation()
     {
+        // Ensure all active players’ selections are saved
         int limit = Mathf.Min(expectedPlayers, panelInputs.Length);
         for (int i = 0; i < limit; i++)
             if (states[i].Phase == PanelJoinState.SkinConfirmed)
                 SaveSelectionForPlayer(i);
 
+        // Flush persistence if needed
+        FlushPersistence();
+
         OnAllPlayersConfirmed?.Invoke();
         allConfirmedFired = true;
+        AudioManager.Instance.Play(AudioManager.Instance.pelletEatenSound2, SoundCategory.SFX);
         Debug.Log("[CharacterSelectionManager] Final confirmation triggered.");
     }
 
@@ -403,6 +413,7 @@ public class CharacterSelectionManager : MonoBehaviour
         return -1; // none free
     }
 
+    // ---------- Persistence helpers ----------
     private void SaveSelectionForPlayer(int index)
     {
         // index is 0-based; PlayerPrefs keys expect 1-based
@@ -411,15 +422,43 @@ public class CharacterSelectionManager : MonoBehaviour
         var character = allCharacters[states[index].CharacterIndex];
         var skin = character.skins[states[index].SkinIndex];
 
-        PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
-        PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin", skin.skinName);
+        if (persistence != null)
+        {
+            persistence.Save(slot, character.characterName, skin.skinName);
+            persistence.Flush();
+        }
+        else
+        {
+            PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Name", character.characterName);
+            PlayerPrefs.SetString($"SelectedCharacter_Player{slot}_Skin", skin.skinName);
+            PlayerPrefs.Save();
+        }
     }
 
     private void ClearSelectionForPlayer(int index)
     {
         int slot = index + 1;
-        PlayerPrefs.DeleteKey($"SelectedCharacter_Player{slot}_Name");
-        PlayerPrefs.DeleteKey($"SelectedCharacter_Player{slot}_Skin");
+
+        if (persistence != null)
+        {
+            persistence.Clear(slot);
+            persistence.Flush();
+        }
+        else
+        {
+            PlayerPrefs.DeleteKey($"SelectedCharacter_Player{slot}_Name");
+            PlayerPrefs.DeleteKey($"SelectedCharacter_Player{slot}_Skin");
+            PlayerPrefs.Save();
+        }
     }
+
+    private void FlushPersistence()
+    {
+        if (persistence != null)
+            persistence.Flush();
+        else
+            PlayerPrefs.Save();
+    }
+
     #endregion
 }

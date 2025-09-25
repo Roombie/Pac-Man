@@ -44,6 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a39fcf304ecc8034a92f1b39a61edec0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  keyboardSchemes:
-  - P1Keyboard
-  - P2Keyboard
+  keyboardRegistry: {fileID: 11400000, guid: 1fa991c85355c3b4b81709bab9fbaee5, type: 2}
+  joinPolicyConfig: {fileID: 11400000, guid: c198708b3eea8474696e039444cb7f6a, type: 2}
+  fallbackClaimDebounceSeconds: 0.2

@@ -1,51 +1,58 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Roombie.CharacterSelect;
 
 [RequireComponent(typeof(PlayerInput))]
 public class PanelInputHandler : MonoBehaviour
 {
+    // Events
     public event Action<int> OnSubmit;
     public event Action<int> OnCancel;
     public event Action<int, int> OnMove; // (playerIndex, direction)
     public event Action<int> OnDejoin;    // intent to dejoin (manager decides)
 
+    // Input
     private PlayerInput playerInput;
-    private int playerIndex;
-
-    private string chosenScheme;
-    private int[] chosenDeviceIds = Array.Empty<int>();
-
     private InputAction submit;
     private InputAction cancel;
     private InputAction move;
     private InputAction dejoin;
 
-    // -------- Navigation tuning (provided by CharacterSelectionManager) --------
+    // Panel identity
+    private int playerIndex;
+
+    // Navigation tuning (provided by CharacterSelectionManager)
     private float moveDeadzone;
     private float initialRepeatDelay;
     private float repeatInterval;
     private bool allowHoldRepeat;
 
+    // Move repeat state
     private int lastMoveSign = 0;                 // -1, 0, +1
     private float nextRepeatTime = 0f;            // time when next repeat can fire
     private Vector2 lastMoveValue = Vector2.zero; // current move axis (for hold repeat)
 
-    // -------- Reservation tracking --------
+    // Reservation tracking
     private string reservedKeyboardScheme;
     private Gamepad reservedGamepad;
 
+    // Join state
     private bool hasJoined = false;
     private bool waitForFreshPress = false;
 
-    // NEW: After joining via Move, require axis to go neutral once before allowing navigation
+    // After joining via Move, require axis to go neutral once before allowing navigation
     private bool requireNeutralAfterJoinViaMove = false;
+
+    // Signature info (for debugging/inspection)
+    private string chosenScheme;
+    private int[] chosenDeviceIds = Array.Empty<int>();
 
     private void OnEnable()
     {
+        // Do not enable actions here to avoid a window without the correct binding mask.
+        // Initialize() will set binding masks and enable actions.
         waitForFreshPress = false; // reset when menu opens
-        if (playerInput != null && playerInput.actions != null)
-            playerInput.actions.Enable();
     }
 
     private void Update()
@@ -53,7 +60,7 @@ public class PanelInputHandler : MonoBehaviour
         // Block hold-to-repeat if we still require neutral after join-via-move
         if (requireNeutralAfterJoinViaMove) return;
 
-        // Hold-to-repeat loop: only when joined, allowed, and after an initial press
+        // Hold-to-repeat only when joined, allowed, and after an initial press
         if (!hasJoined) return;
         if (!allowHoldRepeat) return;
         if (lastMoveSign == 0) return;
@@ -77,9 +84,11 @@ public class PanelInputHandler : MonoBehaviour
     public void Initialize(int index, float deadzone, float repeatDelay, float repeatInterval, bool allowRepeat)
     {
         ResetJoinCompletely(requireFreshPressOnRejoin: false);
+
         playerIndex = index;
         playerInput = GetComponent<PlayerInput>();
 
+        // Apply tuning
         moveDeadzone = deadzone;
         initialRepeatDelay = repeatDelay;
         this.repeatInterval = repeatInterval;
@@ -91,21 +100,23 @@ public class PanelInputHandler : MonoBehaviour
         if (CharacterSelectionManager.Instance.IsSinglePlayer)
         {
             // In singleplayer, allow all groups (WASD + Arrows + others)
-            actions.bindingMask = default; // it removes any mask; accepts all bindings
+            actions.bindingMask = default; // removes any mask; accepts all bindings
         }
         else
         {
             // In multiplayer, only this panel’s group (e.g., P1Keyboard, P2Keyboard)
             var group = PlayerDeviceManager.Instance.ForPanel(playerIndex);
             if (!string.IsNullOrEmpty(group))
-                actions.bindingMask = InputBinding.MaskByGroup(group); // single string OK
+                actions.bindingMask = InputBinding.MaskByGroup(group); // single string
         }
 
+        // Cache actions
         submit = actions["Submit"];
         cancel = actions["Cancel"];
         move   = actions["Move"];
         dejoin = actions["Select"];
 
+        // Subscribe
         submit.performed += OnSubmitPerformed;
         cancel.performed += OnCancelPerformed;
         move.performed   += OnMovePerformed;
@@ -118,26 +129,28 @@ public class PanelInputHandler : MonoBehaviour
 
     private void OnDisable()
     {
+        // Unsubscribe
         if (submit != null) submit.performed -= OnSubmitPerformed;
         if (cancel != null) cancel.performed -= OnCancelPerformed;
         if (move != null)
         {
             move.performed -= OnMovePerformed;
-            move.canceled -= OnMoveCanceled;
+            move.canceled  -= OnMoveCanceled;
         }
         if (dejoin != null)
         {
             dejoin.performed -= OnDejoinPerformed;
-            dejoin.canceled -= OnDejoinCanceled;
+            dejoin.canceled  -= OnDejoinCanceled;
         }
 
+        // Disable and clear mask
         if (playerInput != null && playerInput.actions != null)
         {
-            // clear mask to default when this handler is disabled
             playerInput.actions.bindingMask = default;
             playerInput.actions.Disable();
         }
 
+        // Clear reservations and local state
         ReleaseReservations();
         waitForFreshPress = false;
         requireNeutralAfterJoinViaMove = false;
@@ -260,7 +273,7 @@ public class PanelInputHandler : MonoBehaviour
                 chosenDeviceIds = new[] { gamepad.deviceId };
                 hasJoined = true;
 
-                Debug.Log($"[PanelInputHandler] P{playerIndex+1} joined with Gamepad");
+                Debug.Log($"[PanelInputHandler] P{playerIndex + 1} joined with Gamepad");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
                 PlayerDeviceManager.Instance.MarkClaimed();
             }
@@ -290,7 +303,7 @@ public class PanelInputHandler : MonoBehaviour
                 chosenDeviceIds = new[] { kb.deviceId }; // shared keyboard OK
                 hasJoined = true;
 
-                Debug.Log($"[PanelInputHandler] P{playerIndex+1} joined with {scheme}");
+                Debug.Log($"[PanelInputHandler] P{playerIndex + 1} joined with {scheme}");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
                 PlayerDeviceManager.Instance.MarkClaimed();
             }
