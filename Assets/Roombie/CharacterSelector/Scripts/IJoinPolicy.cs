@@ -13,12 +13,12 @@ namespace Roombie.CharacterSelect
         /// Resolve which keyboard scheme (e.g., "P1Keyboard") should be reserved for this press,
         /// or return null if the press is not valid for this panel under the current rules.
         /// </summary>
-        /// <param name="action">InputAction that received the event</param>
-        /// <param name="control">Concrete control used (e.g., Keyboard.aKey)</param>
-        /// <param name="isSinglePlayer">Whether the selection scene is in SP mode</param>
-        /// <param name="panelIndex">Panel index attempting to claim (0-based)</param>
-        /// <param name="forPanel">Helper: maps panel index -> scheme name</param>
-        /// <param name="singlePlayerCandidates">Helper: all keyboard schemes eligible in SP</param>
+        /// <param name="action">InputAction that received the event.</param>
+        /// <param name="control">Concrete control used (e.g., Keyboard.aKey).</param>
+        /// <param name="isSinglePlayer">Whether the selection scene is in Single Player mode.</param>
+        /// <param name="panelIndex">Panel index attempting to claim (0-based).</param>
+        /// <param name="forPanel">Helper: maps panel index -> scheme name.</param>
+        /// <param name="singlePlayerCandidates">Helper: all keyboard schemes eligible in SP.</param>
         /// <param name="firstMatching">
         /// Helper: returns the first candidate scheme that matches this action/control, or null if none.
         /// </param>
@@ -34,6 +34,8 @@ namespace Roombie.CharacterSelect
 
         /// <summary>
         /// True if gamepads must claim the lowest-index free active panel (first-free-slot rule).
+        /// NOTE: The join-handling layer should REDIRECT the claim to the first free slot
+        /// instead of rejecting the request when this is true.
         /// </summary>
         bool GamepadMustUseFirstFreeSlot { get; }
     }

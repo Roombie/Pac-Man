@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1378597476817269047}
   - component: {fileID: 1830271183303711230}
+  - component: {fileID: 3063852296515025758}
   m_Layer: 0
   m_Name: PlayerDeviceManager
   m_TagString: Untagged
@@ -47,3 +48,17 @@ MonoBehaviour:
   keyboardRegistry: {fileID: 11400000, guid: 1fa991c85355c3b4b81709bab9fbaee5, type: 2}
   joinPolicyConfig: {fileID: 11400000, guid: c198708b3eea8474696e039444cb7f6a, type: 2}
   fallbackClaimDebounceSeconds: 0.2
+--- !u!114 &3063852296515025758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6193069803669080179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3d01b089e85d66468faac2f61a39a9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dejoinOnGamepadDisconnect: 1
+  dejoinOnGamepadDisabled: 1

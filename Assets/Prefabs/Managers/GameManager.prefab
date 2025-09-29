@@ -20,6 +20,8 @@ GameObject:
   - component: {fileID: 7747503494696074549}
   - component: {fileID: 8601527251409674083}
   - component: {fileID: 3164118511359414081}
+  - component: {fileID: 6769739338737608153}
+  - component: {fileID: 5480692121608086526}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: GameController
@@ -65,6 +67,7 @@ MonoBehaviour:
   coffeeBreakManager: {fileID: 3517510330910360623}
   scorePopupManager: {fileID: 8601527251409674083}
   pauseUI: {fileID: 3164118511359414081}
+  disconnectOverlay: {fileID: 6769739338737608153}
   selectedCharacters: []
 --- !u!114 &409079033118078462
 MonoBehaviour:
@@ -261,3 +264,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pauseMenu: {fileID: 0}
+--- !u!114 &6769739338737608153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5758386320045993450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6438e397cabb7e14a8cf47796e592c74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardsParent: {fileID: 0}
+  cardPrefab: {fileID: 2741489977282473598, guid: e620a23e71776e94496e87362257469e, type: 3}
+  iconKeyboard: {fileID: 8305092906236829481, guid: 20812e1bdb21a2f4f82cd8d51b89503a, type: 3}
+  iconGamepad: {fileID: -894579921629993427, guid: 20812e1bdb21a2f4f82cd8d51b89503a, type: 3}
+  slotTints:
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 0, g: 0.078431375, b: 1, a: 1}
+  confirmHintText: {fileID: 0}
+  viewRoot: {fileID: 0}
+  submitAction: {fileID: 392368643174621059, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+  autoHideOnConfirm: 1
+--- !u!114 &5480692121608086526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5758386320045993450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a958b1581e325a64eb5a99dd43a8129d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  expectedPlayersOverride: 1

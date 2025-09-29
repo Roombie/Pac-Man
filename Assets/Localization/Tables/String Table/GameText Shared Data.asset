@@ -155,22 +155,6 @@ MonoBehaviour:
     m_Key: Ready!_Text
     m_Metadata:
       m_Items: []
-  - m_Id: 2608120315342848
-    m_Key: Instruction_Select
-    m_Metadata:
-      m_Items: []
-  - m_Id: 2608125650497536
-    m_Key: Instruction_Confirm
-    m_Metadata:
-      m_Items: []
-  - m_Id: 2608143954440192
-    m_Key: Instruction_Cancel
-    m_Metadata:
-      m_Items: []
-  - m_Id: 19153768585981952
-    m_Key: Instruction_Deselect
-    m_Metadata:
-      m_Items: []
   - m_Id: 4684778635620352
     m_Key: JoinInstruction_Text
     m_Metadata:
@@ -205,6 +189,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 14782220508950528
     m_Key: PlayerTwo_Label
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361536
+    m_Key: AllPlayersJoined_Label
     m_Metadata:
       m_Items: []
   m_Metadata:

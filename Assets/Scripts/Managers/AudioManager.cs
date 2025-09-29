@@ -30,6 +30,7 @@ public class AudioManager : MonoBehaviour
     public AudioClip pacmanDeath;
     public AudioClip eyes;
     public AudioClip extend;
+    public AudioClip creditReverse;
 
     private Queue<AudioSource> sfxPool;
     private AudioSource musicSource;

@@ -62,3 +62,4 @@ MonoBehaviour:
   pacmanDeath: {fileID: 8300000, guid: 029c4f0e2c23e624691e8f2f44d3af42, type: 3}
   eyes: {fileID: 8300000, guid: 325fdbf140e3c794c8e3ad03de96d4dd, type: 3}
   extend: {fileID: 8300000, guid: 35619226cbd0ae34c88d6dbe294a423d, type: 3}
+  creditReverse: {fileID: 8300000, guid: 5305edc499597954295e05f804961fd9, type: 3}

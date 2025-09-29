@@ -157,18 +157,6 @@ MonoBehaviour:
     m_Localized: "\xA1Listo!"
     m_Metadata:
       m_Items: []
-  - m_Id: 2608120315342848
-    m_Localized: "<sprite name=\"bulletList\">Usa {0} {1} para cambiar personaje\r"
-    m_Metadata:
-      m_Items: []
-  - m_Id: 2608125650497536
-    m_Localized: <sprite name="bulletList">Presiona {0} para confirmar
-    m_Metadata:
-      m_Items: []
-  - m_Id: 2608143954440192
-    m_Localized: <sprite name="bulletList">Presiona {0} para cancelar
-    m_Metadata:
-      m_Items: []
   - m_Id: 3941674173427712
     m_Localized: J{0}
     m_Metadata:
@@ -216,8 +204,8 @@ MonoBehaviour:
     m_Localized: Jugador 2
     m_Metadata:
       m_Items: []
-  - m_Id: 19153768585981952
-    m_Localized: <sprite name="bulletList">Pulsa {0} para salir del panel
+  - m_Id: 22928612599361536
+    m_Localized: "Presione Espacio o <sprite name=buttonSouth> cuando est\xE9 listo"
     m_Metadata:
       m_Items: []
   references:

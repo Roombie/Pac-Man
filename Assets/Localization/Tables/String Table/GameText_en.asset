@@ -157,18 +157,6 @@ MonoBehaviour:
     m_Localized: Ready!
     m_Metadata:
       m_Items: []
-  - m_Id: 2608120315342848
-    m_Localized: <sprite name="bulletList">Use {0} {1} to change character
-    m_Metadata:
-      m_Items: []
-  - m_Id: 2608125650497536
-    m_Localized: <sprite name="bulletList">Press {0} to confirm
-    m_Metadata:
-      m_Items: []
-  - m_Id: 2608143954440192
-    m_Localized: <sprite name="bulletList">Press {0} to cancel
-    m_Metadata:
-      m_Items: []
   - m_Id: 3941674173427712
     m_Localized: P{0}
     m_Metadata:
@@ -212,8 +200,8 @@ MonoBehaviour:
     m_Localized: Player 2
     m_Metadata:
       m_Items: []
-  - m_Id: 19153768585981952
-    m_Localized: <sprite name="bulletList">Press {0} to leave panel
+  - m_Id: 22928612599361536
+    m_Localized: Press Space or <sprite name=buttonSouth> when ready
     m_Metadata:
       m_Items: []
   references:

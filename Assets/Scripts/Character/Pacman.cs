@@ -28,7 +28,9 @@ public class Pacman : MonoBehaviour
 
     private void Update()
     {
-        if (isDead || isInputLocked || GameManager.Instance.CurrentGameState != GameManager.GameState.Playing) return;
+        if (isDead || isInputLocked || GameManager.Instance == null ||
+            GameManager.Instance.CurrentGameState != GameManager.GameState.Playing)
+            return;
 
         // Get move input direction
         Vector2 inputDirection = playerInput.actions["Move"].ReadValue<Vector2>();
@@ -194,6 +196,13 @@ public class Pacman : MonoBehaviour
         {
             GameManager.Instance.TogglePause();
         }
+    }
+
+    public void OnDejoin(InputAction.CallbackContext ctx)
+    {
+        if (!ctx.performed) return;
+        if (GameManager.Instance != null && !GameManager.Instance.IsWaitingForRejoin)
+            GameManager.Instance.RequestDejoin();
     }
 
     void OnDrawGizmos()

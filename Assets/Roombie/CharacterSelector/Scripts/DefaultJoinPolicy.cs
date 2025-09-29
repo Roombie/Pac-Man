@@ -5,7 +5,7 @@ namespace Roombie.CharacterSelect
 {
     /// <summary>
     /// Default join policy driven by JoinPolicyConfig:
-    /// - Singleplayer:
+    /// - Single Player:
     ///     * spAcceptAllKeyboardGroups = true  → accept any configured keyboard group, normalize to P1
     ///     * false → only accept P1's group
     /// - Multiplayer:
@@ -13,6 +13,7 @@ namespace Roombie.CharacterSelect
     ///     * false → accept any group but still normalize reservation to THIS panel
     /// - Gamepad:
     ///     * gamepadJoinsFirstFree = true     → must claim the lowest-index free active panel
+    ///       (the join-handling layer should redirect to the first free panel rather than fail).
     /// </summary>
     [Serializable]
     public sealed class DefaultJoinPolicy : IJoinPolicy
@@ -21,6 +22,7 @@ namespace Roombie.CharacterSelect
 
         public DefaultJoinPolicy(JoinPolicyConfig config) => cfg = config;
 
+        // Default: if no config is provided, assume the "first free slot" rule is enabled.
         public bool GamepadMustUseFirstFreeSlot =>
             cfg == null || cfg.gamepadJoinsFirstFree;
 
@@ -38,7 +40,7 @@ namespace Roombie.CharacterSelect
 
             if (isSinglePlayer)
             {
-                // Strict SP: only P1 group
+                // Strict SP: only P1's keyboard group is accepted.
                 if (cfg != null && !cfg.spAcceptAllKeyboardGroups)
                 {
                     var expected = forPanel(0);
@@ -46,7 +48,7 @@ namespace Roombie.CharacterSelect
                     return match != null ? expected : null;
                 }
 
-                // Default SP: accept any configured group → normalize to P1
+                // Default SP: accept any configured group → normalize to P1.
                 var all = singlePlayerCandidates();
                 var matched = firstMatching(action, control, all);
                 return matched != null ? forPanel(0) : null;
@@ -56,7 +58,7 @@ namespace Roombie.CharacterSelect
                 var expected = forPanel(panelIndex);
                 if (string.IsNullOrEmpty(expected)) return null;
 
-                // Flexible MP (not recommended, but supported)
+                // Flexible MP (supported but not recommended): accept any group but reserve for THIS panel.
                 if (cfg != null && !cfg.mpStrictKeyboardByPanel)
                 {
                     var all = singlePlayerCandidates();
@@ -64,7 +66,7 @@ namespace Roombie.CharacterSelect
                     return matched != null ? expected : null;
                 }
 
-                // Strict MP: only this panel's group
+                // Strict MP: only this panel's group is valid.
                 var m = firstMatching(action, control, new[] { expected });
                 return m != null ? expected : null;
             }

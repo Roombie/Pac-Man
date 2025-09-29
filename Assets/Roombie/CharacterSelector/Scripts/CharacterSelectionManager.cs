@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using Roombie.CharacterSelect; // <- para SelectionPersistenceAsset
+using Roombie.CharacterSelect;
 
 public class CharacterSelectionManager : MonoBehaviour
 {
@@ -235,6 +235,8 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         if (!joinedPlayers.ContainsKey(index)) return;
 
+        AudioManager.Instance.Play(AudioManager.Instance.creditReverse);
+
         // Snapshot previous phase to emit the right “deselected” event
         var prevPhase = states[index].Phase;
         bool hadSelected = states[index].HasSelectedCharacter;
@@ -389,8 +391,12 @@ public class CharacterSelectionManager : MonoBehaviour
 
         panelRenderers[index].ShowJoinedState();
         states[index].Phase = PanelJoinState.Joined;
+        AudioManager.Instance.Play(AudioManager.Instance.credit);
         OnCharacterSelected?.Invoke(allCharacters[states[index].CharacterIndex]);
     }
+
+    public PanelInputHandler GetPanelInput(int index) =>
+    (index >= 0 && index < panelInputs.Length) ? panelInputs[index] : null;
 
     /// <summary>
     /// Returns the lowest-index active panel (0..expectedPlayers-1) that is visible and not yet joined.
