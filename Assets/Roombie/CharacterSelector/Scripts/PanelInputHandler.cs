@@ -1,5 +1,5 @@
 using System;
-using System.Collections; // for coroutine
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Roombie.CharacterSelect;
@@ -66,18 +66,30 @@ public class PanelInputHandler : MonoBehaviour
 
         playerIndex = index;
         playerInput = GetComponent<PlayerInput>();
-        playerInput.neverAutoSwitchControlSchemes = true; // avoid auto-steal pre-join
 
-        moveDeadzone       = deadzone;
+        if (playerInput != null)
+        {
+            // DO NOT let PlayerInput auto-switch schemes on device activity
+            playerInput.neverAutoSwitchControlSchemes = true;
+
+            // Start with no devices paired to this PlayerInput
+            if (playerInput.user.valid)
+                playerInput.user.UnpairDevices();
+
+            // Clear current control scheme (keeps the inspector debug honest)
+            try { playerInput.SwitchCurrentControlScheme(null, (InputDevice[])null); } catch { }
+            playerInput.actions.devices = null;
+        }
+
+        moveDeadzone = deadzone;
         initialRepeatDelay = repeatDelay;
         this.repeatInterval = repeatInterval;
-        allowHoldRepeat    = allowRepeat;
+        allowHoldRepeat = allowRepeat;
 
         var asset = playerInput.actions;
 
         // PRE-JOIN MASK:
-        // SP: open
-        // MP: only this panel's keyboard group + Gamepad
+        // SP: open. MP: only this panel's keyboard group + Gamepad
         if (CharacterSelectionManager.Instance.IsSinglePlayer)
         {
             asset.bindingMask = default;
@@ -86,23 +98,24 @@ public class PanelInputHandler : MonoBehaviour
         {
             var group = PlayerDeviceManager.Instance.ForPanel(playerIndex); // "P1Keyboard"/"P2Keyboard"
             asset.bindingMask = string.IsNullOrEmpty(group)
-                ? InputBinding.MaskByGroup("Gamepad")
-                : InputBinding.MaskByGroups(group, "Gamepad"); // ✅ proper multi-group mask
+                                ? default
+                                : InputBinding.MaskByGroups(group, "Gamepad");
         }
 
         submit = asset["Submit"];
         cancel = asset["Cancel"];
-        move   = asset["Move"];
+        move = asset["Move"];
         dejoin = asset["Select"];
 
         submit.performed += OnSubmitPerformed;
         cancel.performed += OnCancelPerformed;
-        move.performed   += OnMovePerformed;
-        move.canceled    += OnMoveCanceled;
+        move.performed += OnMovePerformed;
+        move.canceled += OnMoveCanceled;
         dejoin.performed += OnDejoinPerformed;
-        dejoin.canceled  += OnDejoinCanceled;
+        dejoin.canceled += OnDejoinCanceled;
 
-        asset.Disable(); asset.Enable(); // apply mask immediately
+        asset.Disable();
+        asset.Enable(); // apply mask immediately
     }
 
     private void OnDisable()
@@ -209,21 +222,24 @@ public class PanelInputHandler : MonoBehaviour
         if (control == null) return;
 
         if (!CharacterSelectionManager.Instance) return;
-        if (!PlayerDeviceManager.Instance.CanClaimNow()) return;
 
         // Gamepad → first free slot (P1 first, then P2)
         if (control.device is Gamepad gamepad)
         {
+            if (!PlayerDeviceManager.Instance.CanClaimNow()) return;
+
             int nextFree = CharacterSelectionManager.Instance.GetNextFreeJoinSlot();
             if (nextFree < 0) return;
 
             if (playerIndex != nextFree)
             {
+                // Route this gamepad press to the correct (first free) panel
                 var target = CharacterSelectionManager.Instance.GetPanelInput(nextFree);
                 if (target != null) target.TryClaimSpecificGamepad(gamepad);
                 return;
             }
 
+            // I'm the first free panel; claim directly
             TryClaimSpecificGamepad(gamepad);
             return;
         }
@@ -250,11 +266,28 @@ public class PanelInputHandler : MonoBehaviour
                 chosenDeviceIds = new[] { kb.deviceId };
                 hasJoined = true;
 
+                if (playerInput != null)
+                {
+                    if (playerInput.user.valid) playerInput.user.UnpairDevices(); // defensive reset
+                    var devices = Mouse.current != null
+                        ? new InputDevice[] { Keyboard.current, Mouse.current }
+                        : new InputDevice[] { Keyboard.current };
+
+                    foreach (var d in devices) InputUser.PerformPairingWithDevice(d, playerInput.user);
+
+                    // Use your real scheme name here ("Keyboard&Mouse" or "Keyboard")
+                    try { playerInput.SwitchCurrentControlScheme("Keyboard&Mouse", devices); } catch { }
+
+                    // Keep the mask strict to this panel's keyboard group
+                    playerInput.actions.bindingMask = InputBinding.MaskByGroup(reservedKeyboardScheme);
+                    playerInput.actions.Disable(); playerInput.actions.Enable();
+                }
+
                 LockToReservation();
 
                 Debug.Log($"[PanelInputHandler] P{playerIndex + 1} joined with {scheme}");
                 CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
-                PlayerDeviceManager.Instance.MarkClaimed();
+                PlayerDeviceManager.Instance.MarkClaimed(); // mark only on successful claim
             }
             return;
         }
@@ -267,21 +300,22 @@ public class PanelInputHandler : MonoBehaviour
         if (!PlayerDeviceManager.Instance.TryReserveGamepad(gamepad)) return;
 
         reservedGamepad = gamepad;
-        chosenScheme    = "Gamepad";
+        chosenScheme = "Gamepad";
         chosenDeviceIds = new[] { gamepad.deviceId };
-        hasJoined       = true;
+        hasJoined = true;
 
-        // Pair ONLY this device to this user (no null device)
-        var user = playerInput.user;
-        if (user.valid) user.UnpairDevice(gamepad);        // clear prior pairing of this device
-        InputUser.PerformPairingWithDevice(gamepad, user); // pair to THIS panel
+        if (playerInput != null)
+        {
+            var user = playerInput.user;
+            try { if (user.valid) user.UnpairDevices(); } catch { }
+            InputUser.PerformPairingWithDevice(gamepad, user);
 
-        // Lock control scheme & mask
-        playerInput.neverAutoSwitchControlSchemes = true;
-        playerInput.SwitchCurrentControlScheme("Gamepad", gamepad);
+            playerInput.neverAutoSwitchControlSchemes = true;
+            playerInput.SwitchCurrentControlScheme("Gamepad", gamepad);
 
-        playerInput.actions.bindingMask = InputBinding.MaskByGroup("Gamepad");
-        playerInput.actions.Disable(); playerInput.actions.Enable();
+            playerInput.actions.bindingMask = InputBinding.MaskByGroup("Gamepad");
+            playerInput.actions.Disable(); playerInput.actions.Enable();
+        }
 
         Debug.Log($"[PanelInputHandler] P{playerIndex + 1} joined with Gamepad (routed).");
         CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
@@ -290,6 +324,11 @@ public class PanelInputHandler : MonoBehaviour
 
     private void ReleaseReservations()
     {
+        if (playerInput != null && playerInput.user.valid)
+        {
+            try { playerInput.user.UnpairDevices(); } catch { }
+        }
+
         if (!string.IsNullOrEmpty(reservedKeyboardScheme))
         {
             PlayerDeviceManager.Instance.ReleaseKeyboardScheme(reservedKeyboardScheme);
@@ -298,8 +337,13 @@ public class PanelInputHandler : MonoBehaviour
 
         if (reservedGamepad != null)
         {
-            var user = playerInput.user;
-            if (user.valid) user.UnpairDevice(reservedGamepad); // only this device
+            // Unpair from our user if we can
+            if (playerInput != null)
+            {
+                var user = playerInput.user;
+                try { user.UnpairDevices(); } catch { }
+            }
+            // Always release globally so the device can be re-claimed
             PlayerDeviceManager.Instance.ReleaseGamepad(reservedGamepad);
             reservedGamepad = null;
         }
@@ -326,9 +370,18 @@ public class PanelInputHandler : MonoBehaviour
             return control.device is Gamepad g && g.deviceId == reservedGamepad.deviceId;
 
         if (!string.IsNullOrEmpty(reservedKeyboardScheme))
-            return PlayerDeviceManager.GroupsContain(ctx.action, control, reservedKeyboardScheme);
+            return PlayerDeviceManager.GroupsContainForPanel(ctx.action, control, reservedKeyboardScheme, playerIndex);
 
         return false;
+    }
+
+    // ---------- helpers for safe scheme/mask ops ----------
+    private void NeutralizeSchemeIfReady()
+    {
+        if (playerInput == null) return;
+        playerInput.neverAutoSwitchControlSchemes = true;
+        try { playerInput.SwitchCurrentControlScheme(null, (InputDevice[])null); } catch { }
+        playerInput.actions.devices = null;
     }
 
     // Lock/clear masks --------------------------------------------------------
@@ -354,61 +407,56 @@ public class PanelInputHandler : MonoBehaviour
 
     private void ApplyPreJoinMask()
     {
+        // Put PlayerInput into a neutral, autoswitchable state if available
+        NeutralizeSchemeIfReady();
+
         if (playerInput == null || playerInput.actions == null) return;
 
         if (CharacterSelectionManager.Instance != null && !CharacterSelectionManager.Instance.IsSinglePlayer)
         {
             var group = PlayerDeviceManager.Instance.ForPanel(playerIndex);
             playerInput.actions.bindingMask = string.IsNullOrEmpty(group)
-                ? InputBinding.MaskByGroup("Gamepad")
+                ? default
                 : InputBinding.MaskByGroups(group, "Gamepad");
         }
         else
         {
             playerInput.actions.bindingMask = default;
         }
-        playerInput.actions.Disable(); playerInput.actions.Enable();
-    }
 
-    private void ClearBindingMask()
-    {
-        if (playerInput != null && playerInput.actions != null)
-        {
-            playerInput.actions.bindingMask = default;
-            playerInput.actions.Disable(); playerInput.actions.Enable();
-        }
+        playerInput.actions.Disable();
+        playerInput.actions.Enable();
     }
 
     private IEnumerator ClearWaitNextFrame()
     {
         yield return null; // let any canceled events happen if they will
-        waitForFreshPress = false; // ✅ always clear, even if cancel never fired (e.g., device unpaired)
+        waitForFreshPress = false; // always clear, even if cancel never fired (e.g., device unpaired)
     }
 
     // ---------------- API ----------------
     public (string scheme, int[] deviceIds) GetInputSignature() => (chosenScheme, chosenDeviceIds);
-    public int  PlayerIndex => playerIndex;
-    public bool HasJoined   => hasJoined;
+    public int PlayerIndex => playerIndex;
+    public bool HasJoined => hasJoined;
 
     public void ConfirmDejoin()
     {
         if (!hasJoined) return;
 
-        // snapshot used devices (optional; we only use global debounce)
         bool wasGamepad = reservedGamepad != null;
 
         ReleaseReservations();
         hasJoined = false;
-        waitForFreshPress = true; // briefly block same-frame rejoin
+        waitForFreshPress = wasGamepad;
         requireNeutralAfterJoinViaMove = false;
         lastMoveSign = 0;
         lastMoveValue = Vector2.zero;
 
-        // Restore pre-join mask so keyboards can claim again
+        // Neutralize scheme (only if playerInput exists), then restore pre-join mask
+        NeutralizeSchemeIfReady();
         ApplyPreJoinMask();
 
-        // Small global debounce to avoid thrash; then lift fresh-press gate next frame
-        PlayerDeviceManager.Instance.MarkClaimed();
+        // Lift the fresh-press gate next frame
         StartCoroutine(ClearWaitNextFrame());
 
         Debug.Log($"[PanelInputHandler] Player {playerIndex} dejoined confirmed (wasGamepad={wasGamepad})");
@@ -428,8 +476,9 @@ public class PanelInputHandler : MonoBehaviour
         lastMoveValue = Vector2.zero;
         OnDejoin?.Invoke(playerIndex);
 
+        NeutralizeSchemeIfReady();
         ApplyPreJoinMask();
-        PlayerDeviceManager.Instance.MarkClaimed();
+
         StartCoroutine(ClearWaitNextFrame());
 
         Debug.Log($"[PanelInputHandler] Player {playerIndex} force-dejoined (wasGamepad={wasGamepad})");
@@ -453,7 +502,9 @@ public class PanelInputHandler : MonoBehaviour
         lastMoveValue = Vector2.zero;
         nextRepeatTime = 0f;
 
-        ApplyPreJoinMask(); // ✅ keep panel in proper pre-join state
+        // If called before Initialize(), playerInput is null — safe now
+        NeutralizeSchemeIfReady();
+        ApplyPreJoinMask();
     }
 
     public bool IsUsingGamepad(Gamepad gp)

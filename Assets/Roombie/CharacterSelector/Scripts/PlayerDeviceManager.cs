@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities; // InputControlPath
@@ -82,25 +83,53 @@ namespace Roombie.CharacterSelect
             if (gp == null) return;
             reservedGamepads.Remove(gp.deviceId);
         }
-
-        public bool GamepadMustUseFirstFreeSlot() => joinPolicy != null && joinPolicy.GamepadMustUseFirstFreeSlot;
         #endregion
 
         #region Registry helpers
+        /// <summary>
+        /// Returns the exact binding-group token this panel should accept, e.g. "P1Keyboard".
+        /// Accepts registry values that might be format templates: "P{0}Keyboard", "P{index}Keyboard", etc.
+        /// Falls back to default "P{n}Keyboard" if the registry is missing/invalid.
+        /// </summary>
         public string ForPanel(int panelIndex)
         {
-            var n = keyboardRegistry != null ? keyboardRegistry.ForPanel(panelIndex) : null;
-            return string.IsNullOrEmpty(n) ? $"P{panelIndex + 1}Keyboard" : n; // safe default
+            int n = panelIndex + 1;
+            string raw = keyboardRegistry != null ? keyboardRegistry.ForPanel(panelIndex) : null;
+
+            string resolved = ResolvePanelGroupToken(raw, n);
+            if (string.IsNullOrEmpty(resolved))
+                resolved = $"P{n}Keyboard";
+
+            // final safety: only accept sane tokens like P1Keyboard..P8Keyboard
+            if (!Regex.IsMatch(resolved, @"^P[1-8]Keyboard$"))
+                resolved = $"P{n}Keyboard";
+
+            return resolved;
+        }
+
+        public static string ResolvePanelGroupToken(string token, int oneBasedIndex)
+        {
+            if (string.IsNullOrEmpty(token)) return null;
+
+            // common placeholders
+            string result = token
+                .Replace("{index}", oneBasedIndex.ToString())
+                .Replace("{0}", oneBasedIndex.ToString());
+
+            // Also support forms like "P{1}Keyboard" (hard-coded number) → replace with current index
+            result = Regex.Replace(result, @"P\{\d+\}Keyboard", $"P{oneBasedIndex}Keyboard");
+
+            // Trim leftover braces/spaces just in case
+            result = result.Replace("{", "").Replace("}", "").Trim();
+
+            return result;
         }
 
         public string[] SinglePlayerCandidates()
         {
+            // SP path still uses all groups as candidates
             if (keyboardRegistry == null)
-            {
-                Debug.LogError("[PlayerDeviceManager] KeyboardSchemeRegistry is not assigned. " +
-                               "Create/assign it to PlayerDeviceManager.");
-                return new[] { "P1Keyboard", "P2Keyboard" }; // temporary safe default
-            }
+                return new[] { "P1Keyboard", "P2Keyboard" };
             return keyboardRegistry.AllAsArray();
         }
 
@@ -112,10 +141,6 @@ namespace Roombie.CharacterSelect
         #endregion
 
         #region Scheme resolution (PANEL-STRICT in MP; exact token only)
-        /// <summary>
-        /// MP: ONLY this panel's keyboard group is accepted (panel 0→"P1Keyboard", panel 1→"P2Keyboard", ...).
-        /// SP: accept any registered keyboard group that truly fired the binding (exact token match).
-        /// </summary>
         public string GetKeyboardSchemeForControl(
             InputAction action,
             InputControl control,
@@ -125,24 +150,18 @@ namespace Roombie.CharacterSelect
             if (action == null || control == null) return null;
 
             if (isSinglePlayer)
-            {
                 return FirstMatchingKeyboardGroup(action, control, SinglePlayerCandidates());
-            }
 
             // MP strict: expect this panel's exact token
             var expected = ForPanel(panelIndex);
-            if (!string.IsNullOrEmpty(expected) && GroupsContain(action, control, expected))
+            if (!string.IsNullOrEmpty(expected) && GroupsContainForPanel(action, control, expected, panelIndex))
                 return expected;
 
-            // No fallback: must be exact
             return null;
         }
         #endregion
 
         #region Binding-group helpers
-        /// Returns the first candidate group that both:
-        /// 1) appears as an exact token in the binding's groups, and
-        /// 2) matches the pressed control via binding.effectivePath.
         public static string FirstMatchingKeyboardGroup(InputAction action, InputControl control, string[] candidates)
         {
             if (action == null || control == null || candidates == null) return null;
@@ -156,7 +175,6 @@ namespace Roombie.CharacterSelect
             return null;
         }
 
-        /// Exact token match on binding groups + effective path match against the pressed control.
         public static bool GroupsContain(InputAction action, InputControl control, string groupName)
         {
             if (action == null || control == null || string.IsNullOrEmpty(groupName)) return false;
@@ -166,18 +184,17 @@ namespace Roombie.CharacterSelect
             {
                 var b = bindings[i];
 
-                // Must match the control path (part binding for composites, simple binding otherwise)
                 if (!InputControlPath.Matches(b.effectivePath, control))
                     continue;
 
-                // 1) Direct token on this binding?
+                // direct token
                 if (!string.IsNullOrEmpty(b.groups))
                 {
                     foreach (var tok in b.groups.Split(';'))
                         if (tok.Trim() == groupName) return true;
                 }
 
-                // 2) If it's a part of a composite, look up the composite parent token
+                // composite parent
                 if (b.isPartOfComposite)
                 {
                     for (int p = i - 1; p >= 0; p--)
@@ -192,20 +209,80 @@ namespace Roombie.CharacterSelect
                             }
                             break;
                         }
-                        if (!bindings[p].isPartOfComposite) break; // safety
+                        if (!bindings[p].isPartOfComposite) break;
                     }
                 }
             }
             return false;
         }
 
-        /// Big, friendly log when a keypress was ignored for a panel (to help fix the asset).
+        public static bool GroupsContainForPanel(InputAction action, InputControl control, string groupName, int panelIndex)
+        {
+            if (action == null || control == null || string.IsNullOrEmpty(groupName)) return false;
+
+            int oneBased = panelIndex + 1;
+            var bindings = action.bindings;
+
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                var b = bindings[i];
+                if (!InputControlPath.Matches(b.effectivePath, control))
+                    continue;
+
+                // direct / template tokens on this binding
+                if (!string.IsNullOrEmpty(b.groups))
+                {
+                    foreach (var tok in b.groups.Split(';'))
+                    {
+                        var t = tok.Trim();
+                        if (t == groupName) return true;
+
+                        // resolve templates like "P{0}Keyboard" or "P{index}Keyboard" or "P{2}Keyboard"
+                        var resolved = ResolvePanelGroupToken(t, oneBased);
+                        if (!string.IsNullOrEmpty(resolved) && resolved == groupName) return true;
+                    }
+                }
+
+                // composite parent case
+                if (b.isPartOfComposite)
+                {
+                    for (int p = i - 1; p >= 0; p--)
+                    {
+                        if (bindings[p].isComposite)
+                        {
+                            var parentGroups = bindings[p].groups;
+                            if (!string.IsNullOrEmpty(parentGroups))
+                            {
+                                foreach (var tok in parentGroups.Split(';'))
+                                {
+                                    var t = tok.Trim();
+                                    if (t == groupName) return true;
+                                    var resolved = ResolvePanelGroupToken(t, oneBased);
+                                    if (!string.IsNullOrEmpty(resolved) && resolved == groupName) return true;
+                                }
+                            }
+                            break;
+                        }
+                        if (!bindings[p].isPartOfComposite) break;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public void ResetAllReservations()
+        {
+            reservedKeyboardSchemes.Clear();
+            reservedGamepads.Clear();
+            lastClaimTime = -999f;
+            Debug.Log("[PlayerDeviceManager] ResetAllReservations: cleared schemes, gamepads, debounce.");
+        }
+
         public static void DebugLogGroupMismatch(InputAction action, InputControl control, int panelIndex)
         {
             var expected = Instance.ForPanel(panelIndex);
+            string fired = null, resolved = null;
 
-            // Try to detect which token actually fired (if any)
-            string fired = null;
             if (action != null && control != null)
             {
                 var bindings = action.bindings;
@@ -215,19 +292,22 @@ namespace Roombie.CharacterSelect
                     if (string.IsNullOrEmpty(b.groups)) continue;
                     if (!InputControlPath.Matches(b.effectivePath, control)) continue;
 
-                    var tokens = b.groups.Split(';');
-                    for (int t = 0; t < tokens.Length; t++)
+                    foreach (var tok in b.groups.Split(';'))
                     {
-                        var tok = tokens[t].Trim();
-                        if (!string.IsNullOrEmpty(tok)) { fired = tok; break; }
+                        var t = tok.Trim();
+                        if (string.IsNullOrEmpty(t)) continue;
+                        fired = t;
+                        resolved = ResolvePanelGroupToken(t, panelIndex + 1);
+                        break;
                     }
                     if (fired != null) break;
                 }
             }
 
             Debug.LogWarning(
-                $"[PlayerDeviceManager] Panel {panelIndex} expected EXACT group '{expected}', but keypress was from '{(fired ?? "<none>")}'. " +
-                $"Fix the Input Actions Group tokens on Move/Submit/Cancel/Select to match exactly.");
+            $"[PlayerDeviceManager] Panel {panelIndex} expected '{expected}', " +
+            $"binding group was '{(fired ?? "<none>")}', resolved='{(resolved ?? "<n/a>")}'. " +
+            "Check Input Actions group tokens (root composite + parts).");
         }
         #endregion
     }

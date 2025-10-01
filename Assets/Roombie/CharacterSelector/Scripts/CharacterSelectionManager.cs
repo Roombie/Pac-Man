@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using Roombie.CharacterSelect;
+using UnityEngine.InputSystem.Users;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 public class CharacterSelectionManager : MonoBehaviour
 {
@@ -50,7 +53,10 @@ public class CharacterSelectionManager : MonoBehaviour
         expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1);
     }
 
-    private void OnEnable() => ResetPanels();
+    private void OnEnable()
+    {
+        ResetPanels();
+    }
 
     private void OnDisable()
     {
@@ -69,7 +75,11 @@ public class CharacterSelectionManager : MonoBehaviour
     /// </summary>
     private void ResetPanels()
     {
+        Instance = this;
         expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1);
+        InputUser.listenForUnpairedDeviceActivity = 1; // 1 = true, 0 = false
+
+        PlayerDeviceManager.Instance?.ResetAllReservations();
 
         joinedPlayers.Clear();
         allSelectedFired = false;
@@ -153,7 +163,7 @@ public class CharacterSelectionManager : MonoBehaviour
         }
         else if (allSelectedFired && !allConfirmedFired)
         {
-            // One extra Submit from ANY player after all selected → finalize
+            // One extra Submit from ANY player after the above → finalize
             FinalConfirmation();
         }
 
@@ -396,7 +406,7 @@ public class CharacterSelectionManager : MonoBehaviour
     }
 
     public PanelInputHandler GetPanelInput(int index) =>
-    (index >= 0 && index < panelInputs.Length) ? panelInputs[index] : null;
+        (index >= 0 && index < panelInputs.Length) ? panelInputs[index] : null;
 
     /// <summary>
     /// Returns the lowest-index active panel (0..expectedPlayers-1) that is visible and not yet joined.
@@ -406,17 +416,28 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         int limit = Mathf.Min(expectedPlayers, panelInputs.Length);
 
+        // Primary pass: panel must be visible, enabled, and not joined
         for (int i = 0; i < limit; i++)
         {
-            // Panel must be active/visible and its input must exist
-            if (panelRenderers[i] != null && panelRenderers[i].gameObject.activeSelf &&
+            if (panelRenderers[i] != null && panelRenderers[i].gameObject.activeInHierarchy &&
+                panelInputs[i] != null && panelInputs[i].enabled &&
+                !panelInputs[i].HasJoined)
+            {
+                return i;
+            }
+        }
+
+        // Fallback (shouldn’t be needed, but avoids deadlocks if a flag desyncs)
+        for (int i = 0; i < limit; i++)
+        {
+            if (panelRenderers[i] != null && panelRenderers[i].gameObject.activeInHierarchy &&
                 panelInputs[i] != null && !panelInputs[i].HasJoined)
             {
                 return i;
             }
         }
 
-        return -1; // none free
+        return -1;
     }
 
     // ---------- Persistence helpers ----------

@@ -8880,7 +8880,7 @@ MonoBehaviour:
   m_Navigation:
     m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 231934808}
+    m_SelectOnUp: {fileID: 184042151}
     m_SelectOnDown: {fileID: 1227820081}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
@@ -9703,7 +9703,7 @@ GameObject:
   - component: {fileID: 1080550762}
   - component: {fileID: 1080550761}
   m_Layer: 5
-  m_Name: CherrySoup Text (TMP)
+  m_Name: Enmark Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9748,7 +9748,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: CherrySoup
+  m_text: Enmark
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: bed4f9c26b4b7d7469b093c0b9994131, type: 2}
   m_sharedMaterial: {fileID: 3899040833245846193, guid: bed4f9c26b4b7d7469b093c0b9994131, type: 2}
