@@ -282,6 +282,38 @@ public class CharacterSelectionManager : MonoBehaviour
         Debug.Log($"[CharacterSelectionManager] Player {index} dejoined (prevPhase={prevPhase}).");
     }
 
+    private void PersistInputChoicesForGameplay()
+    {
+        // expectedPlayers is already set; slots are 1-based in gameplay prefs
+        for (int i = 0; i < expectedPlayers && i < panelInputs.Length; i++)
+        {
+            var input = panelInputs[i];
+            if (input == null || !input.HasJoined) continue;
+
+            var (scheme, deviceIds) = input.GetInputSignature();   // from PanelInputHandler
+            int slot = i + 1;
+
+            // Normalize nulls
+            scheme ??= string.Empty;
+            var ids = (deviceIds != null && deviceIds.Length > 0)
+                    ? string.Join(",", deviceIds)
+                    : string.Empty;
+
+            PlayerPrefs.SetString($"P{slot}_Scheme", scheme);
+            PlayerPrefs.SetString($"P{slot}_Devices", ids);
+        }
+
+        // If you want to be tidy, clear unused slots up to 2 players (or more if you support more)
+        for (int i = expectedPlayers; i < 2; i++)
+        {
+            int slot = i + 1;
+            PlayerPrefs.DeleteKey($"P{slot}_Scheme");
+            PlayerPrefs.DeleteKey($"P{slot}_Devices");
+        }
+
+        PlayerPrefs.Save();
+    }
+
     #endregion
 
     #region Actions
@@ -342,6 +374,7 @@ public class CharacterSelectionManager : MonoBehaviour
             if (states[i].Phase == PanelJoinState.SkinConfirmed)
                 SaveSelectionForPlayer(i);
 
+        PersistInputChoicesForGameplay();
         // Flush persistence if needed
         FlushPersistence();
 
