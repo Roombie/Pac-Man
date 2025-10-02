@@ -38,6 +38,14 @@ public class Pacman : MonoBehaviour
         // Filter out diagonal input: prioritize horizontal or vertical based on which is greater
         if (inputDirection != Vector2.zero)
         {
+            var moveAction = playerInput.actions["Move"];
+            var activeControl = moveAction.activeControl;
+            if (activeControl != null)
+            {   Debug.Log($"[Pacman] Input from: {activeControl.device.displayName} | " +
+                  $"Scheme: {playerInput.currentControlScheme} | " +
+                  $"Direction: {inputDirection} | " +
+                  $"Key: {activeControl.path}");
+            }
             // Prioritize horizontal or vertical input
             if (Mathf.Abs(inputDirection.x) > Mathf.Abs(inputDirection.y))
                 inputDirection = new Vector2(Mathf.Sign(inputDirection.x), 0f);

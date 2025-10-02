@@ -15,4 +15,4 @@ MonoBehaviour:
   claimDebounceSeconds: 0.2
   gamepadJoinsFirstFree: 1
   spAcceptAllKeyboardGroups: 1
-  mpStrictKeyboardByPanel: 1
+  mpStrictKeyboardByPanel: 0

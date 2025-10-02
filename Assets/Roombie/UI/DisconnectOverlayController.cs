@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -7,8 +6,8 @@ using UnityEngine.InputSystem;
 namespace Roombie.UI
 {
     /// <summary>
-    /// Builds one PlayerCardView per slot and updates presence (keyboard/gamepad).
-    /// Uses an InputActionReference (Submit) to confirm.
+    /// Multi-slot overlay that shows per-player presence (keyboard/gamepad).
+    /// Supports "required" slots (must be present) and optional slots (may re-bind while open).
     /// </summary>
     public class DisconnectOverlayController : MonoBehaviour
     {
@@ -41,12 +40,14 @@ namespace Roombie.UI
         InputAction _submitAction;
         bool _submitHooked;
 
+        // Required slots set (only these must present to allow Submit)
+        HashSet<int> _requiredSlots = new();
+
         void Awake()
         {
             if (!viewRoot) viewRoot = gameObject;
             viewRoot.SetActive(false);
             SetupSubmitAction();
-            // delay building until InitializeIfNeeded or first Rebuild/Show
         }
 
         void OnDestroy()
@@ -64,37 +65,43 @@ namespace Roombie.UI
                 Debug.LogWarning("[DisconnectOverlay] No confirmActionRef assigned (UI/Submit recommended).");
                 return;
             }
-            _submitAction.performed -= OnSubmitPerformed; // safety against double-subscribe
+            _submitAction.performed -= OnSubmitPerformed;
             _submitAction.performed += OnSubmitPerformed;
         }
 
         void OnSubmitPerformed(InputAction.CallbackContext _)
         {
             if (!viewRoot || !viewRoot.activeInHierarchy) return;
-            // Only allow confirm if everyone has a device (your rule)
-            if (AreAllSlotsPresent())
+            if (AreRequiredSlotsPresent())
                 GameManager.Instance.FinishRejoin();
         }
 
         // ---------- Public API (what GameManager calls) ----------
 
-        void PushIconsToCards()
-        {
-            for (int i = 0; i < cards.Count; i++)
-            {
-                var c = cards[i];
-                if (!c) continue;
-                c.SetIcons(_iconKeyboard, _iconGamepad);
-            }
-        }
-
-        /// <summary>Parameterless variant if defaults are set via inspector.</summary>
+        /// <summary>Initialize icons once, if using inspector defaults.</summary>
         public void InitializeIfNeeded()
         {
             _iconKeyboard = iconKeyboard;
             _iconGamepad = iconGamepad;
             _initialized = true;
             PushIconsToCards();
+        }
+
+        /// <summary>
+        /// Define how many cards to build and which slots are required in the current rejoin session.
+        /// </summary>
+        public void SetMode(int totalPlayers, IEnumerable<int> requiredSlots)
+        {
+            if (totalPlayers < 1) totalPlayers = 1;
+
+            _requiredSlots.Clear();
+            if (requiredSlots != null)
+            {
+                foreach (var r in requiredSlots)
+                    _requiredSlots.Add(Mathf.Max(0, r));
+            }
+
+            RebuildCards(totalPlayers);
         }
 
         /// <summary>Rebuild card list to exactly this count.</summary>
@@ -137,12 +144,21 @@ namespace Roombie.UI
             {
                 // IMPORTANT: start from a blank state so previous icons don't linger
                 ClearAllPresence();
-                // keep cards visible; presence will be filled by GameManager as input is detected
                 RefreshAll();
             }
         }
 
         // ---------- Internals ----------
+
+        void PushIconsToCards()
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                var c = cards[i];
+                if (!c) continue;
+                c.SetIcons(_iconKeyboard, _iconGamepad);
+            }
+        }
 
         void BuildCards(int count)
         {
@@ -211,15 +227,29 @@ namespace Roombie.UI
             }
         }
 
-        bool AreAllSlotsPresent()
+        bool AreRequiredSlotsPresent()
         {
             if (cards.Count == 0) return false;
+
+            // If there are explicitly required slots, only check those.
+            if (_requiredSlots.Count > 0)
+            {
+                foreach (var slot in _requiredSlots)
+                {
+                    if (slot < 0 || slot >= cards.Count) return false;
+                    var c = cards[slot];
+                    if (!c || !c.HasAnyPresence) return false;
+                }
+                return true;
+            }
+
+            // Fallback: require at least one card with presence
             for (int i = 0; i < cards.Count; i++)
             {
                 var c = cards[i];
-                if (!c || !c.HasAnyPresence) return false;
+                if (c && c.HasAnyPresence) return true;
             }
-            return true;
+            return false;
         }
     }
 }
