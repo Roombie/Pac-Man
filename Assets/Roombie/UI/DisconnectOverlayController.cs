@@ -62,18 +62,28 @@ namespace Roombie.UI
             _submitAction = submitAction ? submitAction.action : null;
             if (_submitAction == null)
             {
-                Debug.LogWarning("[DisconnectOverlay] No confirmActionRef assigned (UI/Submit recommended).");
+                Debug.LogWarning("[DisconnectOverlay] No submitActionRef assigned (UI/Submit recommended).");
                 return;
             }
             _submitAction.performed -= OnSubmitPerformed;
             _submitAction.performed += OnSubmitPerformed;
         }
 
-        void OnSubmitPerformed(InputAction.CallbackContext _)
+        void OnSubmitPerformed(InputAction.CallbackContext ctx)
         {
             if (!viewRoot || !viewRoot.activeInHierarchy) return;
+            
+            Debug.Log($"[DisconnectOverlay] Submit pressed - Required slots present: {AreRequiredSlotsPresent()}");
+            
             if (AreRequiredSlotsPresent())
+            {
+                Debug.Log("[DisconnectOverlay] Finishing rejoin process");
                 GameManager.Instance.FinishRejoin();
+            }
+            else
+            {
+                Debug.Log("[DisconnectOverlay] Submit pressed but required slots not present");
+            }
         }
 
         // ---------- Public API (what GameManager calls) ----------
@@ -127,6 +137,8 @@ namespace Roombie.UI
             // keep card visible; just swap/hide icon internally
             card.Show(true);
             card.SetPresence(hasKeyboard, hasGamepad);
+            
+            Debug.Log($"[DisconnectOverlay] Slot {slotIndex} - Keyboard: {hasKeyboard}, Gamepad: {hasGamepad}");
         }
 
         /// <summary>Toggle overlay visibility; when showing, reset presence and enable Submit.</summary>
@@ -145,6 +157,15 @@ namespace Roombie.UI
                 // IMPORTANT: start from a blank state so previous icons don't linger
                 ClearAllPresence();
                 RefreshAll();
+                
+                // Enable UI input action map
+                EnableUIInput();
+                
+                Debug.Log($"[DisconnectOverlay] Overlay shown - waiting for submit input");
+            }
+            else
+            {
+                Debug.Log("[DisconnectOverlay] Overlay hidden");
             }
         }
 
@@ -183,19 +204,25 @@ namespace Roombie.UI
 
         void HookSubmit(bool hook)
         {
-            if (!submitAction || submitAction.action == null) return;
+            if (_submitAction == null) 
+            {
+                Debug.LogWarning("[DisconnectOverlay] No submit action available to hook");
+                return;
+            }
 
             if (hook && !_submitHooked)
             {
-                submitAction.action.Enable();
-                submitAction.action.performed += OnSubmitPerformed;
+                _submitAction.Enable();
+                _submitAction.performed += OnSubmitPerformed;
                 _submitHooked = true;
+                Debug.Log("[DisconnectOverlay] Submit action hooked and enabled");
             }
             else if (!hook && _submitHooked)
             {
-                submitAction.action.performed -= OnSubmitPerformed;
-                submitAction.action.Disable();
+                _submitAction.performed -= OnSubmitPerformed;
+                _submitAction.Disable();
                 _submitHooked = false;
+                Debug.Log("[DisconnectOverlay] Submit action unhooked and disabled");
             }
         }
 
@@ -213,6 +240,24 @@ namespace Roombie.UI
                 var c = cards[i];
                 if (!c) continue;
                 c.Show(true); // presence is fed externally via SetPresenceForSlot
+            }
+        }
+
+        /// <summary>Enable UI input during rejoin process</summary>
+        private void EnableUIInput()
+        {
+            // Find any PlayerInput and enable UI action map
+            var playerInputs = FindObjectsByType<PlayerInput>(FindObjectsSortMode.None);
+            foreach (var playerInput in playerInputs)
+            {
+                if (playerInput != null)
+                {
+                    // Disable Player actions, enable UI actions
+                    playerInput.actions.FindActionMap("Player", false)?.Disable();
+                    playerInput.actions.FindActionMap("UI", false)?.Enable();
+                    
+                    Debug.Log($"[DisconnectOverlay] Enabled UI action map for {playerInput.gameObject.name}");
+                }
             }
         }
 

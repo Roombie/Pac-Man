@@ -35,8 +35,11 @@ public class Pacman : MonoBehaviour
         // Get move input direction
         Vector2 inputDirection = playerInput.actions["Move"].ReadValue<Vector2>();
 
+        if (inputDirection != Vector2.zero && !IsInputForThisPlayer(inputDirection))
+            return;
+
         // Filter out diagonal input: prioritize horizontal or vertical based on which is greater
-        if (inputDirection != Vector2.zero)
+        if (inputDirection != Vector2.zero && !IsInputForThisPlayer(inputDirection))
         {
             var moveAction = playerInput.actions["Move"];
             var activeControl = moveAction.activeControl;
@@ -84,6 +87,23 @@ public class Pacman : MonoBehaviour
         }
 
         // animator.speed = movement.isBlocked ? 0f : 1f;
+    }
+
+    /// <summary>
+    /// Check if the current input should be handled by this player using the same logic as character selection
+    /// </summary>
+    private bool IsInputForThisPlayer(Vector2 inputDirection)
+    {
+        if (InputManager.Instance == null) return true;
+        
+        var moveAction = playerInput.actions["Move"];
+        var activeControl = moveAction.activeControl;
+        
+        if (activeControl == null) return true;
+        
+        // USE THE SAME RESOLUTION AS CHARACTER SELECTION
+        return InputManager.Instance.ShouldHandleInputForPlayer(
+            moveAction, activeControl, GameManager.Instance.currentPlayer);
     }
 
     /// <summary>

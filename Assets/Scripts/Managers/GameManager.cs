@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour
     public int highScore { get; private set; }
     public bool IsTwoPlayerMode { get; private set; }
     private int currentExtraPoints = 0;
-    private int currentPlayer = 1;
+    [HideInInspector] public int currentPlayer = 1;
     [HideInInspector] public int CurrentIndex => currentPlayer - 1;
     private int startingLives;
     [HideInInspector] public CharacterData[] selectedCharacters;
@@ -215,13 +215,19 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator ApplyInputDevicesDelayed()
     {
-        // Wait one frame to ensure InputUser is properly initialized
         yield return null;
-        
-        if (InputManager.Instance != null)
+    
+        if (InputManager.Instance != null && currentPacman != null)
         {
-            int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
-            InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
+            var playerInput = currentPacman.GetComponent<PlayerInput>();
+            if (playerInput != null)
+            {
+                int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
+                
+                // USE CHARACTER SELECTION RULES instead of custom logic
+                InputManager.Instance.ApplyCharacterSelectionInputRules(playerInput, slot);
+                InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
+            }
         }
     }
 
@@ -1001,10 +1007,17 @@ public class GameManager : MonoBehaviour
         // Switch to the corresponding pacman
         SetCurrentPacman(CurrentIndex, false);
 
-        if (InputManager.Instance != null)
+        if (InputManager.Instance != null && currentPacman != null)
         {
-            int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
-            InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
+            var playerInput = currentPacman.GetComponent<PlayerInput>();
+            if (playerInput != null)
+            {
+                int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
+                
+                // REUSE CHARACTER SELECTION LOGIC
+                InputManager.Instance.ApplyCharacterSelectionInputRules(playerInput, slot);
+                InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
+            }
         }
 
         Debug.Log($"[GameManager] Turn switched. Now it's Player {currentPlayer}");
@@ -1225,7 +1238,7 @@ public class GameManager : MonoBehaviour
         if (waitingForRejoin && InputManager.Instance != null && CurrentGameState != GameState.Intermission)
             InputManager.Instance.PollRejoinInput();
     }
-
+    
     /// Call this from input to let the current player drop their devices and rejoin.
     public void RequestDejoin()
     {
@@ -1247,20 +1260,63 @@ public class GameManager : MonoBehaviour
         disconnectOverlay?.SetPresenceForSlot(0, false, false);
         disconnectOverlay?.Show(true);
 
+        // IMPORTANT: Switch input to UI mode
+        SwitchToUIInput();
+
         waitingForRejoin = true;
+        Debug.Log($"[GameManager] Started rejoin process for Player {currentPlayer}");
+    }
+
+    private void SwitchToUIInput()
+    {
+        // Disable player input, enable UI input
+        if (currentPacman != null)
+        {
+            var playerInput = currentPacman.GetComponent<PlayerInput>();
+            if (playerInput != null)
+            {
+                playerInput.actions.FindActionMap("Player", false)?.Disable();
+                playerInput.actions.FindActionMap("UI", false)?.Enable();
+                Debug.Log("[GameManager] Switched to UI input for rejoin");
+            }
+        }
+
+        // Enable EventSystem's UI module
+        var uiModule = EventSystem.current?.GetComponent<InputSystemUIInputModule>();
+        if (uiModule != null)
+        {
+            uiModule.enabled = true;
+            Debug.Log("[GameManager] Enabled UI input module");
+        }
     }
 
     /// Hide overlay + resume if we paused for rejoin
     public void FinishRejoin()
     {
-        // Hide overlay
-        if (disconnectOverlay) disconnectOverlay.Show(false);
+        Debug.Log("[GameManager] FinishRejoin called");
+
+        // Hide overlay first
+        if (disconnectOverlay != null) 
+        {
+            disconnectOverlay.Show(false);
+            Debug.Log("[GameManager] Hid disconnect overlay");
+        }
+
+        // Get rejoin state from InputManager
+        var (hasKeyboard, hasGamepad) = InputManager.Instance?.GetRejoinState() ?? (false, false);
 
         // Decide which scheme we rejoin with
-        string rejoinScheme;
-        if (rejoinSawGamepad) rejoinScheme = "Gamepad";
-        else if (rejoinSawKeyboard) rejoinScheme = "P1Keyboard";
-        else rejoinScheme = null;
+        string rejoinScheme = null;
+        if (hasGamepad) 
+        {
+            rejoinScheme = "Gamepad";
+            Debug.Log("[GameManager] Rejoining with Gamepad");
+        }
+        else if (hasKeyboard) 
+        {
+            rejoinScheme = IsTwoPlayerMode ? $"P{currentPlayer}Keyboard" : "Keyboard&Mouse";
+            Debug.Log($"[GameManager] Rejoining with Keyboard: {rejoinScheme}");
+        }
 
         int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
 
@@ -1269,38 +1325,53 @@ public class GameManager : MonoBehaviour
         {
             PlayerPrefs.SetString($"P{slot}_Scheme", rejoinScheme);
 
-            if (rejoinSawGamepad && Gamepad.current != null)
+            if (hasGamepad && Gamepad.current != null)
+            {
                 PlayerPrefs.SetString($"P{slot}_Devices", Gamepad.current.deviceId.ToString());
-            else if (rejoinSawKeyboard && Keyboard.current != null)
+                Debug.Log($"[GameManager] Saved Gamepad: {Gamepad.current.deviceId}");
+            }
+            else if (hasKeyboard && Keyboard.current != null)
+            {
                 PlayerPrefs.SetString($"P{slot}_Devices", Keyboard.current.deviceId.ToString());
+                Debug.Log($"[GameManager] Saved Keyboard: {Keyboard.current.deviceId}");
+            }
 
             PlayerPrefs.Save();
+            Debug.Log($"[GameManager] Saved input preferences for slot {slot}");
         }
 
         // Clear rejoin state
         waitingForRejoin = false;
-        rejoinSawKeyboard = false;
-        rejoinSawGamepad = false;
+        InputManager.Instance?.ResetRejoinState();
 
-        // Re-enable gameplay input: Player ON, UI OFF
-        var pi = currentPacman ? currentPacman.GetComponent<PlayerInput>() : null;
-        if (pi != null)
-        {
-            pi.actions.FindActionMap("Player", false)?.Enable();
-            pi.actions.FindActionMap("UI", false)?.Disable();
-        }
+        // Switch back to Player input
+        SwitchToPlayerInput();
 
-        // Re-enable EventSystem's UI module
-        var uiModule = EventSystem.current
-            ? EventSystem.current.GetComponent<InputSystemUIInputModule>()
-            : null;
-        if (uiModule) uiModule.enabled = true;
-
-        // Delegate to InputManager to reapply devices and scheme
+        // Reapply devices
         InputManager.Instance?.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
 
         // Unpause and continue gameplay
-        ResumeGame();
+        if (CurrentGameState == GameState.Paused)
+        {
+            ResumeGame();
+        }
+        
+        Debug.Log("[GameManager] Rejoin process completed");
+    }
+
+    private void SwitchToPlayerInput()
+    {
+        // Enable player input, disable UI input
+        if (currentPacman != null)
+        {
+            var playerInput = currentPacman.GetComponent<PlayerInput>();
+            if (playerInput != null)
+            {
+                playerInput.actions.FindActionMap("UI", false)?.Disable();
+                playerInput.actions.FindActionMap("Player", false)?.Enable();
+                Debug.Log("[GameManager] Switched back to Player input");
+            }
+        }
     }
 
     #endregion

@@ -1,52 +1,22 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
-using UnityEngine.EventSystems;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Roombie.CharacterSelect;
 using UnityEngine.InputSystem.Users;
-using UnityEngine.InputSystem.LowLevel;
 
 public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
 
-    [Header("Input References")]
-    [SerializeField] private PlayerInput playerInput;
-    [SerializeField] private InputActionAsset originalActionsAsset;
+    [Header("Events")]
+    public System.Action<InputDevice> OnDeviceLost;
+    public System.Action<InputDevice> OnNewDevicePaired;
 
-    [Header("Settings")]
-    [SerializeField] private bool enableHotSwap = true;
-    [SerializeField] private bool debugInputEvents = false;
+    private int rejoinSlot = -1;
+    private bool waitingForRejoin = false;
+    private bool rejoinSawKeyboard = false;
+    private bool rejoinSawGamepad = false;
 
-    // Events
-    public event Action<InputDevice> OnDeviceLost;
-    public event Action<InputDevice> OnDeviceRegained;
-    public event Action<InputDevice> OnNewDevicePaired;
-    public event Action<int, string, InputDevice> OnControlSchemeChanged;
-
-    // State
-    private bool _hotSwapEnabled = false;
-    private bool _listeningForUnpaired = false;
-    private bool _deviceChangeHooked = false;
-    private InputUser _pacmanUser;
-    private InputSystemUIInputModule _cachedUiModule;
-    private bool _cachedUiModuleEnabled;
-    private bool _uiLockedForRejoin;
-
-    // Rejoin state
-    private bool _waitingForRejoin = false;
-    private int _rejoinSlot;
-    private bool _rejoinSawKeyboard;
-    private bool _rejoinSawGamepad;
-
-    // Cache
-    private string[] _allKeyboardSchemes;
-    private Coroutine _rejoinCoroutine;
-
-    #region Initialization
-    
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -56,720 +26,259 @@ public class InputManager : MonoBehaviour
         }
 
         Instance = this;
-
-        var deviceMgr = Roombie.CharacterSelect.PlayerDeviceManager.Instance;
-        _allKeyboardSchemes = deviceMgr != null 
-            ? deviceMgr.SinglePlayerCandidates() 
-            : new[] { "P1Keyboard", "P2Keyboard" };
-
-        // Don't try to find PlayerInput here - it will be set by GameManager later
-        // Remove the automatic PlayerInput search in Awake
+        DontDestroyOnLoad(gameObject);
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        // Don't initialize here - wait for GameManager to call InitializeInputSystem
-        // InitializeInputSystem() will be called by GameManager after Pacmans are created
+        InputSystem.onDeviceChange += HandleDeviceChange;
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
-        if (Instance == this)
+        InputSystem.onDeviceChange -= HandleDeviceChange;
+    }
+
+    private void HandleDeviceChange(InputDevice device, InputDeviceChange change)
+    {
+        switch (change)
         {
-            Instance = null;
-            DisableHotSwap();
+            case InputDeviceChange.Disconnected:
+            case InputDeviceChange.Removed:
+                OnDeviceLost?.Invoke(device);
+                break;
+            case InputDeviceChange.Reconnected:
+            case InputDeviceChange.Added:
+                OnNewDevicePaired?.Invoke(device);
+                break;
         }
     }
 
-    // Make this public so GameManager can call it after setting up PlayerInput
-    public void InitializeInputSystem()
+    /// <summary>
+    /// Uses the SAME logic as character selection to determine input ownership
+    /// </summary>
+    public bool ShouldHandleInputForPlayer(InputAction action, InputControl control, int playerSlot)
     {
-        // If playerInput is still null, try to find it now
-        if (playerInput == null)
+        if (action == null || control == null) 
         {
-            playerInput = FindFirstObjectByType<PlayerInput>();
-            if (playerInput == null)
+            Debug.LogWarning("[InputManager] ShouldHandleInputForPlayer: action or control is null");
+            return false;
+        }
+
+        // Convert to 0-based for character selection logic
+        int panelIndex = playerSlot - 1;
+
+        // For keyboards, use EXACTLY the same logic as character selection
+        if (control.device is Keyboard)
+        {
+            var scheme = PlayerDeviceManager.Instance.GetKeyboardSchemeForControl(
+                action, control,
+                isSinglePlayer: !GameManager.Instance.IsTwoPlayerMode,
+                panelIndex: panelIndex
+            );
+
+            if (string.IsNullOrEmpty(scheme))
             {
-                Debug.LogWarning("[InputManager] No PlayerInput found in scene! Waiting for GameManager to set reference.");
-                return;
+                Debug.Log($"[InputManager] Keyboard input rejected - no matching scheme for Player {playerSlot}");
+                return false;
             }
+
+            // Check if this keyboard scheme is reserved for this player
+            bool reserved = PlayerDeviceManager.Instance.TryReserveKeyboardScheme(scheme);
+            Debug.Log($"[InputManager] Keyboard scheme '{scheme}' for Player {playerSlot} - Reserved: {reserved}");
+            return reserved;
         }
 
-        DisableHotSwap(); // Clean up any existing listeners
-
-        originalActionsAsset = playerInput.actions;
-        _pacmanUser = playerInput.user;
-
-        // Apply initial device locking
-        ApplyBootLock();
-        
-        // Set up UI input module
-        WireUIToPlayerInput();
-        
-        if (enableHotSwap)
+        // For gamepads, use the same reservation logic as character selection
+        if (control.device is Gamepad gamepad)
         {
-            EnableHotSwap();
+            bool reserved = PlayerDeviceManager.Instance.TryReserveGamepad(gamepad);
+            Debug.Log($"[InputManager] Gamepad {gamepad.deviceId} for Player {playerSlot} - Reserved: {reserved}");
+            return reserved;
         }
 
-        if (debugInputEvents) Debug.Log("[InputManager] Input system initialized");
+        Debug.LogWarning($"[InputManager] Unknown device type: {control.device.GetType()}");
+        return false;
     }
-    #endregion
 
-    #region Public Interface - Device Management
-    public void ApplyActivePlayerInputDevices(int slot, bool isTwoPlayerMode)
+    /// <summary>
+    /// Apply the SAME binding masks as character selection to PlayerInput
+    /// </summary>
+    public void ApplyCharacterSelectionInputRules(PlayerInput playerInput, int playerSlot)
     {
-        if (playerInput == null)
+        if (playerInput == null) 
         {
-            Debug.LogWarning("[InputManager] PlayerInput not set. Cannot apply devices.");
+            Debug.LogWarning("[InputManager] ApplyCharacterSelectionInputRules: playerInput is null");
             return;
         }
 
-        var pi = playerInput;
-        if (pi.actions == null)
+        Debug.Log($"[InputManager] Applying character selection rules for Player {playerSlot}");
+
+        // Apply the SAME binding masks as character selection
+        if (!GameManager.Instance.IsTwoPlayerMode)
         {
-            Debug.LogWarning("[InputManager] PlayerInput actions missing.");
-            return;
-        }
-
-        string scheme = PlayerPrefs.GetString($"P{slot}_Scheme", "");
-        string devicesCsv = PlayerPrefs.GetString($"P{slot}_Devices", "");
-        var deviceIds = devicesCsv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-        // Resolve chosen device (prefer gamepad if present)
-        InputDevice chosen = null;
-        foreach (var d in InputSystem.devices)
-        {
-            if (deviceIds.Contains(d.deviceId.ToString()))
-                chosen = d is Gamepad ? d : (chosen ?? d);
-        }
-        if (chosen == null)
-        {
-            if (!string.IsNullOrEmpty(scheme) && scheme.IndexOf("Gamepad", StringComparison.OrdinalIgnoreCase) >= 0)
-                chosen = Gamepad.current;
-            else
-                chosen = Keyboard.current;
-        }
-
-        // Lock devices & (maybe) binding mask
-        pi.neverAutoSwitchControlSchemes = true;
-        var actions = pi.actions;
-        actions.Disable();
-
-        // Unpair all first
-        if (pi.user.valid)
-            pi.user.UnpairDevices();
-
-        // Pair ONLY the chosen device
-        if (chosen != null)
-            InputUser.PerformPairingWithDevice(chosen, pi.user);
-
-        // Filter actions to that device
-        actions.devices = chosen != null ? new InputDevice[] { chosen } : null;
-
-        // --- THE IMPORTANT PART ---
-        // Single-player + keyboard => NO MASK so both P1Keyboard & P2Keyboard bindings work
-        if (!isTwoPlayerMode && !string.IsNullOrEmpty(scheme) &&
-            scheme.IndexOf("Keyboard", StringComparison.OrdinalIgnoreCase) >= 0)
-        {
-            actions.bindingMask = default; // allow all keyboard groups
-        }
-        else if (!string.IsNullOrEmpty(scheme))
-        {
-            // For multiplayer or non-keyboard scheme, be strict
-            actions.bindingMask = InputBinding.MaskByGroup(scheme);
+            playerInput.actions.bindingMask = default; // No restrictions in SP
+            Debug.Log($"[InputManager] SinglePlayer mode - no binding restrictions");
         }
         else
         {
-            actions.bindingMask = default;
+            // MP: Only this player's keyboard group + Gamepad (EXACTLY like character selection)
+            string keyboardGroup = PlayerDeviceManager.Instance.ForPanel(playerSlot - 1);
+            playerInput.actions.bindingMask = InputBinding.MaskByGroups(keyboardGroup, "Gamepad");
+            Debug.Log($"[InputManager] MultiPlayer mode - binding mask: {keyboardGroup}, Gamepad");
         }
 
-        actions.Enable();
+        // Refresh to apply mask (same as character selection)
+        playerInput.actions.Disable();
+        playerInput.actions.Enable();
+    }
 
-        // Optional: if you DO have control schemes named "Gamepad"/"Keyboard&Mouse", this is fine.
-        // If your "scheme" is actually just a binding group (P1Keyboard), you can omit this.
+    /// <summary>
+    /// Apply devices to PlayerInput based on PlayerPrefs (existing logic)
+    /// </summary>
+    public void ApplyActivePlayerInputDevices(int slot, bool isTwoPlayer)
+    {
+        string schemeKey = $"P{slot}_Scheme";
+        string devicesKey = $"P{slot}_Devices";
+
+        string scheme = PlayerPrefs.GetString(schemeKey, "");
+        string deviceIds = PlayerPrefs.GetString(devicesKey, "");
+
+        Debug.Log($"[InputManager] ApplyActivePlayerInputDevices -> Slot={slot}, TwoP={isTwoPlayer}, Scheme='{scheme}', Device='{deviceIds}'");
+
+        // Find the current Pacman's PlayerInput
+        var gameManager = GameManager.Instance;
+        if (gameManager == null || gameManager.Pacman == null) return;
+
+        var playerInput = gameManager.Pacman.GetComponent<PlayerInput>();
+        if (playerInput == null) return;
+
+        // Apply character selection input rules FIRST
+        ApplyCharacterSelectionInputRules(playerInput, slot);
+
+        // Then handle device pairing based on scheme
         if (!string.IsNullOrEmpty(scheme))
         {
-            try
+            if (playerInput.user.valid)
             {
-                pi.SwitchCurrentControlScheme(
-                    pi.user.pairedDevices.ToArray()
-                );
+                playerInput.user.UnpairDevices();
             }
-            catch { /* ignore if names don't match control scheme names */ }
-        }
 
-        Debug.Log($"[InputManager] ApplyActivePlayerInputDevices -> Slot={slot}, TwoP={isTwoPlayerMode}, " +
-                  $"Scheme='{scheme}', Device='{chosen?.displayName}', Mask={(actions.bindingMask.HasValue ? actions.bindingMask.Value.groups : "<none>")}");
-    }
+            InputDevice[] devices = null;
 
-    public void ClearActivePlayerDevicesAndPrefs(int playerSlot)
-    {
-        if (!TryGetUser(out var user))
-        {
-            Debug.LogWarning("[InputManager] ClearActivePlayerDevicesAndPrefs: no valid user; skipping unpair.");
-        }
-        else
-        {
-            var toUnpair = new List<InputDevice>(user.pairedDevices);
-            foreach (var d in toUnpair)
+            if (scheme == "Gamepad" && Gamepad.current != null)
             {
-                try 
-                { 
-                    user.UnpairDevice(d); 
-                    if (debugInputEvents) Debug.Log($"[InputManager] Unpaired device: {d.displayName}");
-                }
-                catch (Exception e)
+                devices = new InputDevice[] { Gamepad.current };
+                Debug.Log($"[InputManager] Paired Gamepad: {Gamepad.current.displayName}");
+            }
+            else if ((scheme == "P1Keyboard" || scheme == "P2Keyboard" || scheme == "Keyboard&Mouse") && Keyboard.current != null)
+            {
+                devices = Mouse.current != null 
+                    ? new InputDevice[] { Keyboard.current, Mouse.current } 
+                    : new InputDevice[] { Keyboard.current };
+                Debug.Log($"[InputManager] Paired Keyboard/Mouse");
+            }
+
+            if (devices != null)
+            {
+                foreach (var device in devices)
                 {
-                    Debug.LogWarning($"[InputManager] UnpairDevice failed ({d?.displayName}): {e.Message}");
+                    InputUser.PerformPairingWithDevice(device, playerInput.user);
+                }
+
+                try
+                {
+                    playerInput.SwitchCurrentControlScheme(scheme, devices);
+                    Debug.Log($"[InputManager] Switched to control scheme: {scheme}");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[InputManager] Failed to switch control scheme: {e.Message}");
                 }
             }
         }
 
-        // Clear persisted choice
-        PlayerPrefs.DeleteKey($"P{playerSlot}_Scheme");
-        PlayerPrefs.DeleteKey($"P{playerSlot}_Devices");
-        PlayerPrefs.Save();
-
-        // Reset actions device filter
-        if (playerInput != null && playerInput.actions != null)
-        {
-            playerInput.actions.Disable();
-            playerInput.actions.devices = null;
-            playerInput.actions.bindingMask = default;
-            playerInput.actions.Enable();
-        }
-
-        if (debugInputEvents)
-        {
-            Debug.Log($"[InputManager] Cleared devices and prefs for slot {playerSlot}");
-        }
+        // Apply the binding mask again to ensure it's active
+        ApplyCharacterSelectionInputRules(playerInput, slot);
     }
 
-    public void SwitchToGameplayMap()
+    /// <summary>
+    /// Start the rejoin process for a specific slot
+    /// </summary>
+    public void StartRejoinProcess(int slot)
     {
-        if (playerInput == null) return;
-        
-        var map = playerInput.actions?.FindActionMap("Player", false);
-        playerInput.actions?.FindActionMap("UI", false)?.Disable();
-        map?.Enable();
+        rejoinSlot = slot;
+        waitingForRejoin = true;
+        rejoinSawKeyboard = false;
+        rejoinSawGamepad = false;
+        Debug.Log($"[InputManager] Started rejoin process for slot {slot}");
     }
 
-    public void SwitchToUIMap()
-    {
-        if (playerInput == null) return;
-        
-        var map = playerInput.actions?.FindActionMap("UI", false);
-        playerInput.actions?.FindActionMap("Player", false)?.Disable();
-        map?.Enable();
-    }
-
-    public void DisableAllInput()
-    {
-        if (playerInput == null) return;
-
-        playerInput.actions?.Disable();
-        if (debugInputEvents) Debug.Log("[InputManager] Disabled all input");
-    }
-
-    public void EnableAllInput()
-    {
-        if (playerInput == null) return;
-
-        playerInput.actions?.Enable();
-        if (debugInputEvents) Debug.Log("[InputManager] Enabled all input");
-    }
-    #endregion
-
-    #region Public Interface - Rejoin System
-    public void StartRejoinProcess(int playerSlot)
-    {
-        if (_waitingForRejoin) return;
-
-        _waitingForRejoin = true;
-        _rejoinSlot = playerSlot;
-        _rejoinSawKeyboard = false;
-        _rejoinSawGamepad = false;
-
-        // Disable input maps
-        if (playerInput != null)
-        {
-            playerInput.actions.FindActionMap("Player", false)?.Disable();
-            playerInput.actions.FindActionMap("UI", false)?.Disable();
-        }
-
-        // Lock UI module
-        /*var es = EventSystem.current;
-        _cachedUiModule = es ? es.GetComponent<InputSystemUIInputModule>() : null;
-        if (_cachedUiModule != null)
-        {
-            _cachedUiModuleEnabled = _cachedUiModule.enabled;
-            _cachedUiModule.enabled = false;
-            _uiLockedForRejoin = true;
-        }
-
-        if (debugInputEvents) Debug.Log($"[InputManager] Started rejoin process for slot {playerSlot}");*/
-    }
-
+    /// <summary>
+    /// Poll for rejoin input during the rejoin process
+    /// </summary>
     public void PollRejoinInput()
     {
-        if (!_waitingForRejoin) return;
+        if (!waitingForRejoin) return;
 
-        var kb = Keyboard.current;
-        var gp = Gamepad.current;
-
-        bool kbPressed = kb != null && kb.anyKey.wasPressedThisFrame;
-        bool gpPressed = AnyGamepadPressedThisFrame(gp);
-
-        if (kbPressed)
+        // Check for keyboard input
+        if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
         {
-            _rejoinSawKeyboard = true;
-            _rejoinSawGamepad = false;
-            OnNewDevicePaired?.Invoke(kb);
-            if (debugInputEvents) Debug.Log("[InputManager] Keyboard detected during rejoin");
-        }
-        else if (gpPressed)
-        {
-            _rejoinSawKeyboard = false;
-            _rejoinSawGamepad = true;
-            OnNewDevicePaired?.Invoke(gp);
-            if (debugInputEvents) Debug.Log("[InputManager] Gamepad detected during rejoin");
+            rejoinSawKeyboard = true;
+            Debug.Log("[InputManager] Rejoin: Keyboard detected");
         }
 
-        if ((_rejoinSawKeyboard || _rejoinSawGamepad) && 
-            ConfirmPressedThisFrame(kb, gp, _rejoinSawKeyboard, _rejoinSawGamepad))
+        // Check for gamepad input
+        if (Gamepad.current != null && (Gamepad.current.aButton.wasPressedThisFrame || 
+                                        Gamepad.current.startButton.wasPressedThisFrame ||
+                                        Gamepad.current.buttonSouth.wasPressedThisFrame))
         {
-            return;
+            rejoinSawGamepad = true;
+            Debug.Log("[InputManager] Rejoin: Gamepad detected");
         }
     }
 
-    public void FinishRejoin()
+    /// <summary>
+    /// Clear device preferences for a specific slot
+    /// </summary>
+    public void ClearActivePlayerDevicesAndPrefs(int slot)
     {
-        if (!_waitingForRejoin) return;
+        string schemeKey = $"P{slot}_Scheme";
+        string devicesKey = $"P{slot}_Devices";
 
-        int slot = _rejoinSlot;
-        string rejoinScheme = _rejoinSawGamepad ? "Gamepad" : (_rejoinSawKeyboard ? "P1Keyboard" : "");
-
-        if (!string.IsNullOrEmpty(rejoinScheme))
-        {
-            PlayerPrefs.SetString($"P{slot}_Scheme", rejoinScheme);
-            if (_rejoinSawGamepad && Gamepad.current != null)
-                PlayerPrefs.SetString($"P{slot}_Devices", Gamepad.current.deviceId.ToString());
-            else if (_rejoinSawKeyboard && Keyboard.current != null)
-                PlayerPrefs.SetString($"P{slot}_Devices", Keyboard.current.deviceId.ToString());
-            PlayerPrefs.Save();
-        }
-
-        // Restore UI module
-        var es = EventSystem.current;
-        if (es)
-        {
-            var uiModule = es.GetComponent<InputSystemUIInputModule>();
-            if (uiModule && _uiLockedForRejoin)
-            {
-                uiModule.enabled = _cachedUiModuleEnabled;
-                _uiLockedForRejoin = false;
-            }
-        }
-
-        // Re-enable gameplay input
-        if (playerInput != null)
-        {
-            playerInput.actions.FindActionMap("Player", false)?.Enable();
-        }
-
-        _waitingForRejoin = false;
-        _rejoinSawKeyboard = false;
-        _rejoinSawGamepad = false;
-
-        if (debugInputEvents) Debug.Log($"[InputManager] Finished rejoin process for slot {slot} with scheme: {rejoinScheme}");
-    }
-
-    public bool IsWaitingForRejoin => _waitingForRejoin;
-    #endregion
-
-    #region Core Implementation
-    private void ApplyBootLock()
-    {
-        if (playerInput == null || playerInput.actions == null) return;
-
-        int slot = 1; // Default to player 1 for boot
-
-        var scheme = PlayerPrefs.GetString($"P{slot}_Scheme", "");
-        var devicesCsv = PlayerPrefs.GetString($"P{slot}_Devices", "");
-        var deviceIds = devicesCsv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-        InputDevice chosen = null;
-        foreach (var d in InputSystem.devices)
-            if (deviceIds.Contains(d.deviceId.ToString()))
-                chosen = d is Gamepad ? d : (chosen ?? d);
-
-        if (chosen == null)
-        {
-            if (!string.IsNullOrEmpty(scheme) && scheme.IndexOf("Gamepad", StringComparison.OrdinalIgnoreCase) >= 0)
-                chosen = Gamepad.current;
-            else
-                chosen = Keyboard.current;
-        }
-
-        if (string.IsNullOrEmpty(scheme))
-            scheme = (chosen is Gamepad) ? "Gamepad" : "P1Keyboard";
-
-        playerInput.neverAutoSwitchControlSchemes = true;
-        BootLockMaps();
-        
-        // Only apply device locking if we have a valid device
-        if (chosen != null)
-        {
-            ForceSingleDevice(chosen, scheme, false); // false for boot (treated as single player)
-        }
-        else
-        {
-            Debug.LogWarning("[InputManager] No valid input device found for boot lock");
-        }
-
-        if (debugInputEvents)
-        {
-            Debug.Log($"[InputManager] Boot lock applied: {chosen?.displayName}, Scheme: {scheme}");
-        }
-    }
-
-    private void BootLockMaps()
-    {
-        if (playerInput == null || playerInput.actions == null) return;
-
-        var actions = playerInput.actions;
-        var playerMap = actions.FindActionMap("Player", throwIfNotFound: false);
-        var uiMap = actions.FindActionMap("UI", throwIfNotFound: false);
-
-        actions.Disable();
-        uiMap?.Disable();
-        playerMap?.Enable();
-        actions.Enable();
-    }
-
-    private void ForceSingleDevice(InputDevice chosen, string scheme, bool isTwoPlayerMode)
-    {
-        if (playerInput == null || playerInput.actions == null) return;
-
-        var acts = playerInput.actions;
-        acts.Disable();
-
-        // Unpair previous devices only if user is valid
-        if (playerInput.user.valid)
-        {
-            playerInput.user.UnpairDevices();
-        }
-
-        // Pair only the chosen device
-        if (chosen != null)
-        {
-            InputUser.PerformPairingWithDevice(chosen, playerInput.user);
-        }
-
-        // Set device filter
-        acts.devices = chosen != null ? new InputDevice[] { chosen } : null;
-
-        if (!isTwoPlayerMode && IsKeyboardSchemeName(scheme))
-        {
-            // 1P + keyboard: no binding mask to allow both P1Keyboard and P2Keyboard
-            acts.bindingMask = default;
-        }
-        else
-        {
-            // Gamepad or 2P: strict binding
-            if (!string.IsNullOrEmpty(scheme))
-            {
-                acts.bindingMask = InputBinding.MaskByGroup(scheme);
-                
-                // Only try to switch control scheme if user is valid and has paired devices
-                if (playerInput.user.valid && playerInput.user.pairedDevices.Count > 0)
-                {
-                    try
-                    {
-                        playerInput.SwitchCurrentControlScheme(scheme, playerInput.user.pairedDevices.ToArray());
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogWarning($"[InputManager] Failed to switch control scheme: {e.Message}");
-                    }
-                }
-            }
-            else
-            {
-                acts.bindingMask = default;
-            }
-        }
-
-        acts.Enable();
-
-        if (debugInputEvents)
-        {
-            var maskText = acts.bindingMask.HasValue
-                ? (string.IsNullOrEmpty(acts.bindingMask.Value.groups) ? "<none>" : acts.bindingMask.Value.groups)
-                : "<none>";
-            var paired = playerInput.user.valid ? 
-                string.Join(", ", playerInput.user.pairedDevices.Select(d => d.displayName)) : "no valid user";
-            Debug.Log($"[InputManager] ForceSingleDevice -> Scheme={scheme} | Device={chosen?.displayName} | Paired={paired} | Mask={maskText}");
-        }
-
-        OnControlSchemeChanged?.Invoke(_rejoinSlot, scheme, chosen);
-    }
-
-    private void WireUIToPlayerInput()
-    {
-        if (playerInput == null)
-        {
-            Debug.LogWarning("[InputManager] PlayerInput is null in WireUIToPlayerInput");
-            return;
-        }
-
-        var es = EventSystem.current;
-        if (es == null) 
-        {
-            Debug.LogWarning("[InputManager] EventSystem is null in WireUIToPlayerInput");
-            return;
-        }
-
-        var uiModule = es.GetComponent<InputSystemUIInputModule>();
-        if (uiModule == null) 
-        {
-            Debug.LogWarning("[InputManager] InputSystemUIInputModule is null in WireUIToPlayerInput");
-            return;
-        }
-
-        if (uiModule.actionsAsset == null || uiModule.actionsAsset != playerInput.actions)
-        {
-            uiModule.actionsAsset = playerInput.actions;
-            if (debugInputEvents) Debug.Log("[InputManager] Wired UI to player input actions");
-        }
-    }
-    #endregion
-
-    #region Hot Swap System
-    private void EnableHotSwap()
-    {
-        if (_hotSwapEnabled) return;
-        if (playerInput == null) return;
-
-        _pacmanUser = playerInput.user;
-
-        if (!_listeningForUnpaired)
-        {
-            InputUser.listenForUnpairedDeviceActivity =
-                Mathf.Max(0, InputUser.listenForUnpairedDeviceActivity) + 1;
-
-            InputUser.onUnpairedDeviceUsed += OnUnpairedDeviceUsed;
-            _listeningForUnpaired = true;
-        }
-
-        if (!_deviceChangeHooked)
-        {
-            InputSystem.onDeviceChange += OnDeviceChange;
-            _deviceChangeHooked = true;
-        }
-
-        playerInput.onDeviceLost += OnPairedDeviceLost;
-        playerInput.onDeviceRegained += OnPairedDeviceRegained;
-
-        _hotSwapEnabled = true;
-
-        if (debugInputEvents) Debug.Log("[InputManager] Hot swap enabled");
-    }
-
-    private void DisableHotSwap()
-    {
-        if (!_hotSwapEnabled) return;
-
-        if (playerInput != null)
-        {
-            playerInput.onDeviceLost -= OnPairedDeviceLost;
-            playerInput.onDeviceRegained -= OnPairedDeviceRegained;
-        }
-
-        if (_listeningForUnpaired)
-        {
-            InputUser.onUnpairedDeviceUsed -= OnUnpairedDeviceUsed;
-            if (InputUser.listenForUnpairedDeviceActivity > 0)
-                InputUser.listenForUnpairedDeviceActivity -= 1;
-            _listeningForUnpaired = false;
-        }
-
-        if (_deviceChangeHooked)
-        {
-            InputSystem.onDeviceChange -= OnDeviceChange;
-            _deviceChangeHooked = false;
-        }
-
-        _hotSwapEnabled = false;
-
-        if (debugInputEvents) Debug.Log("[InputManager] Hot swap disabled");
-    }
-
-    private void OnDeviceChange(InputDevice device, InputDeviceChange change)
-    {
-        if (device is not Gamepad) return;
-        if (change != InputDeviceChange.Disconnected && change != InputDeviceChange.Removed) return;
-        
-        if (!IsDeviceRelevantToPlayer(device)) return;
-
-        // Clean saved device list if it contains this device ID
-        int slot = _rejoinSlot;
-        string keyCsv = $"P{slot}_Devices";
-        var savedCsv = PlayerPrefs.GetString(keyCsv, "");
-        if (!string.IsNullOrEmpty(savedCsv))
-        {
-            var list = new List<string>(savedCsv.Split(','));
-            list.RemoveAll(s => int.TryParse(s, out var id) && id == device.deviceId);
-            if (list.Count == 0) PlayerPrefs.DeleteKey(keyCsv);
-            else PlayerPrefs.SetString(keyCsv, string.Join(",", list));
-            PlayerPrefs.Save();
-        }
-
-        if (!_waitingForRejoin)
-        {
-            OnDeviceLost?.Invoke(device);
-            if (debugInputEvents) Debug.Log($"[InputManager] Device lost: {device.displayName}");
-        }
-    }
-
-    private void OnUnpairedDeviceUsed(InputControl control, InputEventPtr eventPtr)
-    {
-        if (control?.device is not Gamepad gp) return;
-
-        var owner = InputUser.FindUserPairedToDevice(gp);
-        if (owner.HasValue && owner.Value.valid && TryGetUser(out var myUser) && owner.Value != myUser)
-            return;
-
-        if (!TryGetUser(out var user)) return;
-
-        // Unpair ALL devices from this user first
-        foreach (var d in new List<InputDevice>(user.pairedDevices))
-            user.UnpairDevice(d);
-
-        // Pair ONLY the new gamepad
-        InputUser.PerformPairingWithDevice(gp, user);
-
-        if (playerInput != null)
-        {
-            playerInput.actions.Disable();
-            playerInput.actions.devices = new InputDevice[] { gp };
-            playerInput.actions.bindingMask = InputBinding.MaskByGroup("Gamepad");
-            playerInput.actions.Enable();
-            playerInput.SwitchCurrentControlScheme("Gamepad", gp);
-        }
-
-        int slot = _rejoinSlot;
-        PlayerPrefs.SetString($"P{slot}_Scheme", "Gamepad");
-        PlayerPrefs.SetString($"P{slot}_Devices", gp.deviceId.ToString());
+        PlayerPrefs.DeleteKey(schemeKey);
+        PlayerPrefs.DeleteKey(devicesKey);
         PlayerPrefs.Save();
 
-        OnNewDevicePaired?.Invoke(gp);
-
-        if (debugInputEvents) Debug.Log($"[InputManager] Paired new gamepad: {gp.displayName} to slot {slot}");
+        Debug.Log($"[InputManager] Cleared input prefs for slot {slot}");
     }
 
-    private void OnPairedDeviceLost(PlayerInput input)
-    {
-        OnDeviceLost?.Invoke(null); // Device specific info might not be available
-        if (debugInputEvents) Debug.Log("[InputManager] Paired device lost");
-    }
-
-    private void OnPairedDeviceRegained(PlayerInput input)
-    {
-        OnDeviceRegained?.Invoke(null);
-        if (debugInputEvents) Debug.Log("[InputManager] Paired device regained");
-    }
-
-    private bool IsDeviceRelevantToPlayer(InputDevice device)
-    {
-        if (playerInput == null) return false;
-
-        // Check actions.devices filter
-        var devs = playerInput.actions.devices;
-        if (devs.HasValue)
-            foreach (var d in devs.Value)
-                if (ReferenceEquals(d, device)) return true;
-
-        // Check user pairings
-        if (TryGetUser(out var user))
-            return user.pairedDevices.Contains(device);
-
-        return false;
-    }
-    #endregion
-
-    #region Utility Methods
-    private static bool IsKeyboardSchemeName(string scheme) =>
-        !string.IsNullOrEmpty(scheme) &&
-        scheme.IndexOf("Keyboard", StringComparison.OrdinalIgnoreCase) >= 0;
-
-    private static bool AnyGamepadPressedThisFrame(Gamepad gp)
-    {
-        if (gp == null) return false;
-        var d = gp.dpad;
-        return gp.startButton.wasPressedThisFrame ||
-            gp.buttonSouth.wasPressedThisFrame ||
-            gp.buttonEast.wasPressedThisFrame ||
-            gp.buttonWest.wasPressedThisFrame ||
-            gp.buttonNorth.wasPressedThisFrame ||
-            d.up.wasPressedThisFrame ||
-            d.down.wasPressedThisFrame ||
-            d.left.wasPressedThisFrame ||
-            d.right.wasPressedThisFrame ||
-            gp.leftStickButton.wasPressedThisFrame ||
-            gp.rightStickButton.wasPressedThisFrame;
-    }
-
-    private static bool ConfirmPressedThisFrame(Keyboard kb, Gamepad gp, bool sawKb, bool sawGp)
-    {
-        bool kbConfirm = kb != null &&
-            (kb.spaceKey.wasPressedThisFrame ||
-            kb.enterKey.wasPressedThisFrame ||
-            kb.numpadEnterKey.wasPressedThisFrame ||
-            (sawKb && kb.anyKey.wasPressedThisFrame));
-
-        bool gpConfirm = gp != null &&
-            (gp.startButton.wasPressedThisFrame ||
-            gp.buttonSouth.wasPressedThisFrame ||
-            (sawGp && AnyGamepadPressedThisFrame(gp)));
-
-        return kbConfirm || gpConfirm;
-    }
-
-    private bool TryGetUser(out InputUser user)
-    {
-        if (playerInput != null && playerInput.user.valid)
-        {
-            user = playerInput.user;
-            return true;
-        }
-        user = default;
-        return false;
-    }
-
+    /// <summary>
+    /// Set player input reference (optional)
+    /// </summary>
     public void SetPlayerInputReference(PlayerInput playerInput)
     {
-        if (playerInput == null) return;
-
-        // Clean up existing references
-        DisableHotSwap();
-
-        this.playerInput = playerInput;
-        originalActionsAsset = playerInput.actions;
-        
-        // Don't try to manipulate the user directly, let InputSystem handle it
-        _pacmanUser = playerInput.user;
-
-        // Re-initialize with new reference but skip the boot lock
-        if (enableHotSwap)
-        {
-            EnableHotSwap();
-        }
-
-        // Wire up UI but skip device forcing for now
-        WireUIToPlayerInput();
-
-        if (debugInputEvents) Debug.Log("[InputManager] Updated PlayerInput reference (minimal initialization)");
+        // Optional: Store reference if needed
+        Debug.Log($"[InputManager] Set player input reference: {playerInput}");
     }
-    #endregion
+
+    /// <summary>
+    /// Get the current rejoin state
+    /// </summary>
+    public (bool sawKeyboard, bool sawGamepad) GetRejoinState()
+    {
+        return (rejoinSawKeyboard, rejoinSawGamepad);
+    }
+
+    /// <summary>
+    /// Reset rejoin state
+    /// </summary>
+    public void ResetRejoinState()
+    {
+        waitingForRejoin = false;
+        rejoinSawKeyboard = false;
+        rejoinSawGamepad = false;
+        rejoinSlot = -1;
+        Debug.Log("[InputManager] Reset rejoin state");
+    }
 }
