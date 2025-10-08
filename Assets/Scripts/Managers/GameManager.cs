@@ -192,21 +192,16 @@ public class GameManager : MonoBehaviour
         CreatePacmanInstances();
 
         // Now initialize InputManager with the current Pacman's PlayerInput
-        if (InputManager.Instance != null)
+        if (InputManager.Instance != null && currentPacman != null)
         {
-            // Make sure currentPacman is set and has PlayerInput
-            if (currentPacman != null)
+            var playerInput = currentPacman.GetComponent<PlayerInput>();
+            if (playerInput != null)
             {
-                var playerInput = currentPacman.GetComponent<PlayerInput>();
-                if (playerInput != null)
-                {
-                    InputManager.Instance.SetPlayerInputReference(playerInput);
-                }
+                InputManager.Instance.SetPlayerInputReference(playerInput);
+                
+                // Apply devices after a small delay to ensure InputUser is valid
+                StartCoroutine(ApplyInputDevicesDelayed());
             }
-            
-            InputManager.Instance.InitializeInputSystem();
-            int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
-            InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
         }
 
         uiManager.InitializeUI(totalPlayers);
@@ -216,6 +211,18 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.OnFrightenedEnded += HandleFrightenedEnded;
 
         NewGame();
+    }
+
+    private IEnumerator ApplyInputDevicesDelayed()
+    {
+        // Wait one frame to ensure InputUser is properly initialized
+        yield return null;
+        
+        if (InputManager.Instance != null)
+        {
+            int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
+            InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
+        }
     }
 
     #region Game Flow

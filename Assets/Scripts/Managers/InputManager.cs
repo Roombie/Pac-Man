@@ -416,7 +416,16 @@ public class InputManager : MonoBehaviour
 
         playerInput.neverAutoSwitchControlSchemes = true;
         BootLockMaps();
-        ForceSingleDevice(chosen, scheme, false); // false for boot (treated as single player)
+        
+        // Only apply device locking if we have a valid device
+        if (chosen != null)
+        {
+            ForceSingleDevice(chosen, scheme, false); // false for boot (treated as single player)
+        }
+        else
+        {
+            Debug.LogWarning("[InputManager] No valid input device found for boot lock");
+        }
 
         if (debugInputEvents)
         {
@@ -445,13 +454,17 @@ public class InputManager : MonoBehaviour
         var acts = playerInput.actions;
         acts.Disable();
 
-        // Unpair previous devices
+        // Unpair previous devices only if user is valid
         if (playerInput.user.valid)
+        {
             playerInput.user.UnpairDevices();
+        }
 
         // Pair only the chosen device
         if (chosen != null)
+        {
             InputUser.PerformPairingWithDevice(chosen, playerInput.user);
+        }
 
         // Set device filter
         acts.devices = chosen != null ? new InputDevice[] { chosen } : null;
@@ -467,7 +480,19 @@ public class InputManager : MonoBehaviour
             if (!string.IsNullOrEmpty(scheme))
             {
                 acts.bindingMask = InputBinding.MaskByGroup(scheme);
-                playerInput.SwitchCurrentControlScheme(scheme, playerInput.user.pairedDevices.ToArray());
+                
+                // Only try to switch control scheme if user is valid and has paired devices
+                if (playerInput.user.valid && playerInput.user.pairedDevices.Count > 0)
+                {
+                    try
+                    {
+                        playerInput.SwitchCurrentControlScheme(scheme, playerInput.user.pairedDevices.ToArray());
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogWarning($"[InputManager] Failed to switch control scheme: {e.Message}");
+                    }
+                }
             }
             else
             {
@@ -482,7 +507,8 @@ public class InputManager : MonoBehaviour
             var maskText = acts.bindingMask.HasValue
                 ? (string.IsNullOrEmpty(acts.bindingMask.Value.groups) ? "<none>" : acts.bindingMask.Value.groups)
                 : "<none>";
-            var paired = string.Join(", ", playerInput.user.pairedDevices.Select(d => d.displayName));
+            var paired = playerInput.user.valid ? 
+                string.Join(", ", playerInput.user.pairedDevices.Select(d => d.displayName)) : "no valid user";
             Debug.Log($"[InputManager] ForceSingleDevice -> Scheme={scheme} | Device={chosen?.displayName} | Paired={paired} | Mask={maskText}");
         }
 
@@ -730,12 +756,20 @@ public class InputManager : MonoBehaviour
 
         this.playerInput = playerInput;
         originalActionsAsset = playerInput.actions;
+        
+        // Don't try to manipulate the user directly, let InputSystem handle it
         _pacmanUser = playerInput.user;
 
-        // Re-initialize with new reference
-        InitializeInputSystem();
+        // Re-initialize with new reference but skip the boot lock
+        if (enableHotSwap)
+        {
+            EnableHotSwap();
+        }
 
-        if (debugInputEvents) Debug.Log("[InputManager] Updated PlayerInput reference");
+        // Wire up UI but skip device forcing for now
+        WireUIToPlayerInput();
+
+        if (debugInputEvents) Debug.Log("[InputManager] Updated PlayerInput reference (minimal initialization)");
     }
     #endregion
 }
