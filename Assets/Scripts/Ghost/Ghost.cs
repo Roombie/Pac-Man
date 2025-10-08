@@ -5,7 +5,17 @@ public class Ghost : MonoBehaviour
 {
     [Header("Core")]
     public Movement movement;
-    public Pacman pacman;
+    public Pacman CurrentPacman
+    {
+        get
+        {
+            if (GameManager.Instance != null && GameManager.Instance.Pacman != null)
+            {
+                return GameManager.Instance.Pacman;
+            }
+            return null;
+        }
+    }
 
     [SerializeField] private GhostType ghostType = GhostType.Blinky;
     public GhostType Type => ghostType;
@@ -44,7 +54,6 @@ public class Ghost : MonoBehaviour
     {
         if (ghostType != GhostType.Inky) blinky = null;
         if (!movement) movement = GetComponent<Movement>();
-        if (!pacman) pacman = FindAnyObjectByType<Pacman>();
         elroyStage = Mathf.Clamp(elroyStage, 0, 2);
     }
 #endif
@@ -52,10 +61,8 @@ public class Ghost : MonoBehaviour
     private void Awake()
     {
         if (!movement) movement = GetComponent<Movement>();
-        if (!pacman) pacman = FindAnyObjectByType<Pacman>();
         if (!eyes) eyes = GetComponent<GhostEyes>(); 
         if (!visuals) visuals = GetComponent<GhostVisuals>();
-
         if (!scatter) scatter = GetComponent<GhostScatter>();
         if (!chase) chase = GetComponent<GhostChase>();
         if (!frightened) frightened = GetComponent<GhostFrightened>();
@@ -151,6 +158,12 @@ public class Ghost : MonoBehaviour
     {
         if (!go) return false;
         if (pacmanLayer == -1) pacmanLayer = LayerMask.NameToLayer("Pacman");
+        
+        // Check if it's the current active pacman
+        Pacman currentPacman = CurrentPacman;
+        if (currentPacman != null && go == currentPacman.gameObject)
+            return true;
+            
         return go.layer == pacmanLayer || go.GetComponent<Pacman>() != null || go.CompareTag("Player");
     }
 
@@ -164,7 +177,9 @@ public class Ghost : MonoBehaviour
         }
         else
         {
-            if (GameManager.Instance != null) GameManager.Instance.pacman.Death();
+            Pacman currentPacman = CurrentPacman;
+            if (currentPacman != null) 
+                currentPacman.Death();
         }
     }
 

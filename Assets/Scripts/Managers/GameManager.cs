@@ -13,7 +13,16 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("Core References")]
-    public Pacman pacman;
+    public GameObject pacmanPrefab;
+    public Transform pacmanContainer;
+    public Transform pacmanSpawnPosition;
+
+    private Pacman[] pacmans;
+    private Pacman currentPacman;
+    private int currentPacmanIndex = 0;
+
+    // Replace the existing pacman field with a property
+    public Pacman Pacman => currentPacman;
     private Animator pacmanAnimator;
     private ArrowIndicator pacmanArrowIndicator;
     private InputActionAsset originalActionsAsset;
@@ -164,11 +173,8 @@ public class GameManager : MonoBehaviour
         totalPlayers = Mathf.Max(1, PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1));
         IsTwoPlayerMode = totalPlayers > 1;
 
-        // Cache pacman's component
-        pacmanAnimator = pacman.GetComponent<Animator>();
-        pacmanArrowIndicator = pacman.GetComponent<ArrowIndicator>();
-        var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
-        originalActionsAsset = pi ? pi.actions : null;
+        // Initialize pacmans array
+        pacmans = new Pacman[totalPlayers];
 
         startingLives = PlayerPrefs.GetInt(SettingsKeys.PacmanLivesKey, GameConstants.MaxLives);
     }
@@ -182,8 +188,22 @@ public class GameManager : MonoBehaviour
         InitializePlayers();
         InitializeExtraLifeThreshold();
 
+        // Create pacman instances before initializing UI
+        CreatePacmanInstances();
+
+        // Now initialize InputManager with the current Pacman's PlayerInput
         if (InputManager.Instance != null)
         {
+            // Make sure currentPacman is set and has PlayerInput
+            if (currentPacman != null)
+            {
+                var playerInput = currentPacman.GetComponent<PlayerInput>();
+                if (playerInput != null)
+                {
+                    InputManager.Instance.SetPlayerInputReference(playerInput);
+                }
+            }
+            
             InputManager.Instance.InitializeInputSystem();
             int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
             InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
@@ -204,6 +224,96 @@ public class GameManager : MonoBehaviour
     {
         CurrentGameState = newState;
         Debug.Log($"Game State changed to: {newState}");
+    }
+
+    private void CreatePacmanInstances()
+    {
+        if (pacmanPrefab == null)
+        {
+            Debug.LogError("Pacman prefab is not assigned!");
+            return;
+        }
+
+        if (pacmanContainer == null)
+        {
+            Debug.LogError("Pacman parent container is not assigned!");
+            return;
+        }
+        
+        for (int i = 0; i < totalPlayers; i++)
+            {
+                GameObject pacmanObj = Instantiate(pacmanPrefab, pacmanSpawnPosition.position, Quaternion.identity, pacmanContainer);
+                pacmanObj.name = $"Pacman_Player{i + 1}";
+
+                Pacman pacman = pacmanObj.GetComponent<Pacman>();
+                if (pacman != null)
+                {
+                    pacmans[i] = pacman;
+
+                    // Deactivate all pacmans initially
+                    pacmanObj.SetActive(false);
+
+                    // Set up player input if needed
+                    var playerInput = pacmanObj.GetComponent<PlayerInput>();
+                    if (playerInput != null)
+                    {
+                        playerInput.enabled = false;
+                    }
+                }
+            }
+
+        // Activate the first pacman
+        SetCurrentPacman(0);
+    }
+
+    // Add this method to switch between pacmans
+    public void SetCurrentPacman(int playerIndex, bool activateInmediately = true)
+    {
+        // Validate index
+        if (playerIndex < 0 || playerIndex >= pacmans.Length || pacmans[playerIndex] == null)
+        {
+            Debug.LogError($"Invalid pacman index: {playerIndex}");
+            return;
+        }
+
+        // Deactivate previous pacman
+        if (currentPacman != null)
+        {
+            currentPacman.gameObject.SetActive(false);
+            
+            // Disable input on previous pacman
+            var prevPlayerInput = currentPacman.GetComponent<PlayerInput>();
+            if (prevPlayerInput != null)
+            {
+                prevPlayerInput.enabled = false;
+            }
+        }
+
+        // Update current index and activate new pacman
+        currentPacmanIndex = playerIndex;
+        currentPacman = pacmans[playerIndex];
+        
+        if (currentPacman != null)
+        {
+            if (activateInmediately)
+            {
+                currentPacman.gameObject.SetActive(true);
+            }
+            
+            // Enable input on current pacman
+            var currentPlayerInput = currentPacman.GetComponent<PlayerInput>();
+            if (currentPlayerInput != null)
+            {
+                currentPlayerInput.enabled = true;
+            }
+
+            // Cache components for current pacman
+            pacmanAnimator = currentPacman.GetComponent<Animator>();
+            pacmanArrowIndicator = currentPacman.GetComponent<ArrowIndicator>();
+            
+            // Apply character data for the current player
+            ApplyCharacterDataForCurrentPlayer();
+        }
     }
 
     private void InitializePlayers()
@@ -306,7 +416,7 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.DeactivateAllGhosts();
         globalGhostModeController.SetEyesAudioAllowed(false);
 
-        pacman.gameObject.SetActive(false);
+        currentPacman.gameObject.SetActive(false);
 
         uiManager.UpdateIntroText(CurrentIndex);
         uiManager.ShowReadyText(true);
@@ -318,10 +428,10 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.ActivateAllGhosts();
         globalGhostModeController.StopAllGhosts();
 
-        pacman.gameObject.SetActive(true);
-        pacman.enabled = false;
-        pacman.animator.speed = 0f;
-        pacman.UpdateIndicator(Vector2.right);
+        currentPacman.gameObject.SetActive(true);
+        currentPacman.enabled = false;
+        currentPacman.animator.speed = 0f;
+        currentPacman.UpdateIndicator(Vector2.right);
 
         UpdateLifeIconsUI();
 
@@ -340,9 +450,9 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.SetEyesAudioAllowed(true);
         globalGhostModeController.SetHouseReleaseEnabled(true);
 
-        pacman.animator.speed = 1f;
-        pacman.enabled = true;
-        pacman.movement.SetDirection(Vector2.right);
+        currentPacman.animator.speed = 1f;
+        currentPacman.enabled = true;
+        currentPacman.movement.SetDirection(Vector2.right);
     }
 
     private IEnumerator NewRoundSequence()
@@ -380,10 +490,10 @@ public class GameManager : MonoBehaviour
             globalGhostModeController.ActivateAllGhosts();
         }
 
-        pacman.gameObject.SetActive(true);
-        pacman.animator.speed = 0f;
-        pacman.enabled = false;
-        pacman.UpdateIndicator(Vector2.right);
+        currentPacman.gameObject.SetActive(true);
+        currentPacman.animator.speed = 0f;
+        currentPacman.enabled = false;
+        currentPacman.UpdateIndicator(Vector2.right);
 
         yield return new WaitForSeconds(NewRoundDelay);
 
@@ -404,9 +514,9 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.SetEyesAudioAllowed(true);
         globalGhostModeController.SetHouseReleaseEnabled(true);
 
-        pacman.animator.speed = 1f;
-        pacman.enabled = true;
-        pacman.movement.SetDirection(Vector2.right);
+        currentPacman.animator.speed = 1f;
+        currentPacman.enabled = true;
+        currentPacman.movement.SetDirection(Vector2.right);
     }
 
     public void TogglePause()
@@ -466,8 +576,8 @@ public class GameManager : MonoBehaviour
             uiManager.StopPlayerFlicker(i);
         uiManager.StartPlayerFlicker(CurrentIndex);
 
-        pacman.animator.speed = 0f;
-        pacman.enabled = false;
+        currentPacman.animator.speed = 0f;
+        currentPacman.enabled = false;
         uiManager.ShowReadyText(true);
 
         UpdateLifeIconsUI();
@@ -483,7 +593,7 @@ public class GameManager : MonoBehaviour
             globalGhostModeController.ActivateAllGhosts();
         }
 
-        pacman.gameObject.SetActive(true);
+        currentPacman.gameObject.SetActive(true);
 
         yield return new WaitForSeconds(NewRoundDelay);
 
@@ -494,10 +604,10 @@ public class GameManager : MonoBehaviour
 
         uiManager.ShowReadyText(false);
 
-        pacman.animator.speed = 1f;
-        pacman.enabled = true;
-        pacman.movement.SetDirection(Vector2.right);
-        pacman.UpdateIndicator(Vector2.right);
+        currentPacman.animator.speed = 1f;
+        currentPacman.enabled = true;
+        currentPacman.movement.SetDirection(Vector2.right);
+        currentPacman.UpdateIndicator(Vector2.right);
 
         SetState(GameState.Playing);
 
@@ -540,9 +650,9 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlayMazeFlashSequence()
     {
-        pacman.enabled = false;
-        pacman.animator.speed = 0f;
-        pacman.movement.SetDirection(Vector2.zero);
+        currentPacman.enabled = false;
+        currentPacman.animator.speed = 0f;
+        currentPacman.movement.SetDirection(Vector2.zero);
 
         yield return new WaitForSecondsRealtime(2f);
 
@@ -744,13 +854,13 @@ public class GameManager : MonoBehaviour
         if (++timersCount == 1)
             globalGhostModeController?.SetTimersFrozen(true);
 
-        if (pacman)
+        if (currentPacman)
         {
-            if (pacman.movement && pacman.movement.enabled) { pacman.movement.enabled = false; disabled.Add(pacman.movement); }
-            var anim = pacman.GetComponentInChildren<Animator>();
+            if (currentPacman.movement && currentPacman.movement.enabled) { currentPacman.movement.enabled = false; disabled.Add(currentPacman.movement); }
+            var anim = currentPacman.GetComponentInChildren<Animator>();
             if (anim && anim.enabled) { anim.enabled = false; disabled.Add(anim); }
 
-            var rb = pacman.movement ? pacman.movement.rb : null;
+            var rb = currentPacman.movement ? currentPacman.movement.rb : null;
             if (rb && rb.simulated)
             {
                 rb.linearVelocity = Vector2.zero;
@@ -825,7 +935,7 @@ public class GameManager : MonoBehaviour
 
     public void ResetActorsState()
     {
-        pacman.ResetState();
+        currentPacman.ResetState();
         globalGhostModeController.ResetAllGhosts();
         globalGhostModeController.ResetElroy();
         mazeFlashController.ResetMaze();
@@ -881,6 +991,9 @@ public class GameManager : MonoBehaviour
         currentPlayer = GetNextPlayerWithLives();
         if (players.All(p => p.lives <= 0)) { GameOver(); return; }
 
+        // Switch to the corresponding pacman
+        SetCurrentPacman(CurrentIndex, false);
+
         if (InputManager.Instance != null)
         {
             int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
@@ -915,10 +1028,10 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.SetHomeExitsPaused(true);
 
         // Freeze Pac-Man
-        pacman.isInputLocked = true;
-        pacman.movement.enabled = false;
-        pacman.animator.speed = 0f;
-        pacman.gameObject.SetActive(false);
+        currentPacman.isInputLocked = true;
+        currentPacman.movement.enabled = false;
+        currentPacman.animator.speed = 0f;
+        currentPacman.gameObject.SetActive(false);
 
         // Freeze ghosts (soft) during popup; your version allows eyes logic as needed
         PushFreezeSoftAllowEyes();
@@ -944,10 +1057,10 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.ApplyModeSpeed(ghost, Ghost.Mode.Eaten);
 
         // Bring Pac-Man back
-        pacman.gameObject.SetActive(true);
-        pacman.movement.enabled = true;
-        pacman.isInputLocked = false;
-        pacman.animator.speed = 1f;
+        currentPacman.gameObject.SetActive(true);
+        currentPacman.movement.enabled = true;
+        currentPacman.isInputLocked = false;
+        currentPacman.animator.speed = 1f;
 
         // Unfreeze ghosts
         PopFreeze();
@@ -957,7 +1070,7 @@ public class GameManager : MonoBehaviour
     private void GameOver()
     {
         globalGhostModeController.SetEyesAudioAllowed(false);
-        pacman.gameObject.SetActive(false);
+        currentPacman.gameObject.SetActive(false);
         bonusItemManager.DespawnBonusItem(true);
         uiManager.ShowGameOverText(true);
         Debug.Log("Game Over!");
@@ -1076,17 +1189,25 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[GameManager] Applying character data for player {CurrentIndex}: {character.characterName} / {skin.skinName}");
 
-        // Update animator controller
+        // Update animator controller - make sure pacmanAnimator is not null
         if (pacmanAnimator != null && skin.animatorController != null)
         {
             Debug.Log($"Pacman Animator: {skin.animatorController}");
             pacmanAnimator.runtimeAnimatorController = skin.animatorController;
+        }
+        else
+        {
+            Debug.LogWarning($"Pacman animator or skin animator controller is null for player {CurrentIndex}");
         }
 
         // Update arrow indicator's color
         if (pacmanArrowIndicator != null)
         {
             pacmanArrowIndicator.SetColor(skin.arrowIndicatorColor);
+        }
+        else
+        {
+            Debug.LogWarning($"Pacman arrow indicator is null for player {CurrentIndex}");
         }
     }
     #endregion
@@ -1155,7 +1276,7 @@ public class GameManager : MonoBehaviour
         rejoinSawGamepad = false;
 
         // Re-enable gameplay input: Player ON, UI OFF
-        var pi = pacman ? pacman.GetComponent<PlayerInput>() : null;
+        var pi = currentPacman ? currentPacman.GetComponent<PlayerInput>() : null;
         if (pi != null)
         {
             pi.actions.FindActionMap("Player", false)?.Enable();

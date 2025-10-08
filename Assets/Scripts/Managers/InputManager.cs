@@ -62,23 +62,14 @@ public class InputManager : MonoBehaviour
             ? deviceMgr.SinglePlayerCandidates() 
             : new[] { "P1Keyboard", "P2Keyboard" };
 
-        if (playerInput == null)
-        {
-            playerInput = FindFirstObjectByType<PlayerInput>();
-            if (playerInput == null)
-            {
-                Debug.LogError("[InputManager] No PlayerInput found in scene!");
-                return;
-            }
-        }
-
-        originalActionsAsset = playerInput.actions;
-        _pacmanUser = playerInput.user;
+        // Don't try to find PlayerInput here - it will be set by GameManager later
+        // Remove the automatic PlayerInput search in Awake
     }
 
     private void Start()
     {
-        InitializeInputSystem();
+        // Don't initialize here - wait for GameManager to call InitializeInputSystem
+        // InitializeInputSystem() will be called by GameManager after Pacmans are created
     }
 
     private void OnDestroy()
@@ -90,9 +81,24 @@ public class InputManager : MonoBehaviour
         }
     }
 
+    // Make this public so GameManager can call it after setting up PlayerInput
     public void InitializeInputSystem()
     {
+        // If playerInput is still null, try to find it now
+        if (playerInput == null)
+        {
+            playerInput = FindFirstObjectByType<PlayerInput>();
+            if (playerInput == null)
+            {
+                Debug.LogWarning("[InputManager] No PlayerInput found in scene! Waiting for GameManager to set reference.");
+                return;
+            }
+        }
+
         DisableHotSwap(); // Clean up any existing listeners
+
+        originalActionsAsset = playerInput.actions;
+        _pacmanUser = playerInput.user;
 
         // Apply initial device locking
         ApplyBootLock();
@@ -104,16 +110,24 @@ public class InputManager : MonoBehaviour
         {
             EnableHotSwap();
         }
+
+        if (debugInputEvents) Debug.Log("[InputManager] Input system initialized");
     }
     #endregion
 
     #region Public Interface - Device Management
     public void ApplyActivePlayerInputDevices(int slot, bool isTwoPlayerMode)
     {
-        var pi = playerInput;
-        if (pi == null || pi.actions == null)
+        if (playerInput == null)
         {
-            Debug.LogWarning("[InputManager] PlayerInput missing.");
+            Debug.LogWarning("[InputManager] PlayerInput not set. Cannot apply devices.");
+            return;
+        }
+
+        var pi = playerInput;
+        if (pi.actions == null)
+        {
+            Debug.LogWarning("[InputManager] PlayerInput actions missing.");
             return;
         }
 
@@ -233,15 +247,19 @@ public class InputManager : MonoBehaviour
 
     public void SwitchToGameplayMap()
     {
-        var map = playerInput?.actions?.FindActionMap("Player", false);
-        playerInput?.actions?.FindActionMap("UI", false)?.Disable();
+        if (playerInput == null) return;
+        
+        var map = playerInput.actions?.FindActionMap("Player", false);
+        playerInput.actions?.FindActionMap("UI", false)?.Disable();
         map?.Enable();
     }
 
     public void SwitchToUIMap()
     {
-        var map = playerInput?.actions?.FindActionMap("UI", false);
-        playerInput?.actions?.FindActionMap("Player", false)?.Disable();
+        if (playerInput == null) return;
+        
+        var map = playerInput.actions?.FindActionMap("UI", false);
+        playerInput.actions?.FindActionMap("Player", false)?.Disable();
         map?.Enable();
     }
 
@@ -473,11 +491,25 @@ public class InputManager : MonoBehaviour
 
     private void WireUIToPlayerInput()
     {
+        if (playerInput == null)
+        {
+            Debug.LogWarning("[InputManager] PlayerInput is null in WireUIToPlayerInput");
+            return;
+        }
+
         var es = EventSystem.current;
-        if (es == null) return;
+        if (es == null) 
+        {
+            Debug.LogWarning("[InputManager] EventSystem is null in WireUIToPlayerInput");
+            return;
+        }
 
         var uiModule = es.GetComponent<InputSystemUIInputModule>();
-        if (uiModule == null) return;
+        if (uiModule == null) 
+        {
+            Debug.LogWarning("[InputManager] InputSystemUIInputModule is null in WireUIToPlayerInput");
+            return;
+        }
 
         if (uiModule.actionsAsset == null || uiModule.actionsAsset != playerInput.actions)
         {

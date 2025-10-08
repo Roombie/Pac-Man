@@ -136,10 +136,10 @@ public class GhostScatter : MonoBehaviour
             elroyChasesDuringScatter &&
             ghost.Type == GhostType.Blinky &&
             ghost.IsElroy &&
-            ghost.pacman;
+            ghost.CurrentPacman;
 
         Vector3 targetPos = targetPacman
-            ? ghost.pacman.transform.position
+            ? ghost.CurrentPacman.transform.position
             : (cornerNode ? cornerNode.transform.position : transform.position);
 
         Vector2 current = move.direction;

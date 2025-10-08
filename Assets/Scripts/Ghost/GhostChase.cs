@@ -18,12 +18,12 @@ public class GhostChase : MonoBehaviour
     {
         ghost = GetComponent<Ghost>();
         move = ghost.movement ?? GetComponent<Movement>();
-        if (ghost.pacman) pacMove = ghost.pacman.GetComponent<Movement>();
+        if (ghost.CurrentPacman) pacMove = ghost.CurrentPacman.GetComponent<Movement>();
     }
 
     void Update()
     {
-        if (!ghost || !ghost.pacman || !move) return;
+        if (!ghost || !ghost.CurrentPacman || !move) return;
         if (ghost.CurrentMode != Ghost.Mode.Chase) return;
         
         Vector3 target = GetChaseTarget();
@@ -35,7 +35,7 @@ public class GhostChase : MonoBehaviour
     // https://pacman.holenet.info
     Vector3 GetChaseTarget()
     {
-        Vector3 pacPos = ghost.pacman.transform.position;
+        Vector3 pacPos = ghost.CurrentPacman.transform.position;
         Vector2 pdir   = (pacMove && pacMove.direction != Vector2.zero) ? pacMove.direction : Vector2.right;
 
         switch (ghost.Type)
@@ -129,9 +129,9 @@ public class GhostChase : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
-        if (!ghost || !ghost.pacman) return;
+        if (!ghost || !ghost.CurrentPacman) return;
         Gizmos.color = Color.yellow;
-        Vector3 target = Application.isPlaying ? GetChaseTarget() : ghost.pacman.transform.position;
+        Vector3 target = Application.isPlaying ? GetChaseTarget() : ghost.CurrentPacman.transform.position;
         Gizmos.DrawLine(transform.position, target);
         Gizmos.DrawWireSphere(target, 0.15f);
     }

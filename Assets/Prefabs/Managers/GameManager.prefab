@@ -56,7 +56,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f8095fb027d4c243b9fa63db2664b66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pacman: {fileID: 0}
+  pacmanPrefab: {fileID: 4694625664711476940, guid: ae9782efde0ad2640b4b0987a2f31e94, type: 3}
+  pacmanContainer: {fileID: 0}
+  pacmanSpawnPosition: {fileID: 0}
   globalGhostModeController: {fileID: 409079033118078462}
   uiManager: {fileID: 7908264411556593840}
   mazeFlashController: {fileID: 7747503494696074549}
@@ -286,7 +288,6 @@ MonoBehaviour:
   confirmHintText: {fileID: 0}
   viewRoot: {fileID: 0}
   submitAction: {fileID: 392368643174621059, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
-  autoHideOnConfirm: 1
 --- !u!114 &5480692121608086526
 MonoBehaviour:
   m_ObjectHideFlags: 0

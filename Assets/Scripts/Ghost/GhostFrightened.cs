@@ -17,10 +17,10 @@ public class GhostFrightened : MonoBehaviour
 
     void Update()
     {
-        if (!g || !move || !g.pacman) return;
+        if (!g || !move || !g.CurrentPacman) return;
         if (g.CurrentMode != Ghost.Mode.Frightened) return;
 
-        Vector3 threat = g.pacman.transform.position;
+        Vector3 threat = g.CurrentPacman.transform.position;
         Vector2 dir = ChooseDirectionAway(threat);
         move.SetDirection(dir); // uses Movement.SetDirection(...) :contentReference[oaicite:2]{index=2}
     }
