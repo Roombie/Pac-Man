@@ -198,8 +198,7 @@ public class GameManager : MonoBehaviour
             if (playerInput != null)
             {
                 InputManager.Instance.SetPlayerInputReference(playerInput);
-                
-                // Apply devices after a small delay to ensure InputUser is valid
+                InputManager.Instance.InitializeInputSystem();
                 StartCoroutine(ApplyInputDevicesDelayed());
             }
         }
@@ -222,6 +221,7 @@ public class GameManager : MonoBehaviour
         {
             int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
             InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
+            Debug.Log($"[GameManager] Devices applied - Slot: {slot}, 2P: {IsTwoPlayerMode}");
         }
     }
 
@@ -1243,8 +1243,8 @@ public class GameManager : MonoBehaviour
         }
 
         disconnectOverlay?.InitializeIfNeeded();
-        disconnectOverlay?.RebuildCards(1);
-        disconnectOverlay?.SetPresenceForSlot(0, false, false);
+        disconnectOverlay?.RebuildCards(totalPlayers);
+        disconnectOverlay?.SetPresenceForSlot(CurrentIndex, false, false);
         disconnectOverlay?.Show(true);
 
         waitingForRejoin = true;
