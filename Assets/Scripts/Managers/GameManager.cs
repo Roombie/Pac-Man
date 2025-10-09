@@ -20,8 +20,6 @@ public class GameManager : MonoBehaviour
     private Pacman[] pacmans;
     private Pacman currentPacman;
     private int currentPacmanIndex = 0;
-
-    // Replace the existing pacman field with a property
     public Pacman Pacman => currentPacman;
     private Animator pacmanAnimator;
     private ArrowIndicator pacmanArrowIndicator;
