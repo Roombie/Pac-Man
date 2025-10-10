@@ -6,8 +6,8 @@ using UnityEngine.InputSystem;
 namespace Roombie.UI
 {
     /// <summary>
-    /// Multi-slot overlay that shows per-player presence (keyboard/gamepad).
-    /// Supports "required" slots (must be present) and optional slots (may re-bind while open).
+    /// UI overlay that displays connection status for each player slot
+    /// Shows per-player device presence (keyboard/gamepad) and manages the rejoin confirmation process
     /// </summary>
     public class DisconnectOverlayController : MonoBehaviour
     {
@@ -23,28 +23,29 @@ namespace Roombie.UI
         [SerializeField] List<Color> slotTints = new() { Color.red, Color.blue, Color.green, Color.cyan };
 
         [Header("Hint")]
-        [SerializeField] TMP_Text confirmHintText; // e.g. "PRESS SUBMIT WHEN READY"
+        [SerializeField] TMP_Text confirmHintText; // Text shown to instruct players to confirm rejoin
 
         [Header("View Root")]
-        [SerializeField] GameObject viewRoot;
+        [SerializeField] GameObject viewRoot; // Root GameObject of the overlay UI
 
         [Header("Confirm Input")]
-        [SerializeField] InputActionReference submitAction; // drag your UI/Submit (or Player/Submit)
+        [SerializeField] InputActionReference submitAction; // Input action for confirming rejoin (usually UI/Submit)
 
-        // Runtime
+        // Runtime data
         readonly List<PlayerCardView> cards = new();
-        Sprite _iconKeyboard;
-        Sprite _iconGamepad;
-        bool _initialized;
-        int _expectedPlayers;
-        InputAction _submitAction;
-        bool _submitHooked;
+        Sprite iconKeyboardRuntime;
+        Sprite iconGamepadRuntime;
+        bool initialized;
+        int expectedPlayers;
+        InputAction submitActionRuntime;
+        bool submitHooked;
 
-        // Required slots set (only these must present to allow Submit)
-        HashSet<int> _requiredSlots = new();
+        // Tracks which slots must be present before rejoin is allowed
+        HashSet<int> requiredSlots = new();
 
         void Awake()
         {
+            // Ensure the overlay starts hidden and set up the input listener
             if (!viewRoot) viewRoot = gameObject;
             viewRoot.SetActive(false);
             SetupSubmitAction();
@@ -52,33 +53,43 @@ namespace Roombie.UI
 
         void OnDestroy()
         {
-            if (_submitAction != null)
-                _submitAction.performed -= OnSubmitPerformed;
+            // Unhook the submit action when destroyed
+            if (submitActionRuntime != null)
+                submitActionRuntime.performed -= OnSubmitPerformed;
             HookSubmit(false);
         }
 
+        /// <summary>
+        /// Initializes and hooks the submit InputAction used to confirm rejoin
+        /// </summary>
         void SetupSubmitAction()
         {
-            _submitAction = submitAction ? submitAction.action : null;
-            if (_submitAction == null)
+            submitActionRuntime = submitAction ? submitAction.action : null;
+            if (submitActionRuntime == null)
             {
-                Debug.LogWarning("[DisconnectOverlay] No submitActionRef assigned (UI/Submit recommended).");
+                Debug.LogWarning("[DisconnectOverlay] No submitActionRef assigned (UI/Submit recommended)");
                 return;
             }
-            _submitAction.performed -= OnSubmitPerformed;
-            _submitAction.performed += OnSubmitPerformed;
+
+            submitActionRuntime.performed -= OnSubmitPerformed;
+            submitActionRuntime.performed += OnSubmitPerformed;
         }
 
+        /// <summary>
+        /// Called when the player presses the submit input (e.g., Start or Enter)
+        /// Checks if all required players are present before completing rejoin
+        /// </summary>
         void OnSubmitPerformed(InputAction.CallbackContext ctx)
         {
             if (!viewRoot || !viewRoot.activeInHierarchy) return;
-            
+
             Debug.Log($"[DisconnectOverlay] Submit pressed - Required slots present: {AreRequiredSlotsPresent()}");
-            
+
             if (AreRequiredSlotsPresent())
             {
-                Debug.Log("[DisconnectOverlay] Finishing rejoin process");
-                GameManager.Instance.FinishRejoin();
+                Debug.Log("[DisconnectOverlay] Finishing global rejoin process");
+                InputManager.Instance.FinishRejoin("Auto");
+                Show(false);
             }
             else
             {
@@ -86,82 +97,84 @@ namespace Roombie.UI
             }
         }
 
-        // ---------- Public API (what GameManager calls) ----------
-
-        /// <summary>Initialize icons once, if using inspector defaults.</summary>
+        /// <summary>
+        /// Initializes keyboard and gamepad icons once if needed
+        /// </summary>
         public void InitializeIfNeeded()
         {
-            _iconKeyboard = iconKeyboard;
-            _iconGamepad = iconGamepad;
-            _initialized = true;
+            iconKeyboardRuntime = iconKeyboard;
+            iconGamepadRuntime = iconGamepad;
+            initialized = true;
             PushIconsToCards();
         }
 
         /// <summary>
-        /// Define how many cards to build and which slots are required in the current rejoin session.
+        /// Sets up the overlay for a specific number of players and defines required slots
         /// </summary>
-        public void SetMode(int totalPlayers, IEnumerable<int> requiredSlots)
+        public void SetMode(int totalPlayers, IEnumerable<int> requiredSlotsInput)
         {
             if (totalPlayers < 1) totalPlayers = 1;
 
-            _requiredSlots.Clear();
-            if (requiredSlots != null)
+            requiredSlots.Clear();
+            if (requiredSlotsInput != null)
             {
-                foreach (var r in requiredSlots)
-                    _requiredSlots.Add(Mathf.Max(0, r));
+                foreach (var r in requiredSlotsInput)
+                    requiredSlots.Add(Mathf.Max(0, r));
             }
 
             RebuildCards(totalPlayers);
         }
 
-        /// <summary>Rebuild card list to exactly this count.</summary>
+        /// <summary>
+        /// Recreates the card layout for all player slots
+        /// </summary>
         public void RebuildCards(int count)
         {
             if (count < 1) count = 1;
-            _expectedPlayers = count;
-            if (!_initialized) InitializeIfNeeded();
+            expectedPlayers = count;
+            if (!initialized) InitializeIfNeeded();
             ClearCards();
-            BuildCards(_expectedPlayers);
+            BuildCards(expectedPlayers);
         }
 
-        /// <summary>Set keyboard/gamepad presence for a slot (0-based).</summary>
+        /// <summary>
+        /// Updates presence state for a given player slot (keyboard/gamepad icons)
+        /// </summary>
         public void SetPresenceForSlot(int slotIndex, bool hasKeyboard, bool hasGamepad)
         {
             if (slotIndex < 0) return;
             if (slotIndex >= cards.Count)
-                RebuildCards(Mathf.Max(slotIndex + 1, _expectedPlayers > 0 ? _expectedPlayers : cards.Count));
+                RebuildCards(Mathf.Max(slotIndex + 1, expectedPlayers > 0 ? expectedPlayers : cards.Count));
 
             var card = cards[slotIndex];
             if (!card) return;
 
-            // keep card visible; just swap/hide icon internally
             card.Show(true);
             card.SetPresence(hasKeyboard, hasGamepad);
-            
+
             Debug.Log($"[DisconnectOverlay] Slot {slotIndex} - Keyboard: {hasKeyboard}, Gamepad: {hasGamepad}");
         }
 
-        /// <summary>Toggle overlay visibility; when showing, reset presence and enable Submit.</summary>
+        /// <summary>
+        /// Toggles the entire overlay on or off
+        /// When shown, it resets presence and enables UI input for rejoin
+        /// </summary>
         public void Show(bool show)
         {
             if (!viewRoot) return;
 
             if (show && cards.Count == 0)
-                RebuildCards(_expectedPlayers > 0 ? _expectedPlayers : 1);
+                RebuildCards(expectedPlayers > 0 ? expectedPlayers : 1);
 
             viewRoot.SetActive(show);
             HookSubmit(show);
 
             if (show)
             {
-                // IMPORTANT: start from a blank state so previous icons don't linger
                 ClearAllPresence();
                 RefreshAll();
-                
-                // Enable UI input action map
                 EnableUIInput();
-                
-                Debug.Log($"[DisconnectOverlay] Overlay shown - waiting for submit input");
+                Debug.Log("[DisconnectOverlay] Overlay shown - waiting for submit input");
             }
             else
             {
@@ -169,18 +182,24 @@ namespace Roombie.UI
             }
         }
 
-        // ---------- Internals ----------
+        // ---------- Internal Helpers ----------
 
+        /// <summary>
+        /// Pushes the assigned keyboard and gamepad icons to all player cards
+        /// </summary>
         void PushIconsToCards()
         {
             for (int i = 0; i < cards.Count; i++)
             {
                 var c = cards[i];
                 if (!c) continue;
-                c.SetIcons(_iconKeyboard, _iconGamepad);
+                c.SetIcons(iconKeyboardRuntime, iconGamepadRuntime);
             }
         }
 
+        /// <summary>
+        /// Instantiates PlayerCardView elements for each player slot
+        /// </summary>
         void BuildCards(int count)
         {
             if (!cardsParent || !cardPrefab) return;
@@ -189,43 +208,48 @@ namespace Roombie.UI
             {
                 var card = Instantiate(cardPrefab, cardsParent);
                 card.SetIndex(i);
-                card.SetIcons(_iconKeyboard, _iconGamepad);
+                card.SetIcons(iconKeyboardRuntime, iconGamepadRuntime);
 
                 if (slotTints != null && slotTints.Count > 0)
                     card.ApplyTint(slotTints[i % slotTints.Count]);
 
                 card.Show(true);
-                // start with "no device" (this must hide the icon in PlayerCardView)
                 card.SetPresence(false, false);
 
                 cards.Add(card);
             }
         }
 
+        /// <summary>
+        /// Hooks or unhooks the submit InputAction depending on visibility
+        /// </summary>
         void HookSubmit(bool hook)
         {
-            if (_submitAction == null) 
+            if (submitActionRuntime == null)
             {
                 Debug.LogWarning("[DisconnectOverlay] No submit action available to hook");
                 return;
             }
 
-            if (hook && !_submitHooked)
+            if (hook && !submitHooked)
             {
-                _submitAction.Enable();
-                _submitAction.performed += OnSubmitPerformed;
-                _submitHooked = true;
+                submitActionRuntime.Enable();
+                submitActionRuntime.performed += OnSubmitPerformed;
+                submitHooked = true;
                 Debug.Log("[DisconnectOverlay] Submit action hooked and enabled");
             }
-            else if (!hook && _submitHooked)
+            else if (!hook && submitHooked)
             {
-                _submitAction.performed -= OnSubmitPerformed;
-                _submitAction.Disable();
-                _submitHooked = false;
+                submitActionRuntime.performed -= OnSubmitPerformed;
+                submitActionRuntime.Disable();
+                submitHooked = false;
                 Debug.Log("[DisconnectOverlay] Submit action unhooked and disabled");
             }
         }
 
+        /// <summary>
+        /// Destroys all existing player cards before rebuilding
+        /// </summary>
         void ClearCards()
         {
             for (int i = cards.Count - 1; i >= 0; i--)
@@ -233,53 +257,61 @@ namespace Roombie.UI
             cards.Clear();
         }
 
+        /// <summary>
+        /// Refreshes visibility of all cards without changing presence state
+        /// </summary>
         void RefreshAll()
         {
             for (int i = 0; i < cards.Count; i++)
             {
                 var c = cards[i];
                 if (!c) continue;
-                c.Show(true); // presence is fed externally via SetPresenceForSlot
+                c.Show(true);
             }
         }
 
-        /// <summary>Enable UI input during rejoin process</summary>
+        /// <summary>
+        /// Enables UI input map for all PlayerInput components during rejoin
+        /// </summary>
         private void EnableUIInput()
         {
-            // Find any PlayerInput and enable UI action map
             var playerInputs = FindObjectsByType<PlayerInput>(FindObjectsSortMode.None);
             foreach (var playerInput in playerInputs)
             {
                 if (playerInput != null)
                 {
-                    // Disable Player actions, enable UI actions
                     playerInput.actions.FindActionMap("Player", false)?.Disable();
                     playerInput.actions.FindActionMap("UI", false)?.Enable();
-                    
                     Debug.Log($"[DisconnectOverlay] Enabled UI action map for {playerInput.gameObject.name}");
                 }
             }
         }
 
-        /// <summary>Disable the icon on all cards and clear presence flags.</summary>
+        /// <summary>
+        /// Clears presence indicators on all cards (removes icons)
+        /// </summary>
         public void ClearAllPresence()
         {
             for (int i = 0; i < cards.Count; i++)
             {
                 var c = cards[i];
                 if (!c) continue;
-                c.SetPresence(false, false); // must hide image inside PlayerCardView
+                c.SetPresence(false, false);
             }
         }
 
+        /// <summary>
+        /// Checks if all required player slots are present before allowing confirmation
+        /// If no required slots exist, at least one player must be connected
+        /// </summary>
         bool AreRequiredSlotsPresent()
         {
             if (cards.Count == 0) return false;
 
-            // If there are explicitly required slots, only check those.
-            if (_requiredSlots.Count > 0)
+            // Check required slots first if defined
+            if (requiredSlots.Count > 0)
             {
-                foreach (var slot in _requiredSlots)
+                foreach (var slot in requiredSlots)
                 {
                     if (slot < 0 || slot >= cards.Count) return false;
                     var c = cards[slot];
@@ -288,7 +320,7 @@ namespace Roombie.UI
                 return true;
             }
 
-            // Fallback: require at least one card with presence
+            // Fallback: at least one player must have any device
             for (int i = 0; i < cards.Count; i++)
             {
                 var c = cards[i];

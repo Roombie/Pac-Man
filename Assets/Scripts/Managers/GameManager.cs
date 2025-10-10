@@ -1,10 +1,8 @@
 using UnityEngine;
 using System.Collections;
-using UnityEngine.EventSystems;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 using Roombie.UI;
 using System;
 
@@ -37,8 +35,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PelletManager pelletManager;
     [SerializeField] private CoffeeBreakManager coffeeBreakManager;
     [SerializeField] private ScorePopupManager scorePopupManager;
-    [SerializeField] private PauseUIController pauseUI;
-    [SerializeField] private DisconnectOverlayController disconnectOverlay;
+    public PauseUIController pauseUI;
+    public DisconnectOverlayController disconnectOverlay;
 
     [Serializable]
     private struct FreezeFrame
@@ -58,6 +56,7 @@ public class GameManager : MonoBehaviour
     public enum GameState { Intro, Playing, Paused, LevelClear, Intermission, GameOver }
     public GameState CurrentGameState { get; private set; }
     private int totalPlayers;
+    public int TotalPlayers => totalPlayers;
     public int PlayerCount => Mathf.Max(1, totalPlayers);
     private class PlayerData
     {
@@ -86,15 +85,11 @@ public class GameManager : MonoBehaviour
     private bool alternatePelletSound = false;
     private const float StartSequenceDelay = 2f;
     private const float NewRoundDelay = 2f;
-    private bool waitingForRejoin = false;
-    public bool IsWaitingForRejoin => waitingForRejoin;
-    private bool rejoinSawKeyboard;
-    private bool rejoinSawGamepad;
 
     public int highScore { get; private set; }
     public bool IsTwoPlayerMode { get; private set; }
     private int currentExtraPoints = 0;
-    private int currentPlayer = 1;
+    [HideInInspector] public int currentPlayer = 1;
     [HideInInspector] public int CurrentIndex => currentPlayer - 1;
     private int startingLives;
     [HideInInspector] public CharacterData[] selectedCharacters;
@@ -115,45 +110,9 @@ public class GameManager : MonoBehaviour
         return CurrentIndex;
     }
 
-    private void OnEnable()
-    {
-        if (InputManager.Instance != null)
-        {
-            InputManager.Instance.OnDeviceLost += HandleDeviceLost;
-            InputManager.Instance.OnNewDevicePaired += HandleNewDevicePaired;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (InputManager.Instance != null)
-        {
-            InputManager.Instance.OnDeviceLost -= HandleDeviceLost;
-            InputManager.Instance.OnNewDevicePaired -= HandleNewDevicePaired;
-        }
-    }
-
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
-    }
-
-    private void HandleDeviceLost(InputDevice device)
-    {
-        RequestDejoin();
-    }
-
-    private void HandleNewDevicePaired(InputDevice device)
-    {
-        if (!waitingForRejoin || disconnectOverlay == null) return;
-
-        bool isKb = device is Keyboard;
-        bool isGp = device is Gamepad;
-
-        rejoinSawKeyboard = isKb;
-        rejoinSawGamepad  = isGp;
-
-        disconnectOverlay.SetPresenceForSlot(0, hasKeyboard: isKb, hasGamepad: isGp);
     }
 
     private void Awake()
@@ -186,20 +145,7 @@ public class GameManager : MonoBehaviour
         InitializePlayers();
         InitializeExtraLifeThreshold();
 
-        // Create pacman instances before initializing UI
         CreatePacmanInstances();
-
-        // Now initialize InputManager with the current Pacman's PlayerInput
-        if (InputManager.Instance != null && currentPacman != null)
-        {
-            var playerInput = currentPacman.GetComponent<PlayerInput>();
-            if (playerInput != null)
-            {
-                InputManager.Instance.SetPlayerInputReference(playerInput);
-                InputManager.Instance.InitializeInputSystem();
-                StartCoroutine(ApplyInputDevicesDelayed());
-            }
-        }
 
         uiManager.InitializeUI(totalPlayers);
         uiManager.UpdateHighScore(highScore);
@@ -210,26 +156,13 @@ public class GameManager : MonoBehaviour
         NewGame();
     }
 
-    private IEnumerator ApplyInputDevicesDelayed()
+    void Update()
     {
-        // Wait one frame to ensure InputUser is properly initialized
-        yield return null;
-        
-        if (InputManager.Instance != null)
-        {
-            int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
-            InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
-            Debug.Log($"[GameManager] Devices applied - Slot: {slot}, 2P: {IsTwoPlayerMode}");
-        }
+        if (InputManager.Instance.waitingForRejoin && InputManager.Instance != null && CurrentGameState != GameState.Intermission)
+            InputManager.Instance.PollRejoinInput();
     }
 
-    #region Game Flow
-
-    public void SetState(GameState newState)
-    {
-        CurrentGameState = newState;
-        Debug.Log($"Game State changed to: {newState}");
-    }
+    #region Initialize Pacman
 
     private void CreatePacmanInstances()
     {
@@ -244,32 +177,21 @@ public class GameManager : MonoBehaviour
             Debug.LogError("Pacman parent container is not assigned!");
             return;
         }
-        
+
         for (int i = 0; i < totalPlayers; i++)
-            {
-                GameObject pacmanObj = Instantiate(pacmanPrefab, pacmanSpawnPosition.position, Quaternion.identity, pacmanContainer);
-                pacmanObj.name = $"Pacman_Player{i + 1}";
+        {
+            var pacmanObj = Instantiate(pacmanPrefab, pacmanSpawnPosition.position, Quaternion.identity, pacmanContainer);
+            pacmanObj.name = $"Pacman_Player{i + 1}";
+            pacmanObj.SetActive(false);
+            pacmans[i] = pacmanObj.GetComponent<Pacman>();
+        }
 
-                Pacman pacman = pacmanObj.GetComponent<Pacman>();
-                if (pacman != null)
-                {
-                    pacmans[i] = pacman;
+        InputManager.Instance.ConfigurePacmanInputs(pacmans, IsTwoPlayerMode);
 
-                    // Deactivate all pacmans initially
-                    pacmanObj.SetActive(false);
-
-                    // Set up player input if needed
-                    var playerInput = pacmanObj.GetComponent<PlayerInput>();
-                    if (playerInput != null)
-                    {
-                        playerInput.enabled = false;
-                    }
-                }
-            }
-
-        // Activate the first pacman
+        // Activa el primer jugador
         SetCurrentPacman(0);
     }
+
 
     // Add this method to switch between pacmans
     public void SetCurrentPacman(int playerIndex, bool activateInmediately = true)
@@ -285,7 +207,7 @@ public class GameManager : MonoBehaviour
         if (currentPacman != null)
         {
             currentPacman.gameObject.SetActive(false);
-            
+
             // Disable input on previous pacman
             var prevPlayerInput = currentPacman.GetComponent<PlayerInput>();
             if (prevPlayerInput != null)
@@ -297,14 +219,14 @@ public class GameManager : MonoBehaviour
         // Update current index and activate new pacman
         currentPacmanIndex = playerIndex;
         currentPacman = pacmans[playerIndex];
-        
+
         if (currentPacman != null)
         {
             if (activateInmediately)
             {
                 currentPacman.gameObject.SetActive(true);
             }
-            
+
             // Enable input on current pacman
             var currentPlayerInput = currentPacman.GetComponent<PlayerInput>();
             if (currentPlayerInput != null)
@@ -315,9 +237,56 @@ public class GameManager : MonoBehaviour
             // Cache components for current pacman
             pacmanAnimator = currentPacman.GetComponent<Animator>();
             pacmanArrowIndicator = currentPacman.GetComponent<ArrowIndicator>();
-            
+
             // Apply character data for the current player
             ApplyCharacterDataForCurrentPlayer();
+        }
+    }
+
+    private void ApplyCharacterDataForCurrentPlayer()
+    {
+        if (selectedCharacters == null || selectedSkins == null)
+        {
+            Debug.LogWarning("[GameManager] Character data or skins not initialized.");
+            return;
+        }
+
+        if (CurrentIndex < 0 || CurrentIndex >= selectedCharacters.Length)
+        {
+            Debug.LogWarning("[GameManager] Invalid currentPlayer index.");
+            return;
+        }
+
+        CharacterData character = selectedCharacters[CurrentIndex];
+        CharacterSkin skin = selectedSkins[CurrentIndex];
+
+        if (character == null || skin == null)
+        {
+            Debug.LogWarning($"[GameManager] Character or skin missing for player {CurrentIndex}.");
+            return;
+        }
+
+        Debug.Log($"[GameManager] Applying character data for player {CurrentIndex}: {character.characterName} / {skin.skinName}");
+
+        // Update animator controller - make sure pacmanAnimator is not null
+        if (pacmanAnimator != null && skin.animatorController != null)
+        {
+            Debug.Log($"Pacman Animator: {skin.animatorController}");
+            pacmanAnimator.runtimeAnimatorController = skin.animatorController;
+        }
+        else
+        {
+            Debug.LogWarning($"Pacman animator or skin animator controller is null for player {CurrentIndex}");
+        }
+
+        // Update arrow indicator's color
+        if (pacmanArrowIndicator != null)
+        {
+            pacmanArrowIndicator.SetColor(skin.arrowIndicatorColor);
+        }
+        else
+        {
+            Debug.LogWarning($"Pacman arrow indicator is null for player {CurrentIndex}");
         }
     }
 
@@ -372,6 +341,16 @@ public class GameManager : MonoBehaviour
         }
 
         highScore = PlayerPrefs.GetInt(highScoreKey, 0);
+    }
+
+    #endregion
+
+    #region Game Flow
+
+    public void SetState(GameState newState)
+    {
+        CurrentGameState = newState;
+        Debug.Log($"Game State changed to: {newState}");
     }
 
     private void CompleteRound()
@@ -526,7 +505,7 @@ public class GameManager : MonoBehaviour
 
     public void TogglePause()
     {
-        if (waitingForRejoin) return;
+        if (InputManager.Instance.waitingForRejoin) return;
         if (CurrentGameState == GameState.Playing)
         {
             PauseGame();
@@ -538,7 +517,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void PauseGame()
+    public void PauseGame()
     {
         Time.timeScale = 0f;
         pauseUI.ShowPause();
@@ -546,7 +525,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game Paused");
     }
 
-    private void ResumeGame()
+    public void ResumeGame()
     {
         Time.timeScale = 1f;
         pauseUI.HidePause();
@@ -999,12 +978,6 @@ public class GameManager : MonoBehaviour
         // Switch to the corresponding pacman
         SetCurrentPacman(CurrentIndex, false);
 
-        if (InputManager.Instance != null)
-        {
-            int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
-            InputManager.Instance.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
-        }
-
         Debug.Log($"[GameManager] Turn switched. Now it's Player {currentPlayer}");
         OnRoundChanged?.Invoke(CurrentIndex, CurrentRound, BestRound);
     }
@@ -1168,138 +1141,5 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-
-    private void ApplyCharacterDataForCurrentPlayer()
-    {
-        if (selectedCharacters == null || selectedSkins == null)
-        {
-            Debug.LogWarning("[GameManager] Character data or skins not initialized.");
-            return;
-        }
-
-        if (CurrentIndex < 0 || CurrentIndex >= selectedCharacters.Length)
-        {
-            Debug.LogWarning("[GameManager] Invalid currentPlayer index.");
-            return;
-        }
-
-        CharacterData character = selectedCharacters[CurrentIndex];
-        CharacterSkin skin = selectedSkins[CurrentIndex];
-
-        if (character == null || skin == null)
-        {
-            Debug.LogWarning($"[GameManager] Character or skin missing for player {CurrentIndex}.");
-            return;
-        }
-
-        Debug.Log($"[GameManager] Applying character data for player {CurrentIndex}: {character.characterName} / {skin.skinName}");
-
-        // Update animator controller - make sure pacmanAnimator is not null
-        if (pacmanAnimator != null && skin.animatorController != null)
-        {
-            Debug.Log($"Pacman Animator: {skin.animatorController}");
-            pacmanAnimator.runtimeAnimatorController = skin.animatorController;
-        }
-        else
-        {
-            Debug.LogWarning($"Pacman animator or skin animator controller is null for player {CurrentIndex}");
-        }
-
-        // Update arrow indicator's color
-        if (pacmanArrowIndicator != null)
-        {
-            pacmanArrowIndicator.SetColor(skin.arrowIndicatorColor);
-        }
-        else
-        {
-            Debug.LogWarning($"Pacman arrow indicator is null for player {CurrentIndex}");
-        }
-    }
-    #endregion
-
-    #region Dejoin
-    void Update()
-    {
-        if (waitingForRejoin && InputManager.Instance != null && CurrentGameState != GameState.Intermission)
-            InputManager.Instance.PollRejoinInput();
-    }
-
-    /// Call this from input to let the current player drop their devices and rejoin.
-    public void RequestDejoin()
-    {
-        if (waitingForRejoin) return;
-
-        if (CurrentGameState == GameState.Playing) PauseGame();
-        pauseUI.HidePause();
-
-        int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
-
-        if (InputManager.Instance != null)
-        {
-            InputManager.Instance.ClearActivePlayerDevicesAndPrefs(slot);
-            InputManager.Instance.StartRejoinProcess(slot);
-        }
-
-        disconnectOverlay?.InitializeIfNeeded();
-        disconnectOverlay?.RebuildCards(totalPlayers);
-        disconnectOverlay?.SetPresenceForSlot(CurrentIndex, false, false);
-        disconnectOverlay?.Show(true);
-
-        waitingForRejoin = true;
-    }
-
-    /// Hide overlay + resume if we paused for rejoin
-    public void FinishRejoin()
-    {
-        // Hide overlay
-        if (disconnectOverlay) disconnectOverlay.Show(false);
-
-        // Decide which scheme we rejoin with
-        string rejoinScheme;
-        if (rejoinSawGamepad) rejoinScheme = "Gamepad";
-        else if (rejoinSawKeyboard) rejoinScheme = "P1Keyboard";
-        else rejoinScheme = null;
-
-        int slot = Mathf.Max(1, IsTwoPlayerMode ? currentPlayer : 1);
-
-        // Save the reacquired scheme + device
-        if (!string.IsNullOrEmpty(rejoinScheme))
-        {
-            PlayerPrefs.SetString($"P{slot}_Scheme", rejoinScheme);
-
-            if (rejoinSawGamepad && Gamepad.current != null)
-                PlayerPrefs.SetString($"P{slot}_Devices", Gamepad.current.deviceId.ToString());
-            else if (rejoinSawKeyboard && Keyboard.current != null)
-                PlayerPrefs.SetString($"P{slot}_Devices", Keyboard.current.deviceId.ToString());
-
-            PlayerPrefs.Save();
-        }
-
-        // Clear rejoin state
-        waitingForRejoin = false;
-        rejoinSawKeyboard = false;
-        rejoinSawGamepad = false;
-
-        // Re-enable gameplay input: Player ON, UI OFF
-        var pi = currentPacman ? currentPacman.GetComponent<PlayerInput>() : null;
-        if (pi != null)
-        {
-            pi.actions.FindActionMap("Player", false)?.Enable();
-            pi.actions.FindActionMap("UI", false)?.Disable();
-        }
-
-        // Re-enable EventSystem's UI module
-        var uiModule = EventSystem.current
-            ? EventSystem.current.GetComponent<InputSystemUIInputModule>()
-            : null;
-        if (uiModule) uiModule.enabled = true;
-
-        // Delegate to InputManager to reapply devices and scheme
-        InputManager.Instance?.ApplyActivePlayerInputDevices(slot, IsTwoPlayerMode);
-
-        // Unpause and continue gameplay
-        ResumeGame();
-    }
-
     #endregion
 }

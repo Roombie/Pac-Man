@@ -2,18 +2,25 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Core Pac-Man player controller
+/// Handles player input, movement buffering, facing direction,
+/// animation, death sequence, and interaction with GameManager
+/// </summary>
 public class Pacman : MonoBehaviour
 {
     public bool isDead = false;
 
+    [Header("References")]
     public Movement movement;
     public ArrowIndicator arrowIndicator;
 
-    private Vector2 lastInputDirection = Vector2.zero;
-    private float inputBufferTime = 0f;
-    private float bufferDuration = 0.18f;
-    public bool isInputLocked = false;
-    private bool indicatorVisible = true;
+    [Header("Input Settings")]
+    private Vector2 lastInputDirection = Vector2.zero; // Stores last movement input
+    private float inputBufferTime = 0f; // When the current buffer expires
+    private float bufferDuration = 0.18f; // How long buffered input lasts
+    public bool isInputLocked = false; // Blocks movement during transitions
+    private bool indicatorVisible = true; // Controls visibility of the direction arrow
 
     private SpriteRenderer spriteRenderer;
     public Animator animator;
@@ -21,6 +28,7 @@ public class Pacman : MonoBehaviour
 
     private void Awake()
     {
+        // Cache required components
         spriteRenderer = GetComponent<SpriteRenderer>();
         playerInput = GetComponent<PlayerInput>();
         movement = GetComponent<Movement>();
@@ -28,103 +36,96 @@ public class Pacman : MonoBehaviour
 
     private void Update()
     {
+        // Disable movement if Pacman is dead, input is locked, or game isn't playing
         if (isDead || isInputLocked || GameManager.Instance == null ||
             GameManager.Instance.CurrentGameState != GameManager.GameState.Playing)
             return;
 
-        // Get move input direction
+        // Read directional input
         Vector2 inputDirection = playerInput.actions["Move"].ReadValue<Vector2>();
 
-        if (inputDirection != Vector2.zero && !IsInputForThisPlayer(inputDirection))
-            return;
-
-        // Filter out diagonal input: prioritize horizontal or vertical based on which is greater
-        if (inputDirection != Vector2.zero && !IsInputForThisPlayer(inputDirection))
+        // Handle directional input and movement buffering
+        if (inputDirection != Vector2.zero)
         {
             var moveAction = playerInput.actions["Move"];
             var activeControl = moveAction.activeControl;
+
+            // Debug which device triggered input
             if (activeControl != null)
-            {   Debug.Log($"[Pacman] Input from: {activeControl.device.displayName} | " +
-                  $"Scheme: {playerInput.currentControlScheme} | " +
-                  $"Direction: {inputDirection} | " +
-                  $"Key: {activeControl.path}");
+            {
+                Debug.Log($"[Pacman] Input from: {activeControl.device.displayName} | " +
+                          $"Scheme: {playerInput.currentControlScheme} | " +
+                          $"Direction: {inputDirection} | " +
+                          $"Key: {activeControl.path}");
             }
-            // Prioritize horizontal or vertical input
+
+            // Prioritize dominant axis (horizontal or vertical)
             if (Mathf.Abs(inputDirection.x) > Mathf.Abs(inputDirection.y))
                 inputDirection = new Vector2(Mathf.Sign(inputDirection.x), 0f);
             else
                 inputDirection = new Vector2(0f, Mathf.Sign(inputDirection.y));
 
+            // Save new direction and buffer expiration time
             if (lastInputDirection != inputDirection)
             {
                 inputBufferTime = Time.time + bufferDuration;
                 lastInputDirection = inputDirection;
             }
 
-            TrySetDirection(inputDirection);   // use the safe “force reverse” helper
+            // Try to set direction immediately or buffer it
+            TrySetDirection(inputDirection);
 
+            // Update arrow indicator direction
             UpdateIndicator(inputDirection);
         }
         else if (Time.time <= inputBufferTime)
         {
-            TrySetDirection(lastInputDirection); // apply buffered input with same logic
+            // If no input but buffer still valid, apply buffered direction
+            TrySetDirection(lastInputDirection);
         }
 
-        // If there's input, rotate depending on the input
+        // Rotate Pac-Man sprite based on current movement direction
         if (movement.direction != Vector2.zero)
         {
             float angle = Mathf.Atan2(movement.direction.y, movement.direction.x);
             transform.rotation = Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
         }
 
+        // Flip sprite vertically based on direction
         if (movement.direction.x < 0)
-        {
             spriteRenderer.flipY = true;
-        }
         else if (movement.direction.x > 0)
-        {
             spriteRenderer.flipY = false;
-        }
 
+        // freeze animation if blocked
         // animator.speed = movement.isBlocked ? 0f : 1f;
     }
 
     /// <summary>
-    /// Check if the current input should be handled by this player using the same logic as character selection
-    /// </summary>
-    private bool IsInputForThisPlayer(Vector2 inputDirection)
-    {
-        if (InputManager.Instance == null) return true;
-        
-        var moveAction = playerInput.actions["Move"];
-        var activeControl = moveAction.activeControl;
-        
-        if (activeControl == null) return true;
-        
-        // USE THE SAME RESOLUTION AS CHARACTER SELECTION
-        return InputManager.Instance.ShouldHandleInputForPlayer(
-            moveAction, activeControl, GameManager.Instance.currentPlayer);
-    }
-
-    /// <summary>
-    /// For Pac-Man only: allow instant reverse if that tile isn’t blocked.
-    /// Otherwise, fall back to normal SetDirection (queues until intersection).
+    /// Safely attempts to change direction
+    /// Allows instant reversal if not blocked, otherwise queues input
     /// </summary>
     private void TrySetDirection(Vector2 dir)
     {
-        bool wantsReverse = (dir == -movement.direction);
+        bool wantsReverse = dir == -movement.direction;
         if (wantsReverse && !movement.Occupied(dir))
-            movement.SetDirection(dir, forced: true);  // safe instant reverse
+            movement.SetDirection(dir, forced: true); // Force instant reverse if possible
         else
-            movement.SetDirection(dir);                // queue or turn normally
+            movement.SetDirection(dir);  // Normal queued turn
     }
 
+    /// <summary>
+    /// Updates the arrow indicator direction during movement
+    /// </summary>
     public void UpdateIndicator(Vector2 direction)
     {
         if (arrowIndicator != null && movement.enabled && indicatorVisible)
             arrowIndicator.UpdateIndicator(direction);
     }
 
+    /// <summary>
+    /// Resets Pac-Man to initial position and default state after death or level restart
+    /// </summary>
     public void ResetState()
     {
         Debug.Log("Resetting Pacman state...");
@@ -140,9 +141,7 @@ public class Pacman : MonoBehaviour
         }
 
         if (animator != null)
-        {
             animator.Play("move", 0, 0f);
-        }
 
         if (spriteRenderer != null)
         {
@@ -156,6 +155,10 @@ public class Pacman : MonoBehaviour
             arrowIndicator.ResetIndicator();
     }
 
+    /// <summary>
+    /// Toggles visibility of the directional arrow indicator
+    /// Automatically updates direction when re-enabled
+    /// </summary>
     public void UpdateIndicatorVisibility(bool value)
     {
         indicatorVisible = value;
@@ -164,7 +167,7 @@ public class Pacman : MonoBehaviour
 
         if (value)
         {
-            // prefer the actual movement direction, else last input, else face right
+            // Choose the best direction to display
             Vector2 dir =
                 (movement != null && movement.direction != Vector2.zero) ? movement.direction :
                 (lastInputDirection != Vector2.zero) ? lastInputDirection :
@@ -178,20 +181,29 @@ public class Pacman : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Triggers Pac-Man's death sequence
+    /// </summary>
     public void Death()
     {
         if (isDead) return;
         StartCoroutine(DieSequence());
     }
 
+    /// <summary>
+    /// Coroutine that handles Pac-Man's death animation and logic
+    /// Freezes movement, plays animation and sound, then notifies GameManager
+    /// </summary>
     private IEnumerator DieSequence()
     {
         isDead = true;
-    
+
         GameManager.Instance.globalGhostModeController.StopAllGhosts();
         GameManager.Instance.globalGhostModeController.SetTimersFrozen(true);
         GameManager.Instance.globalGhostModeController.SetEyesAudioAllowed(false);
+
         AudioManager.Instance.StopAll();
+
         movement.rb.constraints = RigidbodyConstraints2D.FreezeAll;
         movement.enabled = false;
         animator.speed = 0f;
@@ -210,7 +222,11 @@ public class Pacman : MonoBehaviour
             spriteRenderer.flipY = false;
         }
 
-        AudioManager.Instance.Play(GameManager.Instance.selectedCharacters[GameManager.Instance.GetCurrentIndex()].deathSound, SoundCategory.SFX);
+        // Play Pac-Man death sound and trigger animation
+        AudioManager.Instance.Play(
+            GameManager.Instance.selectedCharacters[GameManager.Instance.GetCurrentIndex()].deathSound,
+            SoundCategory.SFX
+        );
         animator.SetTrigger("death");
 
         yield return new WaitForSeconds(2f);
@@ -218,32 +234,52 @@ public class Pacman : MonoBehaviour
         GameManager.Instance.PacmanEaten();
     }
 
+    /// <summary>
+    /// Called by InputSystem when Pause input is triggered
+    /// Toggles the pause state if the game is currently playing or paused
+    /// </summary>
     public void OnPause(InputAction.CallbackContext context)
     {
-        if (context.performed && (GameManager.Instance.CurrentGameState == GameManager.GameState.Playing || GameManager.Instance.CurrentGameState == GameManager.GameState.Paused))
+        if (context.performed &&
+            (GameManager.Instance.CurrentGameState == GameManager.GameState.Playing ||
+             GameManager.Instance.CurrentGameState == GameManager.GameState.Paused))
         {
             GameManager.Instance.TogglePause();
         }
     }
 
+    /// <summary>
+    /// Called by InputSystem when Dejoin input is triggered
+    /// Requests a global dejoin via InputManager if rejoin mode isn't active
+    /// </summary>
     public void OnDejoin(InputAction.CallbackContext ctx)
     {
         if (!ctx.performed) return;
-        if (GameManager.Instance != null && !GameManager.Instance.IsWaitingForRejoin)
-            GameManager.Instance.RequestDejoin();
+
+        if (GameManager.Instance != null && !InputManager.Instance.waitingForRejoin)
+        {
+            InputManager.Instance.RequestDejoin(
+                GameManager.Instance,
+                GameManager.Instance.currentPlayer,
+                GameManager.Instance.IsTwoPlayerMode,
+                GameManager.Instance.TotalPlayers
+            );
+        }
     }
 
+    /// <summary>
+    /// Draws debug gizmos showing Pac-Man's next tile collision state
+    /// Green = free, Red = blocked
+    /// </summary>
     void OnDrawGizmos()
     {
         if (movement == null || !movement.enabled) return;
 
         Vector2 size = new Vector2(1f, 1.75f);
-        Vector2 direction = this.movement.direction;
-
+        Vector2 direction = movement.direction;
         bool isOccupied = movement.Occupied(direction);
 
         Gizmos.color = isOccupied ? Color.red : Color.green;
-
         Gizmos.DrawWireCube(transform.position + (Vector3)direction * 1.5f, size);
     }
 }
