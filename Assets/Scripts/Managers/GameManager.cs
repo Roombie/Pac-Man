@@ -521,6 +521,15 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 0f;
         pauseUI.ShowPause();
+        if (currentPacman != null)
+        {
+            var playerInput = currentPacman.GetComponent<PlayerInput>();
+            if (playerInput != null)
+            {
+                InputManager.Instance.SwitchToUIMap(playerInput);
+                Debug.Log($"[GameManager] Switched Player {currentPlayer} to UI map for pause menu");
+            }
+        }
         SetState(GameState.Paused);
         Debug.Log("Game Paused");
     }
@@ -529,6 +538,15 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         pauseUI.HidePause();
+        if (currentPacman != null)
+        {
+            var playerInput = currentPacman.GetComponent<PlayerInput>();
+            if (playerInput != null)
+            {
+                InputManager.Instance.SwitchToGameplayMap(playerInput);
+                Debug.Log($"[GameManager] Switched Player {currentPlayer} to UI map for pause menu");
+            }
+        }
         SetState(GameState.Playing);
         Debug.Log("Game Resumed");
     }

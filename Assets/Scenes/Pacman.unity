@@ -23488,8 +23488,27 @@ MonoBehaviour:
   toggleSound: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
   toggle: {fileID: 1738596217}
   label: {fileID: 1218674295}
-  onTextKey: Toggle_On
-  offTextKey: Toggle_Off
+  onText:
+    m_TableReference:
+      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
+    m_TableEntryReference:
+      m_KeyId: 624585175040
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  offText:
+    m_TableReference:
+      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
+    m_TableEntryReference:
+      m_KeyId: 654830301184
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &1379414706
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30691,8 +30710,27 @@ MonoBehaviour:
   toggleSound: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
   toggle: {fileID: 1885701902}
   label: {fileID: 2082045139}
-  onTextKey: Toggle_On
-  offTextKey: Toggle_Off
+  onText:
+    m_TableReference:
+      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
+    m_TableEntryReference:
+      m_KeyId: 624585175040
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  offText:
+    m_TableReference:
+      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
+    m_TableEntryReference:
+      m_KeyId: 654830301184
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &2092815420
 MonoBehaviour:
   m_ObjectHideFlags: 0

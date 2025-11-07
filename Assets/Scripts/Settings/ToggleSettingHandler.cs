@@ -1,7 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using TMPro;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.AddressableAssets;
 
 public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
 {
@@ -13,17 +16,21 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
     [Header("UI")]
     public Toggle toggle;
     public TextMeshProUGUI label;
-    [SerializeField] private string onTextKey = "Toggle_On";
-    [SerializeField] private string offTextKey = "Toggle_Off";
+    [SerializeField] private LocalizedString onText;
+    [SerializeField] private LocalizedString offText;
 
     private bool currentValue;
 
     public SettingType SettingType => settingType;
 
-    private System.Action<UnityEngine.Localization.Locale> localeChangedHandler;
+    private System.Action<Locale> localeChangedHandler;
 
     private ISettingsProvider settingsProvider;
 
+    private AsyncOperationHandle<string> _labelHandle;
+    private bool _hasLabelHandle;
+    private uint _labelReqVersion;
+    
     void Start()
     {
         localeChangedHandler = _ => RefreshUI();
@@ -51,6 +58,12 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
     {
         if (toggle != null)
             toggle.onValueChanged.RemoveListener(OnToggleChanged);
+
+        if (_hasLabelHandle && _labelHandle.IsValid())
+        {
+            Addressables.Release(_labelHandle);
+            _hasLabelHandle = false;
+        }
 
         LocalizationSettings.SelectedLocaleChanged -= localeChangedHandler;
     }
@@ -112,8 +125,31 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
 
     public void RefreshUI()
     {
-        if (label == null) return;
-        string key = (toggle != null && toggle.isOn) ? onTextKey : offTextKey;
-        label.text = LocalizationSettings.StringDatabase.GetLocalizedString("GameText", key);
+        if (!label) return;
+
+        // Invalidate previous requests (token/version)
+        _labelReqVersion++;
+        uint thisReq = _labelReqVersion;
+
+        // Free previous handle to avoid leaks
+        if (_hasLabelHandle && _labelHandle.IsValid())
+        {
+            Addressables.Release(_labelHandle);
+            _hasLabelHandle = false;
+        }
+
+        // Launch new request
+        // define which text to use
+        // then get the localized string
+        LocalizedString reference = (toggle != null && toggle.isOn) ? onText : offText;
+        _labelHandle = reference.GetLocalizedStringAsync();
+        _hasLabelHandle = true;
+        
+        // On completion, only apply if this is still the "current" request
+        _labelHandle.Completed += op =>
+        {
+            if (thisReq != _labelReqVersion) return; // it's late, so ignore
+            if (label) label.text = op.Result;
+        };
     }
 }
