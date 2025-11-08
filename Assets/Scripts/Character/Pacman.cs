@@ -41,14 +41,45 @@ public class Pacman : MonoBehaviour
             GameManager.Instance.CurrentGameState != GameManager.GameState.Playing)
             return;
 
-        // Read directional input
-        Vector2 inputDirection = playerInput.actions["Move"].ReadValue<Vector2>();
-
-        // Handle directional input and movement buffering
-        if (inputDirection != Vector2.zero)
+        // Apply buffered input if no new input but buffer still valid
+        if (Time.time <= inputBufferTime && lastInputDirection != Vector2.zero)
         {
-            var moveAction = playerInput.actions["Move"];
-            var activeControl = moveAction.activeControl;
+            TrySetDirection(lastInputDirection);
+        }
+
+        // Rotate Pac-Man sprite based on current movement direction
+        if (movement.direction != Vector2.zero)
+        {
+            float angle = Mathf.Atan2(movement.direction.y, movement.direction.x);
+            transform.rotation = Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
+        }
+
+        // Flip sprite vertically based on direction
+        if (movement.direction.x < 0)
+            spriteRenderer.flipY = true;
+        else if (movement.direction.x > 0)
+            spriteRenderer.flipY = false;
+
+        // freeze animation if blocked
+        // animator.speed = movement.isBlocked ? 0f : 1f;
+    }
+
+    /// <summary>
+    /// Called by InputSystem when Move input is triggered
+    /// Handles directional input and movement buffering
+    /// </summary>
+    public void OnMove(InputAction.CallbackContext context)
+    {
+        if (isDead || isInputLocked || GameManager.Instance == null ||
+            GameManager.Instance.CurrentGameState != GameManager.GameState.Playing)
+            return;
+
+        if (context.performed)
+        {
+            Vector2 inputDirection = context.ReadValue<Vector2>();
+
+            var moveAction = context.action;
+            var activeControl = context.control;
 
             // Debug which device triggered input
             if (activeControl != null)
@@ -78,27 +109,11 @@ public class Pacman : MonoBehaviour
             // Update arrow indicator direction
             UpdateIndicator(inputDirection);
         }
-        else if (Time.time <= inputBufferTime)
+        else if (context.canceled)
         {
-            // If no input but buffer still valid, apply buffered direction
-            TrySetDirection(lastInputDirection);
+            // Clear buffer when input is released
+            inputBufferTime = 0f;
         }
-
-        // Rotate Pac-Man sprite based on current movement direction
-        if (movement.direction != Vector2.zero)
-        {
-            float angle = Mathf.Atan2(movement.direction.y, movement.direction.x);
-            transform.rotation = Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
-        }
-
-        // Flip sprite vertically based on direction
-        if (movement.direction.x < 0)
-            spriteRenderer.flipY = true;
-        else if (movement.direction.x > 0)
-            spriteRenderer.flipY = false;
-
-        // freeze animation if blocked
-        // animator.speed = movement.isBlocked ? 0f : 1f;
     }
 
     /// <summary>
