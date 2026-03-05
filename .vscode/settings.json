@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Pac-Man.sln"
+    "dotnet.defaultSolution": "Pac-Man.slnx"
 }
