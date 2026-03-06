@@ -128,8 +128,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 25176718}
-  - component: {fileID: 25176719}
   - component: {fileID: 25176720}
+  - component: {fileID: 25176719}
   m_Layer: 5
   m_Name: Service Menu
   m_TagString: Untagged
@@ -168,22 +168,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 25176717}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46aa86bc457052943bcd6af8fbf200e4, type: 3}
+  m_Script: {fileID: 11500000, guid: a531915c8dd43ac44b984630791add75, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  defaultFirstSelected: {fileID: 1947089902}
---- !u!114 &25176720
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 25176717}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 880a9d2812eb1b64287a01312dd66634, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackButtonHandler
   cancelAction: {fileID: 7727032971491509709, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   onCancelEvent:
     m_PersistentCalls:
@@ -212,7 +199,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: Back
         m_Mode: 1
@@ -224,6 +211,19 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &25176720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 25176717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9606fb07819e1c742b272bb99ba3a72b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BaseMenuPanel
+  defaultFirstSelected: {fileID: 1947089902}
 --- !u!1 &40485120
 GameObject:
   m_ObjectHideFlags: 0
@@ -469,6 +469,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -608,6 +609,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 4.17
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -789,6 +791,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -951,7 +954,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -1059,6 +1062,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1623,7 +1627,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -1750,6 +1754,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1965,6 +1970,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 9
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2102,6 +2108,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2334,7 +2341,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -2466,7 +2473,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -2478,7 +2485,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: OpenMenu
         m_Mode: 2
@@ -2601,7 +2608,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -2783,6 +2790,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3104,7 +3112,7 @@ MonoBehaviour:
           m_StringArgument: Pacman
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 724888843}
+      - m_Target: {fileID: 724888847}
         m_TargetAssemblyTypeName: ChangeScene, Assembly-CSharp
         m_MethodName: LoadScene
         m_Mode: 5
@@ -3131,7 +3139,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: Back
         m_Mode: 1
@@ -3245,6 +3253,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -3347,7 +3356,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -3582,8 +3591,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 302603572}
-  - component: {fileID: 302603573}
   - component: {fileID: 302603574}
+  - component: {fileID: 302603573}
   m_Layer: 5
   m_Name: Options Menu
   m_TagString: Untagged
@@ -3622,22 +3631,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 302603571}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46aa86bc457052943bcd6af8fbf200e4, type: 3}
+  m_Script: {fileID: 11500000, guid: a531915c8dd43ac44b984630791add75, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  defaultFirstSelected: {fileID: 1490433865}
---- !u!114 &302603574
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 302603571}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 880a9d2812eb1b64287a01312dd66634, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackButtonHandler
   cancelAction: {fileID: 7727032971491509709, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   onCancelEvent:
     m_PersistentCalls:
@@ -3652,9 +3648,9 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 1
+          m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -3678,7 +3674,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: Back
         m_Mode: 1
@@ -3688,8 +3684,21 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 1
+          m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &302603574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302603571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9606fb07819e1c742b272bb99ba3a72b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BaseMenuPanel
+  defaultFirstSelected: {fileID: 1490433865}
 --- !u!1 &307336968
 GameObject:
   m_ObjectHideFlags: 0
@@ -3959,6 +3968,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -4121,7 +4131,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -4133,17 +4143,6 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
---- !u!114 &330400273 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6804867386467491970, guid: 727db14e8671e2c48875714d5b7cee77, type: 3}
-  m_PrefabInstance: {fileID: 3904760414294257303}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb992962de9271c4991abf0653872cd1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &343183903
 GameObject:
   m_ObjectHideFlags: 0
@@ -4267,7 +4266,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -4691,6 +4690,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -4902,6 +4902,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -5114,6 +5115,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 1.15
+  m_characterHorizontalScale: 1
   m_wordSpacing: 7.27
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -5596,6 +5598,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -6182,6 +6185,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -6240,7 +6244,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -6561,6 +6565,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -6687,9 +6692,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 706334347}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c24d87c8f141e34daf99ac9e4c030f5, type: 3}
+  m_Script: {fileID: 11500000, guid: 208e266c02d3a874197383a5990afba1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIFlickerSynced
 --- !u!1 &707978028
 GameObject:
   m_ObjectHideFlags: 0
@@ -6866,9 +6871,9 @@ GameObject:
   - component: {fileID: 724888840}
   - component: {fileID: 724888839}
   - component: {fileID: 724888838}
-  - component: {fileID: 724888843}
+  - component: {fileID: 724888847}
   - component: {fileID: 724888844}
-  - component: {fileID: 724888842}
+  - component: {fileID: 724888846}
   - component: {fileID: 724888845}
   m_Layer: 5
   m_Name: Canva
@@ -6968,74 +6973,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &724888842
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 724888837}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9faacdb9f21694245be069cff538dd77, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  showDebugLinesOnlyOnActiveObjects: 1
-  navigateSound: {fileID: 8300000, guid: a57e0e7187603e4499fa34089fbf2db0, type: 3}
-  buttons:
-  - button: {fileID: 236693490}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 1205125616}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 1598249723}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 1490433866}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 319702948}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 126431435}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 1245545241}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 1242340971}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 1264256538}
-    arrowOffset: {x: -110, y: 0}
-  - button: {fileID: 1947089903}
-    arrowOffset: {x: -84, y: 0}
-  - button: {fileID: 290680175}
-    arrowOffset: {x: -84, y: 0}
-  - button: {fileID: 646625272}
-    arrowOffset: {x: -84, y: 0}
-  - button: {fileID: 1131991885}
-    arrowOffset: {x: -100, y: 0}
-  - button: {fileID: 343183905}
-    arrowOffset: {x: -100, y: 0}
-  - button: {fileID: 231934806}
-    arrowOffset: {x: -100, y: 0}
-  - button: {fileID: 184042153}
-    arrowOffset: {x: -100, y: 0}
-  - button: {fileID: 1013672805}
-    arrowOffset: {x: -100, y: 0}
-  - button: {fileID: 1227820080}
-    arrowOffset: {x: -100, y: 0}
-  - button: {fileID: 1306429182}
-    arrowOffset: {x: -110, y: 0}
-  arrowIndicator: {fileID: 506947151}
-  isSelectingOption: 0
-  lastSelected: -1
---- !u!114 &724888843
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 724888837}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39f71d1b12243234ba64139a4633945b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &724888844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7058,7 +6995,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -2265923611715886288, guid: 80ab0b5e82a11b04fa49977c201de635, type: 2}
-  m_audioClip: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -7145,6 +7082,74 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &724888846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724888837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3bfe875d94e65143bf6dd52972e5fe3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArrowSelector
+  showDebugLinesOnlyOnActiveObjects: 1
+  navigateSound: {fileID: 8300000, guid: a57e0e7187603e4499fa34089fbf2db0, type: 3}
+  buttons:
+  - button: {fileID: 236693490}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 1205125616}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 1598249723}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 1490433866}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 319702948}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 126431435}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 1245545241}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 1242340971}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 1264256538}
+    arrowOffset: {x: -110, y: 0}
+  - button: {fileID: 1947089903}
+    arrowOffset: {x: -84, y: 0}
+  - button: {fileID: 290680175}
+    arrowOffset: {x: -84, y: 0}
+  - button: {fileID: 646625272}
+    arrowOffset: {x: -84, y: 0}
+  - button: {fileID: 1131991885}
+    arrowOffset: {x: -100, y: 0}
+  - button: {fileID: 343183905}
+    arrowOffset: {x: -100, y: 0}
+  - button: {fileID: 231934806}
+    arrowOffset: {x: -100, y: 0}
+  - button: {fileID: 184042153}
+    arrowOffset: {x: -100, y: 0}
+  - button: {fileID: 1013672805}
+    arrowOffset: {x: -100, y: 0}
+  - button: {fileID: 1227820080}
+    arrowOffset: {x: -100, y: 0}
+  - button: {fileID: 1306429182}
+    arrowOffset: {x: -110, y: 0}
+  arrowIndicator: {fileID: 506947151}
+  isSelectingOption: 0
+  lastSelected: -1
+--- !u!114 &724888847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724888837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3668af25bc815e42b4728edb5731c3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChangeScene
 --- !u!1 &752199673
 GameObject:
   m_ObjectHideFlags: 0
@@ -7276,7 +7281,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -7582,6 +7587,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 3.4
+  m_characterHorizontalScale: 1
   m_wordSpacing: -65.83
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -7793,6 +7799,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: -60
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -7890,7 +7897,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -8084,6 +8091,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -8220,6 +8228,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 11.7
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -8358,6 +8367,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -8554,6 +8564,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -8690,6 +8701,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -8946,7 +8958,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -9167,6 +9179,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -9303,6 +9316,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -9429,7 +9443,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1050379242}
   - component: {fileID: 1050379243}
-  - component: {fileID: 1050379244}
+  - component: {fileID: 1050379246}
   - component: {fileID: 1050379245}
   m_Layer: 0
   m_Name: Intro
@@ -9494,106 +9508,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 1
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &1050379244
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1050379241}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d25ef7c2600801948905828e1a547423, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animationName: Intro
-  onFinalInput:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1328695563}
-        m_TargetAssemblyTypeName: UnityEngine.CanvasGroup, UnityEngine
-        m_MethodName: set_alpha
-        m_Mode: 4
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1303056567}
-        m_TargetAssemblyTypeName: UnityEngine.CanvasGroup, UnityEngine
-        m_MethodName: set_alpha
-        m_Mode: 4
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1846992841}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1441352534}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
-      - m_Target: {fileID: 1050379245}
-        m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
-        m_MethodName: Play
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
-      - m_Target: {fileID: 724888842}
-        m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
-        m_MethodName: SuppressSoundOnNextSelection
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
-      - m_Target: {fileID: 330400273}
-        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: OpenMenu
-        m_Mode: 2
-        m_Arguments:
-          m_ObjectArgument: {fileID: 1581157991}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
 --- !u!82 &1050379245
 AudioSource:
   m_ObjectHideFlags: 0
@@ -9604,7 +9518,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -2265923611715886288, guid: 80ab0b5e82a11b04fa49977c201de635, type: 2}
-  m_audioClip: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -9691,6 +9605,106 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1050379246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1050379241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ac88bf00362a20499dc7c4ae5773f23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEndInputTrigger
+  animationName: Intro
+  onFinalInput:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1328695563}
+        m_TargetAssemblyTypeName: UnityEngine.CanvasGroup, UnityEngine
+        m_MethodName: set_alpha
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1303056567}
+        m_TargetAssemblyTypeName: UnityEngine.CanvasGroup, UnityEngine
+        m_MethodName: set_alpha
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1846992841}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1441352534}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 1050379245}
+        m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
+        m_MethodName: Play
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 724888846}
+        m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
+        m_MethodName: SuppressSoundOnNextSelection
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 3904760414294257304}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: OpenMenu
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1581157991}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
 --- !u!1 &1080550759
 GameObject:
   m_ObjectHideFlags: 0
@@ -9786,6 +9800,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -10072,6 +10087,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -10236,7 +10252,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -10344,6 +10360,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -10618,6 +10635,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 2.25
+  m_characterHorizontalScale: 1
   m_wordSpacing: -4.99
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -10668,9 +10686,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1144528724}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0fc01e4aea783404cb980387982065ef, type: 3}
+  m_Script: {fileID: 11500000, guid: a97e15008c1a3c04699477572b0528f8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExtraDisplayTextUpdater
   bonusText: {fileID: 1144528726}
   localizedKey: BonusExtra_Text
   pointsSpriteTag: <sprite name="pts_pink">
@@ -10844,6 +10862,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -11135,7 +11154,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -11147,7 +11166,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: OpenMenu
         m_Mode: 2
@@ -11246,7 +11265,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -11527,6 +11546,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -11702,7 +11722,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -11726,7 +11746,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: Back
         m_Mode: 1
@@ -11793,7 +11813,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -11968,6 +11988,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -12184,6 +12205,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -12468,6 +12490,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -12526,7 +12549,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -12747,6 +12770,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -12912,8 +12936,8 @@ GameObject:
   - component: {fileID: 1303056563}
   - component: {fileID: 1303056565}
   - component: {fileID: 1303056564}
-  - component: {fileID: 1303056566}
   - component: {fileID: 1303056567}
+  - component: {fileID: 1303056568}
   m_Layer: 0
   m_Name: PowerPellet Image
   m_TagString: Untagged
@@ -12980,18 +13004,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1303056562}
   m_CullTransparentMesh: 1
---- !u!114 &1303056566
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1303056562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c24d87c8f141e34daf99ac9e4c030f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!225 &1303056567
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -13004,6 +13016,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1303056568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1303056562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 208e266c02d3a874197383a5990afba1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIFlickerSynced
 --- !u!1 &1306429181
 GameObject:
   m_ObjectHideFlags: 0
@@ -13061,7 +13085,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -13129,7 +13153,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -13141,7 +13165,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: OpenMenu
         m_Mode: 2
@@ -13388,6 +13412,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -13524,6 +13549,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 2.2
+  m_characterHorizontalScale: 1
   m_wordSpacing: -64.92
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -13574,8 +13600,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1380205504}
-  - component: {fileID: 1380205505}
   - component: {fileID: 1380205506}
+  - component: {fileID: 1380205505}
   m_Layer: 5
   m_Name: Credits Menu
   m_TagString: Untagged
@@ -13615,22 +13641,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1380205503}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46aa86bc457052943bcd6af8fbf200e4, type: 3}
+  m_Script: {fileID: 11500000, guid: a531915c8dd43ac44b984630791add75, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  defaultFirstSelected: {fileID: 1227820079}
---- !u!114 &1380205506
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1380205503}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 880a9d2812eb1b64287a01312dd66634, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackButtonHandler
   cancelAction: {fileID: 7727032971491509709, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   onCancelEvent:
     m_PersistentCalls:
@@ -13645,9 +13658,9 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 1
+          m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -13657,7 +13670,7 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 1
+          m_BoolArgument: 0
         m_CallState: 2
       - m_Target: {fileID: 1050379241}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
@@ -13671,7 +13684,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: Back
         m_Mode: 1
@@ -13681,8 +13694,21 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 1
+          m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &1380205506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1380205503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9606fb07819e1c742b272bb99ba3a72b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BaseMenuPanel
+  defaultFirstSelected: {fileID: 1227820079}
 --- !u!1 &1385367121
 GameObject:
   m_ObjectHideFlags: 0
@@ -13779,6 +13805,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -13953,6 +13980,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -14207,6 +14235,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -14475,6 +14504,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -14652,7 +14682,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -14676,7 +14706,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: Back
         m_Mode: 1
@@ -14743,7 +14773,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -14889,6 +14919,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -15114,7 +15145,7 @@ GameObject:
   - component: {fileID: 1581157992}
   - component: {fileID: 1581157993}
   - component: {fileID: 1581157995}
-  - component: {fileID: 1581157996}
+  - component: {fileID: 1581157994}
   m_Layer: 5
   m_Name: Start Menu
   m_TagString: Untagged
@@ -15169,7 +15200,7 @@ MonoBehaviour:
   m_Spacing: {x: 0, y: 0}
   m_Constraint: 0
   m_ConstraintCount: 2
---- !u!114 &1581157995
+--- !u!114 &1581157994
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -15178,22 +15209,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1581157991}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46aa86bc457052943bcd6af8fbf200e4, type: 3}
+  m_Script: {fileID: 11500000, guid: 23038ce81cdb1dc4b9956283088213ca, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  defaultFirstSelected: {fileID: 236693486}
---- !u!114 &1581157996
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1581157991}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1776e7d1638fbf409696ff6b0579c57, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::DualButtonCombo
   button1Action: {fileID: -1577091158578443317, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   button2Action: {fileID: -7823918736048250073, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   onComboActivated:
@@ -15211,7 +15229,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -15247,18 +15265,31 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: OpenMenu
-        m_Mode: 2
+        m_MethodName: Back
+        m_Mode: 1
         m_Arguments:
-          m_ObjectArgument: {fileID: 25176717}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &1581157995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1581157991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9606fb07819e1c742b272bb99ba3a72b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BaseMenuPanel
+  defaultFirstSelected: {fileID: 236693486}
 --- !u!1 &1594599699
 GameObject:
   m_ObjectHideFlags: 0
@@ -15354,6 +15385,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -15480,7 +15512,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 724888843}
+      - m_Target: {fileID: 724888847}
         m_TargetAssemblyTypeName: ChangeScene, Assembly-CSharp
         m_MethodName: ExitApplication
         m_Mode: 1
@@ -15559,7 +15591,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -15581,7 +15613,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -2265923611715886288, guid: 80ab0b5e82a11b04fa49977c201de635, type: 2}
-  m_audioClip: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -16126,6 +16158,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -16262,6 +16295,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 11.7
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -16512,6 +16546,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -16798,6 +16833,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 8.6
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -16934,6 +16970,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 6.7
+  m_characterHorizontalScale: 1
   m_wordSpacing: -73.51
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -17071,6 +17108,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -17245,6 +17283,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -17382,6 +17421,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 2.2
+  m_characterHorizontalScale: 1
   m_wordSpacing: 7.27
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -17801,6 +17841,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -18088,6 +18129,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 2.2
+  m_characterHorizontalScale: 1
   m_wordSpacing: 7.27
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -18282,6 +18324,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 2.22
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -18458,7 +18501,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 724888842}
+      - m_Target: {fileID: 724888846}
         m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
         m_MethodName: SuppressSoundOnNextSelection
         m_Mode: 1
@@ -18470,7 +18513,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: Back
         m_Mode: 1
@@ -18561,7 +18604,7 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 724888842}
+        - m_Target: {fileID: 724888846}
           m_TargetAssemblyTypeName: ArrowSelector, Assembly-CSharp
           m_MethodName: ButtonSelected
           m_Mode: 3
@@ -18838,6 +18881,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -18974,6 +19018,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -19141,9 +19186,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2020953299}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46aa86bc457052943bcd6af8fbf200e4, type: 3}
+  m_Script: {fileID: 11500000, guid: 9606fb07819e1c742b272bb99ba3a72b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::BaseMenuPanel
   defaultFirstSelected: {fileID: 2020953299}
 --- !u!1 &2028692730
 GameObject:
@@ -19240,6 +19285,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -19376,6 +19422,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -19513,6 +19560,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -19743,9 +19791,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2071441611}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c190fed16fa4da742a0368bb678b6065, type: 3}
+  m_Script: {fileID: 11500000, guid: a541ad5243a2b0d4bb99e0f9e5ec3e4b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::OpenURL
 --- !u!1 &2075860383
 GameObject:
   m_ObjectHideFlags: 0
@@ -19916,6 +19964,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -20053,6 +20102,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -20103,9 +20153,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2099264387}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 367a6aaf0bfbbc847997766bf5cb8f77, type: 3}
+  m_Script: {fileID: 11500000, guid: d9e55c40a8f271441ab6e9ef4fda8dbe, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighscoreDisplayText
   highscoreText: {fileID: 2099264389}
 --- !u!1 &2100766823
 GameObject:
@@ -20203,6 +20253,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -20443,6 +20494,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -20493,9 +20545,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2117652713}
-  - component: {fileID: 2117652714}
-  - component: {fileID: 2117652715}
   - component: {fileID: 2117652716}
+  - component: {fileID: 2117652715}
+  - component: {fileID: 2117652714}
   m_Layer: 0
   m_Name: Game Mode Select Screen
   m_TagString: Untagged
@@ -20533,65 +20585,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2117652712}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46aa86bc457052943bcd6af8fbf200e4, type: 3}
+  m_Script: {fileID: 11500000, guid: a531915c8dd43ac44b984630791add75, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  defaultFirstSelected: {fileID: 0}
---- !u!114 &2117652715
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2117652712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6c3ba6b914aac8047ae5762d48002969, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  onePlayerModeObject: {fileID: 1923332975}
-  twoPlayerModeObject: {fileID: 1848438166}
-  pauseAction: {fileID: -7823918736048250073, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
-  submitAction: {fileID: 392368643174621059, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
-  onSubmitEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 724888845}
-        m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
-        m_MethodName: Play
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 330400273}
-        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: OpenMenu
-        m_Mode: 2
-        m_Arguments:
-          m_ObjectArgument: {fileID: 2020953299}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
---- !u!114 &2117652716
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2117652712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 880a9d2812eb1b64287a01312dd66634, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackButtonHandler
   cancelAction: {fileID: 7727032971491509709, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   onCancelEvent:
     m_PersistentCalls:
@@ -20606,7 +20602,7 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 1
+          m_BoolArgument: 0
         m_CallState: 2
       - m_Target: {fileID: 996813968}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
@@ -20632,7 +20628,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 330400273}
+      - m_Target: {fileID: 3904760414294257304}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
         m_MethodName: Back
         m_Mode: 1
@@ -20642,8 +20638,64 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 1
+          m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &2117652715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2117652712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 846d4261736b55447877ff74477757c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameModeSelector
+  onePlayerModeObject: {fileID: 1923332975}
+  twoPlayerModeObject: {fileID: 1848438166}
+  pauseAction: {fileID: -7823918736048250073, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+  submitAction: {fileID: 392368643174621059, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
+  onSubmitEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 724888845}
+        m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
+        m_MethodName: Play
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 3904760414294257304}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: OpenMenu
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 2020953299}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &2117652716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2117652712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9606fb07819e1c742b272bb99ba3a72b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BaseMenuPanel
+  defaultFirstSelected: {fileID: 0}
 --- !u!1 &2139142361
 GameObject:
   m_ObjectHideFlags: 0
@@ -21027,7 +21079,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: FlickerSyncManager
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4387862687303258831, guid: c8685fc535158084ebd544ae6f437f81, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -21089,6 +21142,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 727db14e8671e2c48875714d5b7cee77, type: 3}
+--- !u!114 &3904760414294257304 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3410209645789314839, guid: 727db14e8671e2c48875714d5b7cee77, type: 3}
+  m_PrefabInstance: {fileID: 3904760414294257303}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67f25819e27a81c4b97898958e8940d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MenuManager
 --- !u!1001 &6510994692726693492
 PrefabInstance:
   m_ObjectHideFlags: 0

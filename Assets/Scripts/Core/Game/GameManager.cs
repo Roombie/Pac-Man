@@ -109,14 +109,26 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Clears the static Instance before every play session.
+    // Required when "Enter Play Mode > Domain Reload" is disabled in Editor settings:
+    // with it off, statics survive between sessions, Instance stays non-null,
+    // and the old DestroyImmediate(gameObject) would wipe Systems/Board/UI children.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() => Instance = null;
+
     private void Awake()
     {
-        if (Instance != null) { DestroyImmediate(gameObject); return; }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
         totalPlayers = Mathf.Max(1, PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1));
         IsTwoPlayerMode = totalPlayers > 1;
+    }
 
+    private void Start()
+    {
+        // All sibling/child Awakes are complete by the time Start runs,
+        // so every subsystem Instance is guaranteed to be set here.
         int startingLives = PlayerPrefs.GetInt(SettingsKeys.PacmanLivesKey, GameConstants.MaxLives);
 
         ScoreManager.Instance.Initialize(totalPlayers, startingLives, IsTwoPlayerMode);
@@ -128,10 +140,7 @@ public class GameManager : MonoBehaviour
 
         // Bridge GameEvents to the legacy OnRoundChanged event
         GameEvents.OnRoundChanged += (idx, round, best) => OnRoundChanged?.Invoke(idx, round, best);
-    }
 
-    private void Start()
-    {
         SetState(GameState.Intro);
 
         currentPlayer = 1;

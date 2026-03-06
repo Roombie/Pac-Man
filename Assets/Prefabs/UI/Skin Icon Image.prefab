@@ -87,7 +87,7 @@ GameObject:
   - component: {fileID: 5651134337099537215}
   - component: {fileID: 2757116805215355064}
   - component: {fileID: 5421965969218324073}
-  - component: {fileID: 3812833163831416612}
+  - component: {fileID: 1018549974458319148}
   m_Layer: 5
   m_Name: Skins Indicator Image
   m_TagString: Untagged
@@ -152,7 +152,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3812833163831416612
+--- !u!114 &1018549974458319148
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -161,6 +161,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 8879184791233802866}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f4031578dc61fd419bc8cfad8b7d185, type: 3}
+  m_Script: {fileID: 11500000, guid: 93a2c300a8e7f8f42b553fe1498ff8bb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::SelectorIndicator

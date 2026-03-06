@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 205171905}
   - component: {fileID: 205171904}
   - component: {fileID: 205171903}
-  - component: {fileID: 205171908}
+  - component: {fileID: 205171910}
   - component: {fileID: 205171909}
   m_Layer: 5
   m_Name: Canvas
@@ -223,18 +223,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &205171908
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 205171902}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39f71d1b12243234ba64139a4633945b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!225 &205171909
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -247,6 +235,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &205171910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 205171902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3668af25bc815e42b4728edb5731c3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChangeScene
 --- !u!1001 &312595924
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -556,8 +556,8 @@ GameObject:
   - component: {fileID: 2133443406}
   - component: {fileID: 2133443408}
   - component: {fileID: 2133443407}
-  - component: {fileID: 2133443409}
   - component: {fileID: 2133443410}
+  - component: {fileID: 2133443409}
   m_Layer: 5
   m_Name: Disclaimer Text (TMP)
   m_TagString: Untagged
@@ -644,6 +644,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -732,9 +733,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2133443405}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2651222b259fae44dacfbbda021428d9, type: 3}
+  m_Script: {fileID: 11500000, guid: a4f554c7f1e3c2446a8dc05fcb89eebd, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::WordTypewriter
   textUI: {fileID: 2133443407}
   canvasGroup: {fileID: 205171909}
   perWordDelay: 0.35
@@ -749,7 +750,7 @@ MonoBehaviour:
   OnHidden:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 205171908}
+      - m_Target: {fileID: 205171910}
         m_TargetAssemblyTypeName: ChangeScene, Assembly-CSharp
         m_MethodName: ChangeSceneNoTransition
         m_Mode: 5
