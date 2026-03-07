@@ -7,7 +7,7 @@ public class Movement : MonoBehaviour
     public float speed = 8f;
     public float speedMultiplier = 1f;
     public float envMultiplier = 1f;
-    public Vector2 initialDirection;
+    public Vector2 initialDirection = new Vector2(1, 0); // always start going to the right
     public LayerMask obstacleLayer;
     private LayerMask activeObstacleMask;
 
@@ -25,7 +25,7 @@ public class Movement : MonoBehaviour
     [SerializeField] private float snapEpsilon = 0.02f;
 
     private bool cornering = false;
-    private Vector2 cornerDir = Vector2.zero; // the perpendicular nextDirection we’re cornering into
+    private Vector2 cornerDir = Vector2.zero;  // the perpendicular nextDirection we’re cornering into
 
     private void Awake()
     {
@@ -42,27 +42,67 @@ public class Movement : MonoBehaviour
     public void ResetState()
     {
         activeObstacleMask = obstacleLayer;
-        direction = initialDirection;
+        direction = Snap4(initialDirection);
         nextDirection = Vector2.zero;
+
         transform.position = startingPosition;
-        rb.bodyType = RigidbodyType2D.Dynamic;
-        rb.linearVelocity = Vector2.zero;
-        rb.angularVelocity = 0f;
-        rb.simulated = true;  
+
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.constraints = RigidbodyConstraints2D.None;
+            rb.simulated = true;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.position = startingPosition;
+            rb.rotation = 0f;
+            rb.WakeUp();
+        }
+
         cornering = false;
         cornerDir = Vector2.zero;
+        isBlocked = false;
         enabled = true;
+
+        Physics2D.SyncTransforms();
+    }
+
+    /// <summary>
+    /// Hard reset for scripted start/restart/new-round movement.
+    /// This bypasses normal turn logic and guarantees Pac-Man begins moving immediately.
+    /// </summary>
+    public void ForceStartMove(Vector2 dir)
+    {
+        dir = Snap4(dir);
+
+        direction = dir;
+        nextDirection = Vector2.zero;
+        cornering = false;
+        cornerDir = Vector2.zero;
+        isBlocked = false;
+
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.constraints = RigidbodyConstraints2D.None;
+            rb.simulated = true;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.position = transform.position;
+            rb.WakeUp();
+        }
+
+        Physics2D.SyncTransforms();
+
+        Debug.Log($"[Movement] ForceStartMove -> direction={direction}, enabled={enabled}, simulated={rb != null && rb.simulated}");
     }
 
     private void Update()
     {
-        // Keep trying queued turns for responsiveness
         if (nextDirection != Vector2.zero)
         {
-            // If we can just take it now, do it
             SetDirection(nextDirection);
 
-            // Otherwise, arm cornering if conditions are right
             if (corneringEnabled &&
                 !cornering &&
                 direction != Vector2.zero &&
@@ -75,24 +115,25 @@ public class Movement : MonoBehaviour
             }
         }
 
-        isBlocked = Occupied(direction);
+        isBlocked = direction != Vector2.zero && Occupied(direction);
     }
 
     private void FixedUpdate()
     {
         if (!enabled) return;
-        if (!rb || !rb.simulated) return;
+        if (rb == null || !rb.simulated) return;
 
         Vector2 pos = rb.position;
         float step = speed * speedMultiplier * envMultiplier * Time.fixedDeltaTime;
 
+        if (direction == Vector2.zero)
+            return;
+
         if (cornering)
         {
-            // “One pixel along old dir + one pixel along new dir”
-            Vector2 baseStep  = direction  * step;
-            Vector2 extraStep = cornerDir  * step;
+            Vector2 baseStep = direction * step;
+            Vector2 extraStep = cornerDir * step;
 
-            // Be safe: if the new corridor is actually blocked, abort cornering
             if (Occupied(cornerDir))
             {
                 cornering = false;
@@ -103,7 +144,6 @@ public class Movement : MonoBehaviour
 
             Vector2 nextPos = pos + baseStep + extraStep;
 
-            // Detect crossing the new corridor centerline, snap, and commit the turn
             if (CrossedCenterline(pos, nextPos, cornerDir, out Vector2 snapped))
             {
                 pos = snapped;
@@ -120,14 +160,20 @@ public class Movement : MonoBehaviour
         }
         else
         {
-            // normal motion
             Vector2 translation = direction * step;
             rb.MovePosition(pos + translation);
         }
     }
 
-    public void SetObstacleMask(LayerMask mask) { activeObstacleMask = mask; }
-    public void ClearObstacleMask() { activeObstacleMask = obstacleLayer; }
+    public void SetObstacleMask(LayerMask mask)
+    {
+        activeObstacleMask = mask;
+    }
+
+    public void ClearObstacleMask()
+    {
+        activeObstacleMask = obstacleLayer;
+    }
 
     /// <summary>
     /// Disallow instant 180s unless forced. Otherwise, set immediately if free; else queue.
@@ -142,24 +188,41 @@ public class Movement : MonoBehaviour
             nextDirection = Vector2.zero;
             cornering = false;
             cornerDir = Vector2.zero;
+
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+            }
+
             return;
         }
 
-        if (dir == Vector2.zero) return;
+        if (dir == Vector2.zero)
+            return;
 
-        // Avoid instantaneous reverse unless it's forced
-        if (!forced && dir == -direction) { nextDirection = dir; return; }
+        if (!forced && dir == -direction)
+        {
+            nextDirection = dir;
+            return;
+        }
 
         if (forced || !Occupied(dir))
         {
             direction = dir;
             nextDirection = Vector2.zero;
 
-            // cancel any cornering if change is forced
             if (forced)
             {
                 cornering = false;
                 cornerDir = Vector2.zero;
+
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector2.zero;
+                    rb.angularVelocity = 0f;
+                    rb.WakeUp();
+                }
             }
             else if (cornering && dir == cornerDir)
             {
@@ -173,48 +236,75 @@ public class Movement : MonoBehaviour
         }
     }
 
-    public void SetNextDirection(Vector2 dir) => nextDirection = Snap4(dir);
+    public void SetNextDirection(Vector2 dir)
+    {
+        nextDirection = Snap4(dir);
+    }
+
+    public void ClearNextDirection()
+    {
+        nextDirection = Vector2.zero;
+    }
 
     public bool Occupied(Vector2 dir)
     {
-        return Physics2D.BoxCast(transform.position, Vector2.one * 0.75f, 0f, dir, 1.5f, activeObstacleMask).collider != null;
+        if (dir == Vector2.zero)
+            return false;
+
+        Vector2 origin = rb != null ? rb.position : (Vector2)transform.position;
+
+        return Physics2D.BoxCast(
+            origin,
+            Vector2.one * 0.75f,
+            0f,
+            dir,
+            1.5f,
+            activeObstacleMask
+        ).collider != null;
     }
 
-    /// <summary>Sets the “base” multiplier (modes/elroy). Does not touch env multiplier.</summary>
-    public void SetBaseSpeedMultiplier(float m) => speedMultiplier = Mathf.Max(0f, m);
+    public void SetBaseSpeedMultiplier(float m)
+    {
+        speedMultiplier = Mathf.Max(0f, m);
+    }
 
-    /// <summary>Sets the environment multiplier (slow zones). Does not touch base multiplier.</summary>
-    public void SetEnvSpeedMultiplier(float m) => envMultiplier = Mathf.Max(0f, m);
+    public void SetEnvSpeedMultiplier(float m)
+    {
+        envMultiplier = Mathf.Max(0f, m);
+    }
 
-    private static bool IsPerpendicular(Vector2 a, Vector2 b) =>
-        Mathf.Abs(Vector2.Dot(Snap4(a), Snap4(b))) < 0.5f;
+    private static bool IsPerpendicular(Vector2 a, Vector2 b)
+    {
+        return Mathf.Abs(Vector2.Dot(Snap4(a), Snap4(b))) < 0.5f;
+    }
 
     private static Vector2 Snap4(Vector2 d)
     {
-        if (Mathf.Abs(d.x) >= Mathf.Abs(d.y)) return new Vector2(Mathf.Sign(d.x), 0f);
+        if (d == Vector2.zero)
+            return Vector2.zero;
+
+        if (Mathf.Abs(d.x) >= Mathf.Abs(d.y))
+            return new Vector2(Mathf.Sign(d.x), 0f);
+
         return new Vector2(0f, Mathf.Sign(d.y));
     }
 
-    // Are we within the side-to-centerline window for the *new* corridor?
     private bool NearCenterlineFor(Vector2 turnDir)
     {
-        Vector2 p = rb ? rb.position : (Vector2)transform.position;
+        Vector2 p = rb != null ? rb.position : (Vector2)transform.position;
 
         if (Mathf.Abs(turnDir.y) > 0f)
         {
-            // turning vertical -> we must be near x = round(x)
             float centerX = Mathf.Round(p.x);
             return Mathf.Abs(p.x - centerX) <= cornerWindow;
         }
         else
         {
-            // turning horizontal -> we must be near y = round(y)
             float centerY = Mathf.Round(p.y);
             return Mathf.Abs(p.y - centerY) <= cornerWindow;
         }
     }
 
-    // Did the segment from prev->next cross the target centerline? Output snapped pos.
     private bool CrossedCenterline(Vector2 prev, Vector2 next, Vector2 turnDir, out Vector2 snapped)
     {
         snapped = next;
@@ -224,6 +314,7 @@ public class Movement : MonoBehaviour
             float cx = Mathf.Round(prev.x);
             float a = prev.x - cx;
             float b = next.x - cx;
+
             if (Mathf.Sign(a) != Mathf.Sign(b) || Mathf.Abs(b) <= snapEpsilon)
             {
                 snapped = new Vector2(cx, next.y);
@@ -235,12 +326,14 @@ public class Movement : MonoBehaviour
             float cy = Mathf.Round(prev.y);
             float a = prev.y - cy;
             float b = next.y - cy;
+
             if (Mathf.Sign(a) != Mathf.Sign(b) || Mathf.Abs(b) <= snapEpsilon)
             {
                 snapped = new Vector2(next.x, cy);
                 return true;
             }
         }
+
         return false;
     }
 }

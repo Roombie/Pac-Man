@@ -20484,7 +20484,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 3774684118405692481}
         m_TargetAssemblyTypeName: PauseMenuController, Assembly-CSharp
         m_MethodName: TogglePause
         m_Mode: 1
@@ -23360,18 +23360,20 @@ MonoBehaviour:
   showDebugLinesOnlyOnActiveObjects: 1
   navigateSound: {fileID: 8300000, guid: a57e0e7187603e4499fa34089fbf2db0, type: 3}
   buttons:
+  - button: {fileID: 840588181}
+    arrowOffset: {x: -105, y: 0}
   - button: {fileID: 419407887}
     arrowOffset: {x: -105, y: 0}
   - button: {fileID: 688000761}
     arrowOffset: {x: -105, y: 0}
-  - button: {fileID: 840588181}
+  - button: {fileID: 272743277}
     arrowOffset: {x: -105, y: 0}
   - button: {fileID: 1283084889}
     arrowOffset: {x: -105, y: 0}
   - button: {fileID: 1341487317}
     arrowOffset: {x: -105, y: 0}
   - button: {fileID: 1885701903}
-    arrowOffset: {x: -105, y: 0}
+    arrowOffset: {x: -213.5, y: 0}
   - button: {fileID: 1738596218}
     arrowOffset: {x: -213.5, y: 0}
   - button: {fileID: 345424196}
@@ -23403,7 +23405,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 279f9f52da72389498d4cf0ebee7b056, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GhostMiniHUDUI
-  controller: {fileID: 0}
+  controller: {fileID: 3774684118405692476}
   textTarget: {fileID: 1791192315}
   startVisible: 0
   showInReleaseBuild: 1
@@ -26020,7 +26022,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 3774684118405692481}
         m_TargetAssemblyTypeName: PauseMenuController, Assembly-CSharp
         m_MethodName: TogglePause
         m_Mode: 1
@@ -31506,6 +31508,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5a9937b6a218014fbbdcfa5a05aa19a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PelletManager
+--- !u!114 &3774684118405692481 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5673961903178620712, guid: 2d04a02420331f843bbdf2fccecc49d8, type: 3}
+  m_PrefabInstance: {fileID: 3774684118405692468}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c9fb66c66f0e248867350c3884162f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PauseMenuController
 --- !u!1001 &4103923285604761616
 PrefabInstance:
   m_ObjectHideFlags: 0

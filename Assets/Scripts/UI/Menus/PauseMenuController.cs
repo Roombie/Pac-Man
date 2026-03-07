@@ -218,7 +218,17 @@ public class PauseMenuController : MonoBehaviour
     private void Navigate(Vector2 direction)
     {
         var current = EventSystem.current.currentSelectedGameObject;
-        if (current == null) return;
+
+        // Nothing selected yet (e.g. menu just opened, BaseMenuPanel.SelectDefaultNextFrame
+        // hasn't fired yet). Fall back to the first selectable in the pause menu.
+        if (current == null)
+        {
+            if (pauseMenu == null) return;
+            var fallback = pauseMenu.GetComponentInChildren<Selectable>();
+            if (fallback != null)
+                EventSystem.current.SetSelectedGameObject(fallback.gameObject);
+            return;
+        }
 
         var selectable = current.GetComponent<Selectable>();
         if (selectable == null) return;

@@ -68,7 +68,7 @@ public class GameManager : MonoBehaviour
     public int GetBestRoundForPlayer(int playerIndex) => ScoreManager.Instance.GetBestRoundForPlayer(playerIndex);
     public HashSet<int> GetPelletIDsEatenByCurrentPlayer() => ScoreManager.Instance.GetPelletIDsEaten();
 
-    public void UpdateLifeIconsUI() 
+    public void UpdateLifeIconsUI()
     {
         ScoreManager.Instance.UpdateLifeIconsUI(PacmanSpawner.Instance.CurrentSkin);
     }
@@ -77,7 +77,7 @@ public class GameManager : MonoBehaviour
     public void SetExtraPoints(int index) => ScoreManager.Instance.SetExtraPoints(index);
     public void UpdateRoundsUI() => ScoreManager.Instance.UpdateRoundsUI();
 
-    // Freeze — external scripts (e.g. cutscenes) may still call these
+    // Freeze — external scripts (cutscenes) may still call these
     public void PushFreeze(bool hard, bool freezeTimers = false, IEnumerable<Behaviour> toDisable = null)
         => FreezeController.Instance.PushFreeze(hard, freezeTimers, toDisable);
     public void PopFreeze() => FreezeController.Instance.PopFreeze();
@@ -86,12 +86,12 @@ public class GameManager : MonoBehaviour
     public void PauseGame() => PauseMenuController.Instance.Pause();
     public void ResumeGame() => PauseMenuController.Instance.Resume();
 
-    public void AddScore(int amount) 
+    public void AddScore(int amount)
     {
         ScoreManager.Instance.AddScore(amount);
     }
 
-    public int GetCurrentIndex() 
+    public int GetCurrentIndex()
     {
         return CurrentIndex;
     }
@@ -109,10 +109,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Clears the static Instance before every play session.
-    // Required when "Enter Play Mode > Domain Reload" is disabled in Editor settings:
-    // with it off, statics survive between sessions, Instance stays non-null,
-    // and the old DestroyImmediate(gameObject) would wipe Systems/Board/UI children.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics() => Instance = null;
 
@@ -127,8 +123,6 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // All sibling/child Awakes are complete by the time Start runs,
-        // so every subsystem Instance is guaranteed to be set here.
         int startingLives = PlayerPrefs.GetInt(SettingsKeys.PacmanLivesKey, GameConstants.MaxLives);
 
         ScoreManager.Instance.Initialize(totalPlayers, startingLives, IsTwoPlayerMode);
@@ -207,6 +201,24 @@ public class GameManager : MonoBehaviour
         StartCoroutine(StartSequence());
     }
 
+    private void PreparePacmanForSequence(Pacman pacman)
+    {
+        pacman.gameObject.SetActive(true);
+        pacman.animator.speed = 0f;
+        pacman.enabled = false;
+        pacman.movement.enabled = false;
+        pacman.UpdateIndicator(Vector2.right);
+    }
+
+    private void ResumePacmanAfterSequence(Pacman pacman)
+    {
+        pacman.animator.speed = 1f;
+        pacman.movement.enabled = true;
+        pacman.movement.ForceStartMove(Vector2.right);
+        pacman.UpdateIndicator(Vector2.right);
+        pacman.enabled = true;
+    }
+
     private IEnumerator StartSequence()
     {
         var pacman = PacmanSpawner.Instance.CurrentPacman;
@@ -226,10 +238,7 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.ActivateAllGhosts();
         globalGhostModeController.StopAllGhosts();
 
-        pacman.gameObject.SetActive(true);
-        pacman.enabled = false;
-        pacman.animator.speed = 0f;
-        pacman.UpdateIndicator(Vector2.right);
+        PreparePacmanForSequence(pacman);
         UpdateLifeIconsUI();
 
         yield return new WaitForSeconds(StartSequenceDelay);
@@ -245,9 +254,7 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.SetEyesAudioAllowed(true);
         globalGhostModeController.SetHouseReleaseEnabled(true);
 
-        pacman.animator.speed = 1f;
-        pacman.enabled = true;
-        pacman.movement.SetDirection(Vector2.right);
+        ResumePacmanAfterSequence(pacman);
     }
 
     private IEnumerator NewRoundSequence()
@@ -287,10 +294,7 @@ public class GameManager : MonoBehaviour
             globalGhostModeController.ActivateAllGhosts();
         }
 
-        pacman.gameObject.SetActive(true);
-        pacman.animator.speed = 0f;
-        pacman.enabled = false;
-        pacman.UpdateIndicator(Vector2.right);
+        PreparePacmanForSequence(pacman);
 
         yield return new WaitForSeconds(NewRoundDelay);
 
@@ -308,9 +312,7 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.SetEyesAudioAllowed(true);
         globalGhostModeController.SetHouseReleaseEnabled(true);
 
-        pacman.animator.speed = 1f;
-        pacman.enabled = true;
-        pacman.movement.SetDirection(Vector2.right);
+        ResumePacmanAfterSequence(pacman);
     }
 
     private void CompleteRound() => StartNextLevel();
@@ -347,6 +349,7 @@ public class GameManager : MonoBehaviour
 
         pacman.animator.speed = 0f;
         pacman.enabled = false;
+        pacman.movement.enabled = false;
         uiManager.ShowReadyText(true);
         UpdateLifeIconsUI();
 
@@ -362,18 +365,16 @@ public class GameManager : MonoBehaviour
         }
 
         pacman.gameObject.SetActive(true);
+        pacman.UpdateIndicator(Vector2.right);
 
         yield return new WaitForSeconds(NewRoundDelay);
 
         if (!IsTwoPlayerMode) uiManager.HidePlayerIntroText();
 
         uiManager.ShowReadyText(false);
-        pacman.animator.speed = 1f;
-        pacman.enabled = true;
-        pacman.movement.SetDirection(Vector2.right);
-        pacman.UpdateIndicator(Vector2.right);
-
         SetState(GameState.Playing);
+
+        ResumePacmanAfterSequence(pacman);
 
         globalGhostModeController.SetTimersFrozen(false);
         globalGhostModeController.StartAllGhosts();

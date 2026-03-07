@@ -36,25 +36,22 @@ public class InputManager : MonoBehaviour
     private bool rejoinSawGamepad; // Tracks if a gamepad triggered rejoin
 
     #region Initialization
+    [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() => Instance = null;
+
     private void Awake()
     {
-        // Enforce singleton pattern — only one InputManager should exist at any time
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
 
-        // Ensure PlayerDeviceManager exists (used to track reserved devices)
+    private void Start()
+    {
         if (PlayerDeviceManager.Instance == null)
         {
             Debug.LogError("[InputManager] PlayerDeviceManager instance not found!");
         }
-
-        // Persist across scenes (used by gameplay, menus, etc.)
-        DontDestroyOnLoad(gameObject);
     }
 
     private void OnDestroy()
@@ -248,43 +245,20 @@ public class InputManager : MonoBehaviour
         if (playerInput == null) return;
         playerInput.actions.FindActionMap("UI", false)?.Disable();
         playerInput.actions.FindActionMap("Player", false)?.Enable();
-
-        // Disable the UI Input Module during gameplay so navigation
-        // inputs (WASD / D-pad) don't accidentally drive the EventSystem.
-        var eventSystem = UnityEngine.EventSystems.EventSystem.current;
-        if (eventSystem != null)
-        {
-            var uiModule = eventSystem.GetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-            if (uiModule != null)
-            {
-                uiModule.enabled = false;
-            }
-        }
     }
 
     /// <summary>
-    /// Enables UI input and disables gameplay actions for a PlayerInput.
-    /// Also enables the EventSystem's InputSystemUIInputModule so that
-    /// UI navigation works regardless of whether the PlayerInput user is valid.
+    /// Disables gameplay actions and enables the UI map for a PlayerInput.
+    /// Navigation is handled entirely by PauseMenuController.HandleNavigationInput()
+    /// via raw Keyboard/Gamepad polling, so the InputSystemUIInputModule is intentionally
+    /// left alone — enabling it would fight with the manual polling loop and cause
+    /// currentSelectedGameObject to be dropped or Submit to double-fire.
     /// </summary>
     public void SwitchToUIMap(PlayerInput playerInput)
     {
         if (playerInput == null) return;
         playerInput.actions.FindActionMap("Player", false)?.Disable();
         playerInput.actions.FindActionMap("UI", false)?.Enable();
-
-        // Enable the UI Input Module directly — this is what actually drives
-        // EventSystem navigation (move/submit/cancel). It reads from any active
-        // device, so it works even when PlayerInput's user pairing failed.
-        var eventSystem = UnityEngine.EventSystems.EventSystem.current;
-        if (eventSystem != null)
-        {
-            var uiModule = eventSystem.GetComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-            if (uiModule != null)
-            {
-                uiModule.enabled = true;
-            }
-        }
     }
 
     #endregion

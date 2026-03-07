@@ -37,7 +37,8 @@ public class Pacman : MonoBehaviour
     private void Update()
     {
         // Disable movement if Pacman is dead, input is locked, or game isn't playing
-        if (isDead || isInputLocked || GameManager.Instance == null ||
+        if (isDead || isInputLocked ||
+            GameManager.Instance == null ||
             GameManager.Instance.CurrentGameState != GameManager.GameState.Playing)
             return;
 
@@ -70,7 +71,8 @@ public class Pacman : MonoBehaviour
     /// </summary>
     public void OnMove(InputAction.CallbackContext context)
     {
-        if (isDead || isInputLocked || GameManager.Instance == null ||
+        if (isDead || isInputLocked || !movement.enabled ||
+            GameManager.Instance == null ||
             GameManager.Instance.CurrentGameState != GameManager.GameState.Playing)
             return;
 
@@ -145,14 +147,17 @@ public class Pacman : MonoBehaviour
     {
         Debug.Log("Resetting Pacman state...");
 
-        movement.rb.constraints = RigidbodyConstraints2D.None;
+        lastInputDirection = Vector2.zero;
+        inputBufferTime = 0f;
+        isInputLocked = false;
+
         transform.position = movement.startingPosition;
         transform.rotation = Quaternion.identity;
 
         if (movement != null)
         {
-            movement.SetDirection(Vector2.zero);
             movement.ResetState();
+            movement.ClearNextDirection();
         }
 
         if (animator != null)
