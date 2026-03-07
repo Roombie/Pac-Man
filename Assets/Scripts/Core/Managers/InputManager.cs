@@ -43,7 +43,6 @@ public class InputManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
@@ -56,7 +55,6 @@ public class InputManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Cleanup hooks when destroyed (e.g., on scene unload)
         if (Instance == this)
         {
             Instance = null;

@@ -39,9 +39,6 @@ public class AudioManager : MonoBehaviour
 
     public AudioClip CurrentMusic { get; private set; }
 
-    [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetStatics() => Instance = null;
-
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -274,7 +271,7 @@ public class AudioManager : MonoBehaviour
 
     private IEnumerator ReturnToPoolAfterPlayback(AudioSource source, float delay)
     {
-        yield return new WaitForSeconds(delay);
+        yield return new WaitForSecondsRealtime(delay);
         source.Stop();
         sfxPool.Enqueue(source);
     }

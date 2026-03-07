@@ -24,6 +24,20 @@ public class UIManager : MonoBehaviour
         flickerCoroutines = new Coroutine[playerScoresTitle.Length];
     }
 
+    private void OnDestroy()
+    {
+        if (flickerCoroutines == null) return;
+        
+        for (int i = 0; i < flickerCoroutines.Length; i++)
+        {
+            if (flickerCoroutines[i] != null)
+            {
+                StopCoroutine(flickerCoroutines[i]);
+                flickerCoroutines[i] = null;
+            }
+        }
+    }
+
     public void InitializeUI(int playerCount)
     {
         currentPlayerCount = Mathf.Clamp(playerCount, 1, scoreTexts.Length);
@@ -133,6 +147,8 @@ public class UIManager : MonoBehaviour
 
         while (true)
         {
+            if (group == null) yield break;
+
             group.alpha = fadingOut ? 0f : 1f;
             fadingOut = !fadingOut;
             yield return new WaitForSeconds(interval);

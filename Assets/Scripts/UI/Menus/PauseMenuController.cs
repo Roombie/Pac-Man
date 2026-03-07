@@ -124,23 +124,39 @@ public class PauseMenuController : MonoBehaviour
 
         // Submit
         bool submitPressed = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame))
-                          || (gp != null && gp.buttonSouth.wasPressedThisFrame);
+                        || (gp != null && gp.buttonSouth.wasPressedThisFrame);
 
         if (submitPressed)
         {
             if (!OptionSelectorSettingHandler.IsCurrentlySelecting)
             {
                 var selected = EventSystem.current.currentSelectedGameObject;
-                selected?.GetComponent<Button>()?.onClick.Invoke();
+                if (selected != null)
+                {
+                    // Check for a standard Button first
+                    var button = selected.GetComponent<Button>();
+                    if (button != null)
+                    {
+                        button.onClick.Invoke();
+                    }
+                    // If no button, check if it's your ToggleSettingHandler
+                    else
+                    {
+                        var toggleHandler = selected.GetComponent<ToggleSettingHandler>();
+                        if (toggleHandler != null)
+                        {
+                            toggleHandler.Toggle();
+                        }
+                    }
+                }
             }
             return;
         }
 
-        // OptionSelector is mid-edit: forward Left/Right, block Up/Down
+        // --- OptionSelector mid-edit logic (Forward Left/Right) ---
         if (OptionSelectorSettingHandler.IsCurrentlySelecting)
         {
             Vector2 lr = Vector2.zero;
-
             if (kb != null)
             {
                 if      (kb.leftArrowKey.isPressed  || kb.aKey.isPressed) lr = Vector2.left;
@@ -174,13 +190,11 @@ public class PauseMenuController : MonoBehaviour
                 holdingDirection = false;
                 lastDirection    = Vector2.zero;
             }
-
             return;
         }
 
-        // Normal Up/Down navigation
+        // --- Normal Up/Down navigation ---
         Vector2 nav = Vector2.zero;
-
         if (kb != null)
         {
             if      (kb.upArrowKey.isPressed   || kb.wKey.isPressed) nav = Vector2.up;
@@ -218,17 +232,7 @@ public class PauseMenuController : MonoBehaviour
     private void Navigate(Vector2 direction)
     {
         var current = EventSystem.current.currentSelectedGameObject;
-
-        // Nothing selected yet (e.g. menu just opened, BaseMenuPanel.SelectDefaultNextFrame
-        // hasn't fired yet). Fall back to the first selectable in the pause menu.
-        if (current == null)
-        {
-            if (pauseMenu == null) return;
-            var fallback = pauseMenu.GetComponentInChildren<Selectable>();
-            if (fallback != null)
-                EventSystem.current.SetSelectedGameObject(fallback.gameObject);
-            return;
-        }
+        if (current == null) return;
 
         var selectable = current.GetComponent<Selectable>();
         if (selectable == null) return;

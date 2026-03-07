@@ -23421,7 +23421,6 @@ GameObject:
   - component: {fileID: 1379414703}
   - component: {fileID: 1379414707}
   - component: {fileID: 1379414706}
-  - component: {fileID: 1379414705}
   - component: {fileID: 1379414704}
   m_Layer: 5
   m_Name: Fullscreen Text (TMP)
@@ -23490,43 +23489,6 @@ MonoBehaviour:
           m_WaitForCompletion: 0
           m_LocalVariables: []
         m_PropertyPath: m_text
---- !u!114 &1379414705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1379414702}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 781806ceb1ed7ed46be5b2408b565ebd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  settingType: 3
-  toggleSound: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
-  toggle: {fileID: 1738596217}
-  label: {fileID: 1218674295}
-  onText:
-    m_TableReference:
-      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
-    m_TableEntryReference:
-      m_KeyId: 624585175040
-      m_Key: 
-    m_FallbackState: 0
-    m_WaitForCompletion: 0
-    m_LocalVariables: []
-  offText:
-    m_TableReference:
-      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
-    m_TableEntryReference:
-      m_KeyId: 654830301184
-      m_Key: 
-    m_FallbackState: 0
-    m_WaitForCompletion: 0
-    m_LocalVariables: []
-  references:
-    version: 2
-    RefIds: []
 --- !u!114 &1379414706
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26133,6 +26095,7 @@ GameObject:
   - component: {fileID: 1738596218}
   - component: {fileID: 1738596217}
   - component: {fileID: 1738596219}
+  - component: {fileID: 1738596220}
   m_Layer: 5
   m_Name: Fullscreen Toggle
   m_TagString: Untagged
@@ -26187,7 +26150,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_IsOn: 0
+  m_IsOn: 1
 --- !u!224 &1738596218
 RectTransform:
   m_ObjectHideFlags: 0
@@ -26238,6 +26201,43 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &1738596220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1738596216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 781806ceb1ed7ed46be5b2408b565ebd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  settingType: 3
+  toggleSound: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
+  toggle: {fileID: 1738596217}
+  label: {fileID: 1218674295}
+  onText:
+    m_TableReference:
+      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
+    m_TableEntryReference:
+      m_KeyId: 624585175040
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  offText:
+    m_TableReference:
+      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
+    m_TableEntryReference:
+      m_KeyId: 654830301184
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!1 &1791192312
 GameObject:
   m_ObjectHideFlags: 0
@@ -26975,6 +26975,7 @@ GameObject:
   - component: {fileID: 1885701903}
   - component: {fileID: 1885701902}
   - component: {fileID: 1885701904}
+  - component: {fileID: 1885701905}
   m_Layer: 5
   m_Name: Indicator Toggle
   m_TagString: Untagged
@@ -27080,6 +27081,43 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &1885701905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1885701901}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 781806ceb1ed7ed46be5b2408b565ebd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  settingType: 2
+  toggleSound: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
+  toggle: {fileID: 1885701902}
+  label: {fileID: 2082045139}
+  onText:
+    m_TableReference:
+      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
+    m_TableEntryReference:
+      m_KeyId: 624585175040
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  offText:
+    m_TableReference:
+      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
+    m_TableEntryReference:
+      m_KeyId: 654830301184
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!1 &1886492637
 GameObject:
   m_ObjectHideFlags: 0
@@ -30631,7 +30669,6 @@ GameObject:
   - component: {fileID: 2092815417}
   - component: {fileID: 2092815421}
   - component: {fileID: 2092815420}
-  - component: {fileID: 2092815419}
   - component: {fileID: 2092815418}
   m_Layer: 5
   m_Name: Indicator Text (TMP)
@@ -30700,43 +30737,6 @@ MonoBehaviour:
           m_WaitForCompletion: 0
           m_LocalVariables: []
         m_PropertyPath: m_text
---- !u!114 &2092815419
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2092815416}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 781806ceb1ed7ed46be5b2408b565ebd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  settingType: 2
-  toggleSound: {fileID: 8300000, guid: 46a538387e55c924694d7f2227250087, type: 3}
-  toggle: {fileID: 1885701902}
-  label: {fileID: 2082045139}
-  onText:
-    m_TableReference:
-      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
-    m_TableEntryReference:
-      m_KeyId: 624585175040
-      m_Key: 
-    m_FallbackState: 0
-    m_WaitForCompletion: 0
-    m_LocalVariables: []
-  offText:
-    m_TableReference:
-      m_TableCollectionName: GUID:28d5660381f26fe448cbd3d1bb5a4cfb
-    m_TableEntryReference:
-      m_KeyId: 654830301184
-      m_Key: 
-    m_FallbackState: 0
-    m_WaitForCompletion: 0
-    m_LocalVariables: []
-  references:
-    version: 2
-    RefIds: []
 --- !u!114 &2092815420
 MonoBehaviour:
   m_ObjectHideFlags: 0

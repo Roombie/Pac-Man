@@ -37,11 +37,12 @@ public class MenuManager : MonoBehaviour
         }
 
         GameObject previous = menuStack.Count > 0 ? menuStack.Peek() : null;
+        Debug.Log($"{menu.name} - Menu opened");
 
         // If stack is not on top, delete to reopen
         if (menuStack.Contains(menu))
         {
-            Debug.Log($"[MenuManager] Menu '{menu.name}' ya estaba en el stack. Removiendo instancias previas para reabrirlo correctamente.");
+            Debug.Log($"[MenuManager] Menu '{menu.name}' was already on the stack. Removing previous instances to reopen it correctly.");
             Stack<GameObject> tempStack = new Stack<GameObject>();
             while (menuStack.Count > 0)
             {
@@ -68,7 +69,6 @@ public class MenuManager : MonoBehaviour
             previous = menuStack.Count > 0 ? menuStack.Peek() : null;
         }
 
-        // Verificar si el menú actual permite salir
         // Verify if current menu allows you to exit
         if (previous != null)
         {

@@ -3,8 +3,6 @@ using UnityEngine.UI;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using TMPro;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.AddressableAssets;
 
 public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
 {
@@ -27,10 +25,7 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
 
     private ISettingsProvider settingsProvider;
 
-    private AsyncOperationHandle<string> _labelHandle;
-    private bool _hasLabelHandle;
-    private uint _labelReqVersion;
-    
+
     void Start()
     {
         localeChangedHandler = _ => RefreshUI();
@@ -59,12 +54,6 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
         if (toggle != null)
             toggle.onValueChanged.RemoveListener(OnToggleChanged);
 
-        if (_hasLabelHandle && _labelHandle.IsValid())
-        {
-            Addressables.Release(_labelHandle);
-            _hasLabelHandle = false;
-        }
-
         LocalizationSettings.SelectedLocaleChanged -= localeChangedHandler;
     }
 
@@ -85,14 +74,18 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
     // Programmatic toggle (e.g., bound to a button)
     public void Toggle()
     {
-        Apply(!currentValue);
-        Save();
-
-        // Apply to game immediately
-        settingsProvider?.ApplySetting(settingType, currentValue ? 1 : 0);
+        bool newValue = !currentValue;
+        currentValue = newValue;
 
         if (toggle != null)
-            toggle.isOn = currentValue;
+            toggle.SetIsOnWithoutNotify(currentValue);
+
+        RefreshUI();
+        Save();
+        settingsProvider?.ApplySetting(settingType, currentValue ? 1 : 0);
+
+        if (toggleSound != null && AudioManager.Instance != null)
+            AudioManager.Instance.Play(toggleSound, SoundCategory.SFX);
     }
 
     public void Apply(bool value)
@@ -127,29 +120,11 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
     {
         if (!label) return;
 
-        // Invalidate previous requests (token/version)
-        _labelReqVersion++;
-        uint thisReq = _labelReqVersion;
-
-        // Free previous handle to avoid leaks
-        if (_hasLabelHandle && _labelHandle.IsValid())
-        {
-            Addressables.Release(_labelHandle);
-            _hasLabelHandle = false;
-        }
-
-        // Launch new request
-        // define which text to use
-        // then get the localized string
+        // Use the synchronous path so the label updates instantly even when
+        // Time.timeScale == 0 (e.g. during pause). GetLocalizedStringAsync
+        // relies on a coroutine internally that never advances at timeScale 0.
         LocalizedString reference = (toggle != null && toggle.isOn) ? onText : offText;
-        _labelHandle = reference.GetLocalizedStringAsync();
-        _hasLabelHandle = true;
-        
-        // On completion, only apply if this is still the "current" request
-        _labelHandle.Completed += op =>
-        {
-            if (thisReq != _labelReqVersion) return; // it's late, so ignore
-            if (label) label.text = op.Result;
-        };
+        string result = reference.GetLocalizedString();
+        if (label) label.text = result;
     }
 }
