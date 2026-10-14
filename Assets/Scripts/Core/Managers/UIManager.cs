@@ -19,6 +19,9 @@ public class UIManager : MonoBehaviour
     private Coroutine[] flickerCoroutines;
     private int currentPlayerCount = 1;
 
+    /// <summary>The HUD's arcade font, so runtime-built screens match it</summary>
+    public TMP_FontAsset HudFont => gameOverText != null ? gameOverText.font : null;
+
     private void Awake()
     {
         flickerCoroutines = new Coroutine[playerScoresTitle.Length];

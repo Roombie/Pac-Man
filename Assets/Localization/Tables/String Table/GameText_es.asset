@@ -208,6 +208,18 @@ MonoBehaviour:
     m_Localized: "Presione Espacio o <sprite name=buttonSouth> cuando est\xE9 listo"
     m_Metadata:
       m_Items: []
+  - m_Id: 22928612599361601
+    m_Localized: "\xA1Gana el Jugador {0}!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361602
+    m_Localized: "\xA1Empate!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361603
+    m_Localized: Presione Espacio, / o A para continuar
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

@@ -275,8 +275,8 @@ public class PanelInputHandler : MonoBehaviour
 
                     foreach (var d in devices) InputUser.PerformPairingWithDevice(d, playerInput.user);
 
-                    // Use your real scheme name here ("Keyboard&Mouse" or "Keyboard")
-                    try { playerInput.SwitchCurrentControlScheme("Keyboard&Mouse", devices); } catch { }
+                    // Scheme names come from the actions asset (P1Keyboard / P2Keyboard)
+                    try { playerInput.SwitchCurrentControlScheme(reservedKeyboardScheme, devices); } catch { }
 
                     // Keep the mask strict to this panel's keyboard group
                     playerInput.actions.bindingMask = InputBinding.MaskByGroup(reservedKeyboardScheme);

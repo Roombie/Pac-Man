@@ -107,6 +107,9 @@ public class GameManager : MonoBehaviour
             GameEvents.ClearAll();
             Instance = null;
         }
+
+        if (InputManager.Instance != null)
+            InputManager.Instance.OnRejoinCompleted -= OnRejoinCompleted;
     }
 
     private void Awake()
@@ -147,7 +150,21 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.OnFrightenedStarted += GhostInteractionHandler.Instance.OnFrightenedStarted;
         globalGhostModeController.OnFrightenedEnded += GhostInteractionHandler.Instance.OnFrightenedEnded;
 
+        InputManager.Instance.OnRejoinCompleted += OnRejoinCompleted;
+
         NewGame();
+    }
+
+    /// <summary>
+    /// Called by InputManager.OnRejoinCompleted after the player confirms their new device
+    /// (InputManager has already rebound that player's controller). Hides the overlay and resumes.
+    /// </summary>
+    private void OnRejoinCompleted(int slotIndex)
+    {
+        disconnectOverlay?.Show(false);
+        PauseMenuController.Instance.Resume();
+
+        Debug.Log($"[GameManager] Player {slotIndex + 1} rejoined. Game resumed.");
     }
 
     private void Update()
@@ -198,12 +215,21 @@ public class GameManager : MonoBehaviour
         StartCoroutine(StartSequence());
     }
 
-    private void PreparePacmanForSequence(Pacman pacman)
+    /// <summary>
+    /// Stops Pacman in place (no movement, no input, frozen animation)
+    /// Call right after resetting actors so he can't drive off during READY
+    /// </summary>
+    private void HaltPacman(Pacman pacman)
     {
-        pacman.gameObject.SetActive(true);
         pacman.animator.speed = 0f;
         pacman.enabled = false;
         pacman.movement.enabled = false;
+    }
+
+    private void PreparePacmanForSequence(Pacman pacman)
+    {
+        pacman.gameObject.SetActive(true);
+        HaltPacman(pacman);
         pacman.UpdateIndicator(Vector2.right);
     }
 
@@ -261,6 +287,7 @@ public class GameManager : MonoBehaviour
         globalGhostModeController.SetTimersFrozen(true);
         globalGhostModeController.SetEyesAudioAllowed(false);
         ResetActorsState();
+        HaltPacman(pacman); // movement is still enabled from the previous level
         bonusItemManager.DespawnBonusItem(true);
 
         ScoreManager.Instance.CurrentPlayerData.level++;
@@ -330,6 +357,9 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
+        // Restarts the Scatter/Chase timer (arcade does this on every death) and,
+        // in 2P, loads the level settings of the player whose turn it is now
+        globalGhostModeController.ApplyLevel(CurrentRound);
         ResetState();
 
         if (IsTwoPlayerMode)
@@ -341,12 +371,14 @@ public class GameManager : MonoBehaviour
         ScoreManager.Instance.UpdateRoundsUI();
         pelletManager.RestorePelletsForPlayer(GetPelletIDsEatenByCurrentPlayer());
 
+        // After ResetState (it clears house counters): global dot counter + Elroy paused until Clyde leaves
+        globalGhostModeController.OnLifeLost();
+        globalGhostModeController.OnPelletCountChanged(pelletManager.RemainingPelletCount());
+
         for (int i = 0; i < totalPlayers; i++) uiManager.StopPlayerFlicker(i);
         uiManager.StartPlayerFlicker(CurrentIndex);
 
-        pacman.animator.speed = 0f;
-        pacman.enabled = false;
-        pacman.movement.enabled = false;
+        HaltPacman(pacman);
         uiManager.ShowReadyText(true);
         UpdateLifeIconsUI();
 
@@ -459,7 +491,38 @@ public class GameManager : MonoBehaviour
     private IEnumerator GameOverSequence()
     {
         yield return new WaitForSeconds(3f);
+
+        // 2P: announce who won before returning to the menu
+        if (IsTwoPlayerMode)
+        {
+            uiManager.ShowGameOverText(false);
+            yield return VictoryScreen.Show(BuildPlayerResults(), uiManager.HudFont);
+        }
+
         ExitLevel();
+    }
+
+    private VictoryScreen.PlayerResult[] BuildPlayerResults()
+    {
+        var results = new VictoryScreen.PlayerResult[totalPlayers];
+        var characters = PacmanSpawner.Instance.SelectedCharacters;
+        var skins = PacmanSpawner.Instance.SelectedSkins;
+
+        for (int i = 0; i < totalPlayers; i++)
+        {
+            var data = ScoreManager.Instance.GetPlayerData(i);
+            var character = (characters != null && i < characters.Length) ? characters[i] : null;
+            var skin = (skins != null && i < skins.Length) ? skins[i] : null;
+
+            results[i] = new VictoryScreen.PlayerResult
+            {
+                score = data.score,
+                round = data.level,
+                characterName = character != null ? character.characterName : null,
+                color = skin != null ? skin.arrowIndicatorColor : Color.yellow
+            };
+        }
+        return results;
     }
 
     #endregion

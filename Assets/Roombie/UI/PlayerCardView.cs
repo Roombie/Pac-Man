@@ -27,7 +27,11 @@ namespace Roombie.UI
 
         void Start()
         {
-            deviceIconImage.gameObject.SetActive(false);
+            // Only hide if SetPresence hasn't already shown an icon.
+            // Start fires the frame after Instantiate, so it would overwrite
+            // a presence that was set immediately after BuildCards.
+            if (!HasAnyPresence)
+                deviceIconImage.gameObject.SetActive(false);
         }
 
         void OnDestroy()
@@ -62,6 +66,8 @@ namespace Roombie.UI
         /// <summary>Keyboard has priority; hides image if neither present.</summary>
         public void SetPresence(bool hasKeyboard, bool hasGamepad)
         {
+            HasAnyPresence = hasKeyboard || hasGamepad;
+
             if (!deviceIconImage) return;
 
             if (hasKeyboard)

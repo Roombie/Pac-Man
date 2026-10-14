@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f870ed46d92c7914b9b1d79a531195f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gameplayActions: {fileID: -944628639613478452, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   pacmanPlayerInput: {fileID: 0}
   originalActionsAsset: {fileID: -944628639613478452, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   enableHotSwap: 1

@@ -19,8 +19,6 @@ GameObject:
   - component: {fileID: 2679925130295582572}
   - component: {fileID: 2027771087733606235}
   - component: {fileID: 2862814928264735462}
-  - component: {fileID: 6072915645157527766}
-  - component: {fileID: 8490887935115171153}
   - component: {fileID: 5673961903178620712}
   - component: {fileID: 2634271768859137002}
   - component: {fileID: 2386610984319508447}
@@ -28,6 +26,8 @@ GameObject:
   - component: {fileID: 2828441576314835376}
   - component: {fileID: 2179634328657717684}
   - component: {fileID: 694748192147767769}
+  - component: {fileID: 8490887935115171153}
+  - component: {fileID: 6072915645157527766}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: GameController
@@ -62,15 +62,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2c43828de3f6ff4facc16bf6dae1533, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  globalGhostModeController: {fileID: 0}
-  mazeFlashController: {fileID: 0}
-  coffeeBreakManager: {fileID: 0}
-  pelletManager: {fileID: 0}
-  bonusItemManager: {fileID: 0}
-  uiManager: {fileID: 0}
-  lifeIconsController: {fileID: 0}
-  fruitDisplayController: {fileID: 0}
-  disconnectOverlay: {fileID: 0}
+  globalGhostModeController: {fileID: 3096402529645483443}
+  mazeFlashController: {fileID: 8301731351201619490}
+  coffeeBreakManager: {fileID: 2223841319577327775}
+  pelletManager: {fileID: 1846629052948249888}
+  bonusItemManager: {fileID: 7147218721300244031}
+  uiManager: {fileID: 2179634328657717684}
+  lifeIconsController: {fileID: 2828441576314835376}
+  fruitDisplayController: {fileID: 694748192147767769}
+  disconnectOverlay: {fileID: 6072915645157527766}
   currentPlayer: 1
 --- !u!114 &694360416647447746
 MonoBehaviour:
@@ -182,6 +182,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f870ed46d92c7914b9b1d79a531195f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
+  gameplayActions: {fileID: -944628639613478452, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
   enableHotSwap: 1
   debugInputEvents: 0
   waitingForRejoin: 0
@@ -228,41 +229,6 @@ MonoBehaviour:
   prefab400: {fileID: 490764208900113918, guid: 60898be00e41e3846a19c1a92b8adb00, type: 3}
   prefab800: {fileID: 1759425929868520084, guid: 4ef451bbe5a8d2646a75c66f6e2905ca, type: 3}
   prefab1600: {fileID: 5790173717095235151, guid: 10f1990ddaeedc047aa7abb90f56106b, type: 3}
---- !u!114 &6072915645157527766
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5758386320045993450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6438e397cabb7e14a8cf47796e592c74, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cardsParent: {fileID: 0}
-  cardPrefab: {fileID: 2741489977282473598, guid: e620a23e71776e94496e87362257469e, type: 3}
-  iconKeyboard: {fileID: 8305092906236829481, guid: 20812e1bdb21a2f4f82cd8d51b89503a, type: 3}
-  iconGamepad: {fileID: -894579921629993427, guid: 20812e1bdb21a2f4f82cd8d51b89503a, type: 3}
-  slotTints:
-  - {r: 1, g: 0, b: 0, a: 1}
-  - {r: 0, g: 0.078431375, b: 1, a: 1}
-  confirmHintText: {fileID: 0}
-  viewRoot: {fileID: 0}
-  submitAction: {fileID: 392368643174621059, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}
---- !u!114 &8490887935115171153
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5758386320045993450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a958b1581e325a64eb5a99dd43a8129d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  expectedPlayersOverride: 1
 --- !u!114 &5673961903178620712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -383,3 +349,38 @@ MonoBehaviour:
   - {fileID: 140428078, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
   - {fileID: -403158955, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
   - {fileID: 666859101, guid: 57352ab62a6602c4ab51c857277f0b05, type: 3}
+--- !u!114 &8490887935115171153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5758386320045993450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a958b1581e325a64eb5a99dd43a8129d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  expectedPlayersOverride: 1
+--- !u!114 &6072915645157527766
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5758386320045993450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6438e397cabb7e14a8cf47796e592c74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardsParent: {fileID: 0}
+  cardPrefab: {fileID: 2741489977282473598, guid: e620a23e71776e94496e87362257469e, type: 3}
+  iconKeyboard: {fileID: 8305092906236829481, guid: 20812e1bdb21a2f4f82cd8d51b89503a, type: 3}
+  iconGamepad: {fileID: -894579921629993427, guid: 20812e1bdb21a2f4f82cd8d51b89503a, type: 3}
+  slotTints:
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 0, g: 0.078431375, b: 1, a: 1}
+  confirmHintText: {fileID: 0}
+  viewRoot: {fileID: 0}
+  submitAction: {fileID: 392368643174621059, guid: f6ae7cc3e18fbe848af449d8b03af3fb, type: 3}

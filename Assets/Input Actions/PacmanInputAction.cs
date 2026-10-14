@@ -278,7 +278,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""aefa3a93-e0c9-4206-9532-a5a998a6d0fb"",
-                    ""path"": ""<Keyboard>/escape"",
+                    ""path"": ""<Keyboard>/tab"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""P1Keyboard"",
@@ -300,7 +300,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""dcde096e-2104-431a-ab94-23ced4dd8332"",
-                    ""path"": ""<Keyboard>/p"",
+                    ""path"": ""<Keyboard>/rightShift"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""P2Keyboard"",
@@ -322,7 +322,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""fb456eed-c1b1-4053-8521-8cd9a686b470"",
-                    ""path"": ""<Keyboard>/comma"",
+                    ""path"": ""<Keyboard>/rightAlt"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""P2Keyboard"",
@@ -695,7 +695,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""c34f7e7e-ffda-4f7e-9ab9-a747c21afea7"",
-                    ""path"": ""<Keyboard>/period"",
+                    ""path"": ""<Keyboard>/slash"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""P2Keyboard"",
@@ -728,7 +728,7 @@ public partial class @PacmanInputAction: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""fdec7be1-961a-4375-bce5-7265dd7d9fae"",
-                    ""path"": ""<Keyboard>/slash"",
+                    ""path"": ""<Keyboard>/period"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""P2Keyboard"",
