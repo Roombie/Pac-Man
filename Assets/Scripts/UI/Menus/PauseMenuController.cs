@@ -66,13 +66,8 @@ public class PauseMenuController : MonoBehaviour
 
         ShowMenu();
 
-        // Switch Pacman's input to UI map so gameplay input is blocked
-        var pi = PacmanSpawner.Instance.CurrentPacman?.GetComponent<PlayerInput>();
-        if (pi != null)
-        {
-            InputManager.Instance.SwitchToUIMap(pi);
-            Debug.Log($"[PauseMenuController] Switched Player {GameManager.Instance.currentPlayer} to UI map");
-        }
+        // Block gameplay input while paused; menu navigation is polled below
+        InputManager.Instance.SetGameplayInputEnabled(false);
 
         GameManager.Instance.SetState(GameManager.GameState.Paused);
         Debug.Log("[PauseMenuController] Game paused");
@@ -85,12 +80,7 @@ public class PauseMenuController : MonoBehaviour
         HideMenu();
 
         // Restore gameplay input
-        var pi = PacmanSpawner.Instance.CurrentPacman?.GetComponent<PlayerInput>();
-        if (pi != null)
-        {
-            InputManager.Instance.SwitchToGameplayMap(pi);
-            Debug.Log($"[PauseMenuController] Switched Player {GameManager.Instance.currentPlayer} back to gameplay map");
-        }
+        InputManager.Instance.SetGameplayInputEnabled(true);
 
         GameManager.Instance.SetState(GameManager.GameState.Playing);
         Debug.Log("[PauseMenuController] Game resumed");

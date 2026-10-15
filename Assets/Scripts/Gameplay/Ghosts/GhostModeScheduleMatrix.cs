@@ -30,9 +30,32 @@ public class GhostModeScheduleMatrix : ScriptableObject
 
         [Tooltip("No-dot release seconds for this band (4s on L1–4, 3s on L5+).")]
         public float noDotRelease = 4f;
+
+        // Speeds as a fraction of full speed (Pac-Man Dossier table)
+        [Header("Speeds (fraction of full speed)")]
+        public float pacmanSpeed = 0.80f;
+        [Tooltip("Pac-Man while ghosts are frightened.")]
+        public float pacmanFrightSpeed = 0.90f;
+        public float ghostSpeed = 0.75f;
+        public float ghostFrightSpeed = 0.50f;
+        public float ghostTunnelSpeed = 0.40f;
+        public float elroy1Speed = 0.80f;
+        public float elroy2Speed = 0.85f;
     }
 
     public List<Row> rows = new();
+
+    [Tooltip("World units per second that equal 100% speed. Arcade 100% is ~9.47 tiles/s; " +
+             "10 keeps Level 1 Pac-Man at 8 units/s.")]
+    public float fullSpeed = 10f;
+
+    [Tooltip("Dots left when Blinky becomes Elroy 1, per level (index 0 = level 1). The last value repeats. " +
+             "Elroy 2 starts at half of this.")]
+    public int[] elroyDotsByLevel = Array.Empty<int>();
+
+    [Tooltip("Frightened seconds per level (index 0 = level 1). The last value repeats for higher levels. " +
+             "0 = ghosts only reverse, they don't turn blue. Overrides the row's 'frightened' when not empty.")]
+    public float[] frightenedByLevel = Array.Empty<float>();
 
     // Select row with greatest fromLevel <= level
     private Row SelectRow(int level)
@@ -52,14 +75,53 @@ public class GhostModeScheduleMatrix : ScriptableObject
     public GhostPhase[] GetPhasesForLevel(int level, out float frightenedSeconds)
     {
         var row = SelectRow(level);
-        frightenedSeconds = row.frightened;
+        frightenedSeconds = GetFrightenedSecondsForLevel(level, row);
         return row.phases ?? Array.Empty<GhostPhase>();
+    }
+
+    private float GetFrightenedSecondsForLevel(int level, Row row)
+    {
+        if (frightenedByLevel == null || frightenedByLevel.Length == 0) return row.frightened;
+
+        int i = Mathf.Clamp(level - 1, 0, frightenedByLevel.Length - 1);
+        return Mathf.Max(0f, frightenedByLevel[i]);
     }
 
     public string GetBandLabelForLevel(int level)
     {
         var row = SelectRow(level);
         return $"L{row.fromLevel}+";
+    }
+
+    /// <summary>Movement speeds for a level, in world units per second</summary>
+    public struct LevelSpeeds
+    {
+        public float pacman, pacmanFright;
+        public float ghost, ghostFright, ghostTunnel;
+        public float elroy1, elroy2;
+    }
+
+    public LevelSpeeds GetSpeedsForLevel(int level)
+    {
+        var row = SelectRow(level);
+        return new LevelSpeeds
+        {
+            pacman = fullSpeed * row.pacmanSpeed,
+            pacmanFright = fullSpeed * row.pacmanFrightSpeed,
+            ghost = fullSpeed * row.ghostSpeed,
+            ghostFright = fullSpeed * row.ghostFrightSpeed,
+            ghostTunnel = fullSpeed * row.ghostTunnelSpeed,
+            elroy1 = fullSpeed * row.elroy1Speed,
+            elroy2 = fullSpeed * row.elroy2Speed,
+        };
+    }
+
+    public int GetElroyDotsForLevel(int level)
+    {
+        if (elroyDotsByLevel == null || elroyDotsByLevel.Length == 0) return 20;
+
+        int i = Mathf.Clamp(level - 1, 0, elroyDotsByLevel.Length - 1);
+        return Mathf.Max(0, elroyDotsByLevel[i]);
     }
 
     // house-exit params per level band

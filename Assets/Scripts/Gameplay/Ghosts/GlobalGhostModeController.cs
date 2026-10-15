@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 [AddComponentMenu("Pacman/Global Ghost Mode Controller")]
 [DisallowMultipleComponent]
@@ -35,6 +36,26 @@ public class GlobalGhostModeController : MonoBehaviour
     [SerializeField, Tooltip("Eyes (Eaten) speed multiplier.")]
     private float eatenMult = 1.5f;
 
+    // Level speeds (from the matrix). Defaults are the Dossier's Level 1 values at fullSpeed 10
+    private GhostModeScheduleMatrix.LevelSpeeds levelSpeeds = new GhostModeScheduleMatrix.LevelSpeeds
+    {
+        pacman = 8f, pacmanFright = 9f,
+        ghost = 7.5f, ghostFright = 5f, ghostTunnel = 4f,
+        elroy1 = 8f, elroy2 = 8.5f
+    };
+    private float tunnelMult = 0.4f / 0.75f;
+
+    // Elroy
+    private int elroyDots = 20;                       // Elroy 1 at this many dots left, Elroy 2 at half
+    private bool elroySuspended;                      // after a death, until Clyde leaves the house
+    private int lastPelletsRemaining = int.MaxValue;
+
+    /// <summary>Pac-Man's speed right now (level-based, faster while ghosts are frightened)</summary>
+    public float PacmanSpeed => isFrightenedActive ? levelSpeeds.pacmanFright : levelSpeeds.pacman;
+
+    /// <summary>Tunnel slowdown for ghosts, relative to their normal speed</summary>
+    public float TunnelSpeedMult => tunnelMult;
+
     [Header("Pause/Freeze")]
     [SerializeField] private bool timersFrozen = false;
     public bool IsFrightenedActive => isFrightenedActive;
@@ -56,6 +77,16 @@ public class GlobalGhostModeController : MonoBehaviour
     // Eyes audio control
     private int eatenActiveCount = 0;
     [SerializeField] private bool eyesAudioAllowed = true;
+
+    [Header("Red zones")]
+    [Tooltip("Intersections where Scatter/Chase ghosts can't turn up (Dossier): the two above the ghost house " +
+             "and the two above Pac-Man's start. Matched to the nearest maze node at runtime.")]
+    [SerializeField] private Vector2[] redZonePositions =
+    {
+        new Vector2(-1.5f, 3.5f), new Vector2(1.5f, 3.5f),
+        new Vector2(-1.5f, -8.5f), new Vector2(1.5f, -8.5f)
+    };
+    private HashSet<Node> redZoneNodes;
 
     [Header("Frightened options")]
     [Tooltip("If active, ghosts within Home are also affected (slower + blue/white visuals) during Frightened.")]
@@ -116,7 +147,8 @@ public class GlobalGhostModeController : MonoBehaviour
         if (isFrightenedActive && frightenedTimer != null) frightenedTimer.Tick(Time.deltaTime);
 
         // Stall timer for house release (only while someone is inside Home)
-        if (houseReleaseEnabled && !useGlobalCounter && GetPreferredHomeGhost() != null)
+        // Runs with both the personal and the global (post-death) dot counters
+        if (houseReleaseEnabled && GetPreferredHomeGhost() != null)
         {
             noDotTimer += Time.deltaTime;
             TryReleaseByStall();
@@ -146,6 +178,8 @@ public class GlobalGhostModeController : MonoBehaviour
             exitNoDotSeconds = hx.noDotSeconds;
 
             ResetSchedule(built);
+            levelSpeeds = matrix.GetSpeedsForLevel(currentLevel);
+            elroyDots = matrix.GetElroyDotsForLevel(currentLevel);
 #if UNITY_EDITOR
             Debug.Log($"[GhostModes] {matrix.GetBandLabelForLevel(currentLevel)}  Exit(P:{exitPinky}, I:{exitInky}, C:{exitClyde}, NoDot:{exitNoDotSeconds:0.##}s)");
 #endif
@@ -159,6 +193,12 @@ public class GlobalGhostModeController : MonoBehaviour
             exitNoDotSeconds = (currentLevel <= 4) ? 4f : 3f;
         }
 
+        ApplyLevelSpeeds();
+
+        // Elroy restarts from scratch each level
+        elroySuspended = false;
+        lastPelletsRemaining = int.MaxValue;
+
         // reset counters at level start
         useGlobalCounter = false;
         globalDotCounter = 0;
@@ -166,6 +206,51 @@ public class GlobalGhostModeController : MonoBehaviour
         personalDotCounter = 0;
         homeFrightened.Clear();
         reformedFromEaten.Clear();
+    }
+
+    /// <summary>
+    /// Pushes this level's speeds to the ghosts. Mode multipliers are relative to the normal ghost speed
+    /// </summary>
+    private void ApplyLevelSpeeds()
+    {
+        float ghost = Mathf.Max(0.01f, levelSpeeds.ghost);
+        frightenedMult = levelSpeeds.ghostFright / ghost;
+        tunnelMult = levelSpeeds.ghostTunnel / ghost;
+
+        ForEachGhost(g => g.SetLevelSpeed(ghost));
+        ForEachGhost(g =>
+        {
+            if (g.CurrentMode == Ghost.Mode.Frightened) ApplyModeSpeed(g, Ghost.Mode.Frightened);
+        });
+    }
+
+    public bool IsRedZone(Node node)
+    {
+        if (!node) return false;
+
+        // Maze nodes are tile instances, so resolve the positions lazily (and again after a scene reload)
+        if (redZoneNodes == null || redZoneNodes.Any(n => !n))
+        {
+            redZoneNodes = new HashSet<Node>();
+            foreach (var pos in redZonePositions)
+            {
+                var n = GhostNavigation.NodeNear(pos, 0.3f);
+                if (n) redZoneNodes.Add(n);
+                else Debug.LogWarning($"[GhostModes] No maze node found for red zone at {pos}");
+            }
+        }
+        return redZoneNodes.Contains(node);
+    }
+
+    /// <summary>
+    /// Called when Pac-Man loses a life (before the restart sequence):
+    /// ghosts leave the house on the global dot counter, and Elroy pauses until Clyde is out
+    /// </summary>
+    public void OnLifeLost()
+    {
+        StartGlobalHouseCounterMode();
+        elroySuspended = true;
+        RefreshElroy();
     }
 
     public void ApplyModeSpeed(Ghost g, Ghost.Mode mode)
@@ -344,6 +429,13 @@ public class GlobalGhostModeController : MonoBehaviour
     {
         SetEyesAudioAllowed(true);
         float dur = duration ?? previewFrightenedSeconds;
+
+        // Later levels have no blue time: the power pellet only makes ghosts reverse
+        if (dur <= 0f)
+        {
+            if (!isFrightenedActive) ReverseAll(skipHome: true);
+            return;
+        }
 
         if (!isFrightenedActive)
             ReverseAll(skipHome: true);
@@ -634,7 +726,7 @@ public class GlobalGhostModeController : MonoBehaviour
             // mark flips for ghosts currently in Home (for exit direction)
             ForEachGhost(g => { if (g.CurrentMode == Ghost.Mode.Home) g.NotifyModeFlipWhileHome(); });
 
-            ReverseAll();
+            ReverseAll(skipHome: true);
         }
 
         if (!isFrightenedActive)
@@ -690,6 +782,12 @@ public class GlobalGhostModeController : MonoBehaviour
 
         // once used, clear the re-formed flag
         reformedFromEaten.Remove(g);
+
+        if (elroySuspended && g.Type == GhostType.Clyde)
+        {
+            elroySuspended = false;
+            RefreshElroy();
+        }
     }
 
     private static bool IsScatterChasePair(Ghost.Mode a, Ghost.Mode b) =>
@@ -711,6 +809,7 @@ public class GlobalGhostModeController : MonoBehaviour
         ForEachGhost(g =>
         {
             if (!g || g.movement == null) return;
+            if (g.CurrentMode == Ghost.Mode.Eaten) return; // eyes keep heading home
             if (skipHome && g.CurrentMode == Ghost.Mode.Home) return;
 
             var dir = g.movement.direction;
@@ -742,6 +841,12 @@ public class GlobalGhostModeController : MonoBehaviour
     /// <summary>Call with pellets remaining to compute Elroy stage.</summary>
     public void OnPelletCountChanged(int pelletsRemaining)
     {
+        lastPelletsRemaining = pelletsRemaining;
+        RefreshElroy();
+    }
+
+    private void RefreshElroy()
+    {
         if (ghosts == null) return;
 
         Ghost blinky = null;
@@ -749,11 +854,16 @@ public class GlobalGhostModeController : MonoBehaviour
             if (g && g.Type == GhostType.Blinky) { blinky = g; break; }
         if (!blinky) return;
 
-        int stage = (pelletsRemaining <= 10) ? 2 :
-                    (pelletsRemaining <= 20) ? 1 : 0;
+        int stage = 0;
+        if (!elroySuspended && elroyDots > 0)
+        {
+            if (lastPelletsRemaining <= elroyDots / 2) stage = 2;
+            else if (lastPelletsRemaining <= elroyDots) stage = 1;
+        }
 
-        float mult = (stage == 2) ? (0.85f / 0.75f) :
-                     (stage == 1) ? (0.80f / 0.75f) : 1f;
+        float ghost = Mathf.Max(0.01f, levelSpeeds.ghost);
+        float mult = (stage == 2) ? levelSpeeds.elroy2 / ghost :
+                     (stage == 1) ? levelSpeeds.elroy1 / ghost : 1f;
 
         blinky.SetElroyStage(stage, mult);
     }
@@ -763,6 +873,8 @@ public class GlobalGhostModeController : MonoBehaviour
     {
         if (!houseReleaseEnabled) return;
 
+        noDotTimer = 0f;
+
         if (useGlobalCounter)
         {
             globalDotCounter++;
@@ -770,7 +882,6 @@ public class GlobalGhostModeController : MonoBehaviour
             return;
         }
 
-        noDotTimer = 0f;
         personalDotCounter++;
         TryReleaseByCounter();
     }

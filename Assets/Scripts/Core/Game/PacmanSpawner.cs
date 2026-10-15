@@ -29,6 +29,7 @@ public class PacmanSpawner : MonoBehaviour
     private bool isTwoPlayerMode;
 
     public Pacman CurrentPacman => currentPacman;
+    public Pacman[] AllPacmans => pacmans;
     public CharacterData CurrentCharacter => selectedCharacters?[GameManager.Instance.CurrentIndex];
     public CharacterSkin CurrentSkin => selectedSkins?[GameManager.Instance.CurrentIndex];
     public CharacterData[] SelectedCharacters => selectedCharacters;
@@ -61,14 +62,14 @@ public class PacmanSpawner : MonoBehaviour
         LoadCharacterSelections();
         SpawnPacmans();
 
-        InputManager.Instance.ConfigurePacmanInputs(pacmans, isTwoPlayerMode);
+        InputManager.Instance.SetupPlayers(pacmans, isTwoPlayerMode);
 
         SetCurrentPacman(0);
     }
 
     /// <summary>
     /// Switches the active Pacman to the given player index.
-    /// Deactivates the previous one and enables input on the new one.
+    /// Deactivates the previous one and hands input to the new player.
     /// </summary>
     public void SetCurrentPacman(int playerIndex, bool activateImmediately = true)
     {
@@ -80,11 +81,7 @@ public class PacmanSpawner : MonoBehaviour
 
         // Deactivate previous
         if (currentPacman != null)
-        {
             currentPacman.gameObject.SetActive(false);
-            var prev = currentPacman.GetComponent<PlayerInput>();
-            if (prev != null) prev.enabled = false;
-        }
 
         currentPacmanIndex = playerIndex;
         currentPacman      = pacmans[playerIndex];
@@ -94,8 +91,7 @@ public class PacmanSpawner : MonoBehaviour
             if (activateImmediately)
                 currentPacman.gameObject.SetActive(true);
 
-            var pi = currentPacman.GetComponent<PlayerInput>();
-            if (pi != null) pi.enabled = true;
+            InputManager.Instance.SetActivePlayer(playerIndex);
 
             pacmanAnimator        = currentPacman.GetComponent<Animator>();
             pacmanArrowIndicator  = currentPacman.GetComponent<ArrowIndicator>();

@@ -27,6 +27,8 @@ public class Movement : MonoBehaviour
     private bool cornering = false;
     private Vector2 cornerDir = Vector2.zero;  // the perpendicular nextDirection we’re cornering into
 
+    private float stallTime; // seconds left standing still (Pac-Man eating dots)
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -62,6 +64,7 @@ public class Movement : MonoBehaviour
         cornering = false;
         cornerDir = Vector2.zero;
         isBlocked = false;
+        stallTime = 0f;
         enabled = true;
 
         Physics2D.SyncTransforms();
@@ -123,6 +126,12 @@ public class Movement : MonoBehaviour
         if (!enabled) return;
         if (rb == null || !rb.simulated) return;
 
+        if (stallTime > 0f)
+        {
+            stallTime -= Time.fixedDeltaTime;
+            return;
+        }
+
         Vector2 pos = rb.position;
         float step = speed * speedMultiplier * envMultiplier * Time.fixedDeltaTime;
 
@@ -163,6 +172,12 @@ public class Movement : MonoBehaviour
             Vector2 translation = direction * step;
             rb.MovePosition(pos + translation);
         }
+    }
+
+    /// <summary>Stops movement for a moment without changing direction (arcade dot-eating pause)</summary>
+    public void Stall(float seconds)
+    {
+        stallTime = Mathf.Max(stallTime, seconds);
     }
 
     public void SetObstacleMask(LayerMask mask)

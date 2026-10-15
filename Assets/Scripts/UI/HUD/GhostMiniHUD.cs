@@ -1,6 +1,8 @@
 using System.Text;
 using UnityEngine;
 using TMPro;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public class GhostMiniHUDUI : MonoBehaviour
 {
@@ -11,7 +13,7 @@ public class GhostMiniHUDUI : MonoBehaviour
     [Header("Behavior")]
     [SerializeField] bool startVisible = true;
     [SerializeField] bool showInReleaseBuild = true;   // if false, Editor/Dev builds only
-    [SerializeField] KeyCode toggleKey = KeyCode.F3;
+    [SerializeField] Key toggleHotkey = Key.F3;  // renamed from toggleKey (old KeyCode values aren't valid Keys)
 
     bool visible;
 
@@ -38,7 +40,8 @@ public class GhostMiniHUDUI : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
+        var kb = Keyboard.current;
+        if (kb != null && toggleHotkey > Key.None && (int)toggleHotkey <= kb.allKeys.Count && kb[toggleHotkey].wasPressedThisFrame)
         {
             visible = !visible && AllowedToShow();
             ApplyVisibility();

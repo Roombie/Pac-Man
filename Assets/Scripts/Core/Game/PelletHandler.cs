@@ -38,6 +38,11 @@ public class PelletHandler : MonoBehaviour
         alternatePelletSound = !alternatePelletSound;
         PlayPelletEatenSound(alternatePelletSound);
 
+        // Arcade: Pac-Man stops 1 frame per dot and 3 frames per power pellet
+        var pacman = PacmanSpawner.Instance != null ? PacmanSpawner.Instance.CurrentPacman : null;
+        if (pacman != null && pacman.movement != null)
+            pacman.movement.Stall((pellet is PowerPellet ? 3f : 1f) / 60f);
+
         ScoreManager.Instance.AddScore(pellet.points);
         gm.pelletManager.PelletEaten(pellet);
 
@@ -46,6 +51,7 @@ public class PelletHandler : MonoBehaviour
 
         CheckBonusItemSpawn();
         gm.globalGhostModeController.OnPelletCountChanged(gm.pelletManager.RemainingPelletCount());
+        gm.globalGhostModeController.OnPelletEaten(); // ghost-house dot counters (power pellets count too)
     }
 
     public void PowerPelletEaten(PowerPellet pellet)
@@ -62,7 +68,7 @@ public class PelletHandler : MonoBehaviour
             return;
         }
 
-        gmc.TriggerFrightened(pellet.duration);
+        gmc.TriggerFrightened(); // duration comes from the level (GhostModeScheduleMatrix)
         PelletEaten(pellet);
     }
 

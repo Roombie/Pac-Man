@@ -195,6 +195,18 @@ MonoBehaviour:
     m_Key: AllPlayersJoined_Label
     m_Metadata:
       m_Items: []
+  - m_Id: 22928612599361601
+    m_Key: Victory_Winner
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361602
+    m_Key: Victory_Draw
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361603
+    m_Key: Victory_Continue
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

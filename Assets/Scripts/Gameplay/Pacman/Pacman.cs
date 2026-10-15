@@ -24,18 +24,20 @@ public class Pacman : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
     public Animator animator;
-    private PlayerInput playerInput;
 
     private void Awake()
     {
         // Cache required components
         spriteRenderer = GetComponent<SpriteRenderer>();
-        playerInput = GetComponent<PlayerInput>();
         movement = GetComponent<Movement>();
     }
 
     private void Update()
     {
+        // Level speed (and the faster speed while ghosts are frightened) comes from the ghost controller
+        var ghostController = GameManager.Instance != null ? GameManager.Instance.globalGhostModeController : null;
+        if (ghostController != null) movement.speed = ghostController.PacmanSpeed;
+
         // Disable movement if Pacman is dead, input is locked, or game isn't playing
         if (isDead || isInputLocked ||
             GameManager.Instance == null ||
@@ -66,7 +68,7 @@ public class Pacman : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by InputSystem when Move input is triggered
+    /// Called by this player's PlayerInputController when Move input is triggered
     /// Handles directional input and movement buffering
     /// </summary>
     public void OnMove(InputAction.CallbackContext context)
@@ -80,14 +82,12 @@ public class Pacman : MonoBehaviour
         {
             Vector2 inputDirection = context.ReadValue<Vector2>();
 
-            var moveAction = context.action;
             var activeControl = context.control;
 
             // Debug which device triggered input
             if (activeControl != null)
             {
                 Debug.Log($"[Pacman] Input from: {activeControl.device.displayName} | " +
-                          $"Scheme: {playerInput.currentControlScheme} | " +
                           $"Direction: {inputDirection} | " +
                           $"Key: {activeControl.path}");
             }
@@ -253,39 +253,6 @@ public class Pacman : MonoBehaviour
         yield return new WaitForSeconds(2f);
 
         GameManager.Instance.PacmanEaten(); // Game flow — GameManager owns death/turn logic
-    }
-
-    /// <summary>
-    /// Called by InputSystem when Pause input is triggered
-    /// Toggles the pause state if the game is currently playing or paused
-    /// </summary>
-    public void OnPause(InputAction.CallbackContext context)
-    {
-        if (context.performed &&
-            (GameManager.Instance.CurrentGameState == GameManager.GameState.Playing ||
-             GameManager.Instance.CurrentGameState == GameManager.GameState.Paused))
-        {
-            PauseMenuController.Instance.TogglePause();
-        }
-    }
-
-    /// <summary>
-    /// Called by InputSystem when Dejoin input is triggered
-    /// Requests a global dejoin via InputManager if rejoin mode isn't active
-    /// </summary>
-    public void OnDejoin(InputAction.CallbackContext ctx)
-    {
-        if (!ctx.performed) return;
-
-        if (GameManager.Instance != null && !InputManager.Instance.waitingForRejoin)
-        {
-            InputManager.Instance.RequestDejoin(
-                GameManager.Instance,
-                GameManager.Instance.currentPlayer,
-                GameManager.Instance.IsTwoPlayerMode,
-                GameManager.Instance.TotalPlayers
-            );
-        }
     }
 
     /// <summary>

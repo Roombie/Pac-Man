@@ -34,8 +34,8 @@ public class Ghost : MonoBehaviour
     public int ElroyStage => (Type == GhostType.Blinky) ? elroyStage : 0;
     public bool IsElroy => Type == GhostType.Blinky && elroyStage > 0;
 
-    private float baseNormalSpeed = -1f;
-    private float pendingElroySpeedMult = 1f;
+    private float levelSpeed = -1f;     // normal ghost speed for the current level (set by the controller)
+    private float elroySpeedMult = 1f;  // only applied in Scatter/Chase
     private int homeModeFlipCount = 0;
     public event Action<Ghost, Mode, Mode> ModeChanged;
 
@@ -61,7 +61,7 @@ public class Ghost : MonoBehaviour
 
         startingPosition = transform.position;
 
-        if (movement) baseNormalSpeed = movement.speed;
+        if (movement) levelSpeed = movement.speed;
 
         EnableOnly(CurrentMode);
     }
@@ -78,35 +78,28 @@ public class Ghost : MonoBehaviour
 
         CurrentMode = newMode;
         EnableOnly(newMode);
-
-        // refresh base speed on Scatter/Chase re-entry
-        if (movement && (newMode == Mode.Scatter || newMode == Mode.Chase))
-        {
-            if (elroyStage == 0) baseNormalSpeed = movement.speed;
-            else if (pendingElroySpeedMult > 0f) ApplyElroySpeed(pendingElroySpeedMult);
-        }
+        RefreshSpeed(); // Elroy speed only counts in Scatter/Chase
 
         settingMode = false;
 
         ModeChanged?.Invoke(this, prev, newMode);
     }
 
-    /// <summary>Elroy 0/1/2; speedMult is relative to level's normal speed.</summary>
+    /// <summary>Normal (non-Elroy) speed for the current level, in world units per second</summary>
+    public void SetLevelSpeed(float speed)
+    {
+        levelSpeed = speed;
+        RefreshSpeed();
+    }
+
+    /// <summary>Elroy 0/1/2; speedMult is relative to the level's normal ghost speed.</summary>
     public void SetElroyStage(int stage, float speedMult)
     {
         if (Type != GhostType.Blinky || movement == null) return;
 
-        stage = Mathf.Clamp(stage, 0, 2);
-        elroyStage = stage;
-
-        // defer application in these modes
-        if (CurrentMode == Mode.Frightened || CurrentMode == Mode.Eaten || CurrentMode == Mode.Home)
-        {
-            pendingElroySpeedMult = (stage == 0) ? 1f : speedMult;
-            return;
-        }
-
-        ApplyElroySpeed((stage == 0) ? 1f : speedMult);
+        elroyStage = Mathf.Clamp(stage, 0, 2);
+        elroySpeedMult = (elroyStage == 0) ? 1f : Mathf.Max(0.01f, speedMult);
+        RefreshSpeed();
     }
 
     public void ResetEyesFacingForMode(Mode mode)
@@ -134,8 +127,7 @@ public class Ghost : MonoBehaviour
             movement.enabled = false;
             movement.SetDirection(Vector2.zero, true);
 
-            if (baseNormalSpeed < 0f) baseNormalSpeed = movement.speed;
-            if (movement) movement.SetEnvSpeedMultiplier(1f);
+            movement.SetEnvSpeedMultiplier(1f);
         }
 
         homeModeFlipCount = 0;
@@ -192,14 +184,13 @@ public class Ghost : MonoBehaviour
         if (eaten) eaten.enabled = mode == Mode.Eaten;
     }
 
-    private void ApplyElroySpeed(float mult)
+    // Mode multipliers (frightened, eyes, tunnel) are applied on top through Movement's multipliers
+    private void RefreshSpeed()
     {
-        if (movement == null) return;
+        if (movement == null || levelSpeed <= 0f) return;
 
-        if (baseNormalSpeed < 0.0001f) baseNormalSpeed = movement.speed;
-
-        movement.speed = baseNormalSpeed * Mathf.Max(0.01f, mult);
-        pendingElroySpeedMult = mult;
+        bool elroyApplies = CurrentMode == Mode.Scatter || CurrentMode == Mode.Chase;
+        movement.speed = levelSpeed * (elroyApplies ? elroySpeedMult : 1f);
     }
 
     /// <summary>Called by the controller when a Scatter↔Chase flip occurs.</summary>

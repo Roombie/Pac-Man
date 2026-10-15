@@ -4,6 +4,16 @@ using UnityEngine;
 public class GhostSlowZone : MonoBehaviour
 {
     [Range(0f, 2f)] public float slowMultiplier = 0.5f;
+    [Tooltip("Use the level's tunnel speed from GhostModeScheduleMatrix instead of slowMultiplier.")]
+    public bool useLevelTunnelSpeed = true;
+
+    float SlowMult()
+    {
+        var gm = GameManager.Instance;
+        if (useLevelTunnelSpeed && gm != null && gm.globalGhostModeController != null)
+            return gm.globalGhostModeController.TunnelSpeedMult;
+        return slowMultiplier;
+    }
 
     [Header("Filtering")]
     public bool affectAllGhosts = true;
@@ -19,7 +29,7 @@ public class GhostSlowZone : MonoBehaviour
             ghost.CurrentMode != Ghost.Mode.Frightened &&
             ghost.CurrentMode != Ghost.Mode.Eaten)
         {
-            ghost.movement?.SetEnvSpeedMultiplier(slowMultiplier);
+            ghost.movement?.SetEnvSpeedMultiplier(SlowMult());
         }
     }
 
@@ -34,7 +44,7 @@ public class GhostSlowZone : MonoBehaviour
             ghost.CurrentMode != Ghost.Mode.Frightened &&
             ghost.CurrentMode != Ghost.Mode.Eaten;
 
-        ghost.movement?.SetEnvSpeedMultiplier(shouldAffect ? slowMultiplier : 1f);
+        ghost.movement?.SetEnvSpeedMultiplier(shouldAffect ? SlowMult() : 1f);
     }
 
     void OnTriggerExit2D(Collider2D other)

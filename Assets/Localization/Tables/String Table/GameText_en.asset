@@ -204,6 +204,18 @@ MonoBehaviour:
     m_Localized: Press Space or <sprite name=buttonSouth> when ready
     m_Metadata:
       m_Items: []
+  - m_Id: 22928612599361601
+    m_Localized: Player {0} wins!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361602
+    m_Localized: Draw!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361603
+    m_Localized: Press Space, / or A to continue
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
