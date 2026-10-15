@@ -13,6 +13,8 @@ namespace Roombie.UI
 
         [Header("Single Icon Image")]
         [SerializeField] Image deviceIconImage;
+        [Tooltip("Optional: shows which keyboard half the player has (WASD / ARROWS). Created under the icon if empty.")]
+        [SerializeField] TMP_Text keyboardHalfText;
 
         [Header("Sprites")]
         [SerializeField] Sprite iconKeyboard;
@@ -71,10 +73,14 @@ namespace Roombie.UI
             iconGamepad = gamepad;
         }
 
-        /// <summary>Keyboard has priority; hides image if neither present.</summary>
-        public void SetPresence(bool hasKeyboard, bool hasGamepad)
+        /// <summary>
+        /// Keyboard has priority; hides image if neither present.
+        /// keyboardScheme (e.g. "P1Keyboard") labels which half of the keyboard the player has
+        /// </summary>
+        public void SetPresence(bool hasKeyboard, bool hasGamepad, string keyboardScheme = null)
         {
             HasAnyPresence = hasKeyboard || hasGamepad;
+            ShowKeyboardHalf(hasKeyboard ? keyboardScheme : null);
 
             if (!deviceIconImage) return;
 
@@ -110,6 +116,56 @@ namespace Roombie.UI
         {
             if (frameImage) frameImage.color = c;
             if (titleText)  titleText.color  = c;
+            if (keyboardHalfText) keyboardHalfText.color = c;
+        }
+
+        /// <summary>"WASD" for the left half, "ARROWS" for the right; hidden for gamepads / no device</summary>
+        void ShowKeyboardHalf(string keyboardScheme)
+        {
+            string label = KeyboardHalfLabel(keyboardScheme);
+            if (string.IsNullOrEmpty(label))
+            {
+                if (keyboardHalfText) keyboardHalfText.gameObject.SetActive(false);
+                return;
+            }
+
+            EnsureKeyboardHalfText();
+            if (!keyboardHalfText) return;
+
+            keyboardHalfText.text = label;
+            keyboardHalfText.gameObject.SetActive(true);
+        }
+
+        static string KeyboardHalfLabel(string scheme) => scheme switch
+        {
+            "P1Keyboard" => "WASD",
+            "P2Keyboard" => "ARROWS",
+            _ => null
+        };
+
+        // Built once under the icon (its parent stacks children vertically), styled like the title
+        void EnsureKeyboardHalfText()
+        {
+            if (keyboardHalfText || !deviceIconImage) return;
+
+            var go = new GameObject("Keyboard Half Label", typeof(RectTransform));
+            go.transform.SetParent(deviceIconImage.transform.parent, false);
+            go.transform.SetSiblingIndex(deviceIconImage.transform.GetSiblingIndex() + 1);
+            ((RectTransform)go.transform).sizeDelta = new Vector2(deviceIconImage.rectTransform.sizeDelta.x * 2f, 14f);
+
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            if (titleText)
+            {
+                tmp.font = titleText.font;
+                tmp.fontSize = titleText.fontSize;
+                tmp.color = titleText.color;
+            }
+            else tmp.fontSize = 16f; // should probably just make it a normal text object at this point ngl
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
+            tmp.raycastTarget = false;
+
+            keyboardHalfText = tmp;
         }
 
         public void Show(bool show) => gameObject.SetActive(show);

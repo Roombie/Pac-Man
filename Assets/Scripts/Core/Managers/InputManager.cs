@@ -405,7 +405,7 @@ public class InputManager : MonoBehaviour
         if (overlay == null) return;
 
         var device = HasDevice(draftBindings[slot]) ? draftBindings[slot].device : null;
-        overlay.SetPresenceForSlot(slot, device is Keyboard, device is Gamepad);
+        overlay.SetPresenceForSlot(slot, device is Keyboard, device is Gamepad, draftBindings[slot].scheme);
         overlay.ShowConfirmHint(AllDraftSlotsFilled());
     }
 

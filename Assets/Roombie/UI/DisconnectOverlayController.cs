@@ -88,7 +88,7 @@ namespace Roombie.UI
         /// <summary>
         /// Updates presence state for a given player slot (keyboard/gamepad icons)
         /// </summary>
-        public void SetPresenceForSlot(int slotIndex, bool hasKeyboard, bool hasGamepad)
+        public void SetPresenceForSlot(int slotIndex, bool hasKeyboard, bool hasGamepad, string keyboardScheme = null)
         {
             if (slotIndex < 0) return;
             if (slotIndex >= cards.Count)
@@ -98,9 +98,9 @@ namespace Roombie.UI
             if (!card) return;
 
             card.Show(true);
-            card.SetPresence(hasKeyboard, hasGamepad);
+            card.SetPresence(hasKeyboard, hasGamepad, keyboardScheme);
 
-            Debug.Log($"[DisconnectOverlay] Slot {slotIndex} - Keyboard: {hasKeyboard}, Gamepad: {hasGamepad}");
+            Debug.Log($"[DisconnectOverlay] Slot {slotIndex} - Keyboard: {hasKeyboard} ({keyboardScheme ?? "-"}), Gamepad: {hasGamepad}");
         }
 
         /// <summary>
