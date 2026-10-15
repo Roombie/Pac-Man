@@ -25,6 +25,7 @@ public class ArrowSelector : MonoBehaviour
     private bool isChangingPage = false;
     private bool suppressSoundOnFirstAutoSelection = true;
     public static bool suppressSoundOnNextExternalSelection = false;
+    private Coroutine pendingMove; // only the latest reposition runs (each one forces a canvas/layout rebuild)
 
     private void Awake()
     {
@@ -34,6 +35,11 @@ public class ArrowSelector : MonoBehaviour
             return;
         }
         Instance = this;
+    }
+
+    private void OnDisable()
+    {
+        pendingMove = null; // Unity stops coroutines on disable
     }
 
     void Start()
@@ -69,24 +75,25 @@ public class ArrowSelector : MonoBehaviour
         suppressSoundOnFirstAutoSelection = false;
     }
 
+    // Runs after every Update (selection changes included), so no per-frame coroutine is needed
     void LateUpdate()
     {
         if (firstFrame)
             firstFrame = false;
 
-        StartCoroutine(VerifyArrowVisibilityEndOfFrame());
+        VerifyArrowVisibility();
     }
 
-    IEnumerator VerifyArrowVisibilityEndOfFrame()
+    void VerifyArrowVisibility()
     {
-        yield return new WaitForEndOfFrame();
-
-        var selected = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
+        var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+        var selected = eventSystem != null ? eventSystem.currentSelectedGameObject : null;
 
         if (!IsGameObjectActuallySelectable(selected) || isSelectingOption)
         {
-            arrowIndicator.gameObject.SetActive(false);
-            yield break;
+            if (arrowIndicator.gameObject.activeSelf)
+                arrowIndicator.gameObject.SetActive(false);
+            return;
         }
 
         if (lastSelected >= 0 && lastSelected < buttons.Length)
@@ -94,7 +101,7 @@ public class ArrowSelector : MonoBehaviour
             var button = buttons[lastSelected].button;
             if (button != null && button.gameObject == selected)
             {
-                if (!arrowIndicator.gameObject.activeSelf)
+                if (!arrowIndicator.gameObject.activeSelf && pendingMove == null)
                     MoveIndicator(lastSelected);
             }
         }
@@ -122,42 +129,30 @@ public class ArrowSelector : MonoBehaviour
 
     public void ButtonSelected(int b)
     {
-        bool isSameAsBefore = (lastSelected == b);
         lastSelected = b;
         MoveIndicator(b);
-
-        Debug.Log($"suppressFirstSound: {suppressSoundOnFirstAutoSelection}, sameAsBefore: {isSameAsBefore}");
 
         if (suppressSoundOnFirstAutoSelection)
         {
             suppressSoundOnFirstAutoSelection = false;
-            Debug.Log("First sound suppressed");
             return;
         }
 
         if (suppressSoundOnNextExternalSelection)
         {
             suppressSoundOnNextExternalSelection = false;
-            Debug.Log("Selection sound suppressed via static flag");
             return;
         }
 
         if (!isChangingPage && navigateSound != null && AudioManager.Instance != null)
-        {
             AudioManager.Instance.Play(navigateSound, SoundCategory.SFX);
-            Debug.Log("Navigation sound played");
-        }
-        else
-        {
-            Debug.LogWarning("Missing navigateSound or AudioManager instance");
-        }
     }
 
     public void MoveIndicator(int b)
     {
         if (isSelectingOption || firstFrame)
         {
-            StartCoroutine(MoveIndicatorLaterCoroutine(b));
+            RestartPendingMove(MoveIndicatorLaterCoroutine(b));
             return;
         }
 
@@ -174,7 +169,13 @@ public class ArrowSelector : MonoBehaviour
             return;
         }
 
-        StartCoroutine(DelayedUpdatePosition(b));
+        RestartPendingMove(DelayedUpdatePosition(b));
+    }
+
+    private void RestartPendingMove(IEnumerator routine)
+    {
+        if (pendingMove != null) StopCoroutine(pendingMove);
+        pendingMove = StartCoroutine(routine);
     }
 
     IEnumerator DelayedUpdatePosition(int b)
@@ -186,6 +187,7 @@ public class ArrowSelector : MonoBehaviour
         if (b < 0 || b >= buttons.Length || buttons[b].button == null)
         {
             arrowIndicator.gameObject.SetActive(false);
+            pendingMove = null;
             yield break;
         }
 
@@ -193,6 +195,7 @@ public class ArrowSelector : MonoBehaviour
         {
             Debug.LogWarning($"[ArrowSelector] Button {b} is no longer active, skipping arrow update.");
             arrowIndicator.gameObject.SetActive(false);
+            pendingMove = null;
             yield break;
         }
 
@@ -203,11 +206,13 @@ public class ArrowSelector : MonoBehaviour
         Vector3 worldPos = buttons[b].button.TransformPoint((Vector3)buttons[b].arrowOffset);
         arrowIndicator.position = worldPos;
         arrowIndicator.gameObject.SetActive(true);
+        pendingMove = null;
     }
 
     IEnumerator MoveIndicatorLaterCoroutine(int b)
     {
         yield return null;
+        pendingMove = null;
         MoveIndicator(b);
     }
 

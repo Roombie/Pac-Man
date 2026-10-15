@@ -47,7 +47,7 @@ public class GhostInteractionHandler : MonoBehaviour
 
         FreezeController.Instance.PushFreezeSoftAllowEyes();
 
-        var visuals = ghost.GetComponent<GhostVisuals>();
+        var visuals = ghost.Visuals;
         if (visuals) visuals.HideAllForScore();
 
         int comboIndex = Mathf.Clamp(ghostMultiplier - 1, 0, comboPoints.Length - 1);

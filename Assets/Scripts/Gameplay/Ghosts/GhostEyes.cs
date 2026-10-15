@@ -115,7 +115,9 @@ public class GhostEyes : MonoBehaviour
         bool useElroy = (ghost && ghost.Type == GhostType.Blinky && ghost.IsElroy);
 
         Sprite sprite = SelectSprite(cardinal, useElroy);
-        if (sprite && eyesRenderer) eyesRenderer.sprite = sprite;
+        // Runs every frame: only assign when it changes (compared against the renderer, so other writers stay safe)
+        if (sprite && eyesRenderer && !ReferenceEquals(eyesRenderer.sprite, sprite))
+            eyesRenderer.sprite = sprite;
     }
 
     private static Vector2 ToCardinal(Vector2 v, Vector2 fallback)

@@ -26,7 +26,7 @@ public class GhostEaten : MonoBehaviour
     private Ghost ghost;
     private Movement move;
     private GhostEyes eyes;
-    private Node[] allNodes;
+    private Node gateNode; // node closest to the outside door; nodes never move, so found once
     private Node lastDecisionNode;
     private bool transitioning;
 
@@ -41,11 +41,6 @@ public class GhostEaten : MonoBehaviour
         ghost = GetComponent<Ghost>();
         move = ghost.movement ?? GetComponent<Movement>();
         eyes = GetComponent<GhostEyes>();
-#if UNITY_2023_1_OR_NEWER
-        allNodes = Object.FindObjectsByType<Node>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-#else
-        allNodes = FindObjectsOfType<Node>(false);
-#endif
         originalLayer = gameObject.layer;
         eyesLayer = LayerMask.NameToLayer(eyesLayerName);
         ghostLayer = LayerMask.NameToLayer(ghostLayerName);
@@ -79,13 +74,13 @@ public class GhostEaten : MonoBehaviour
         if (transitioning) return;
         if (!move.enabled) return;
 
-        if (AtGateNode())
+        var n = ClosestNodeWithin(commitRadius);
+        if (n && n == GateNode)
         {
             StartCoroutine(EnterDoorSequence());
             return;
         }
 
-        var n = ClosestNodeWithin(commitRadius);
         if (!n || n == lastDecisionNode) return;
 
         Vector3 targetPos = GateTargetPos();
@@ -112,12 +107,13 @@ public class GhostEaten : MonoBehaviour
         return outsideDoor ? outsideDoor.position : insideDoor.position;
     }
 
-    private bool AtGateNode()
+    private Node GateNode
     {
-        if (!outsideDoor) return false;
-        var gateNode = ClosestNodeTo((Vector2)outsideDoor.position);
-        var here = ClosestNodeWithin(commitRadius);
-        return gateNode && here && gateNode == here;
+        get
+        {
+            if (!gateNode && outsideDoor) gateNode = GhostNavigation.ClosestNode(outsideDoor.position);
+            return gateNode;
+        }
     }
 
     private Vector2 BestDirAtNode(Node node, Vector3 targetPos, Vector2 current)
@@ -244,40 +240,7 @@ public class GhostEaten : MonoBehaviour
 
     private Node ClosestNodeWithin(float radius)
     {
-        if (allNodes == null || allNodes.Length == 0) return null;
         Vector2 p = move && move.rb ? move.rb.position : (Vector2)transform.position;
-        Node best = null;
-        float maxSq = radius * radius;
-
-        for (int i = 0; i < allNodes.Length; i++)
-        {
-            var n = allNodes[i];
-            float d2 = ((Vector2)n.transform.position - p).sqrMagnitude;
-            if (d2 <= maxSq)
-            {
-                maxSq = d2;
-                best = n;
-            }
-        }
-        return best;
-    }
-
-    private Node ClosestNodeTo(Vector2 worldPos)
-    {
-        if (allNodes == null || allNodes.Length == 0) return null;
-        Node best = null;
-        float bestSq = float.PositiveInfinity;
-
-        for (int i = 0; i < allNodes.Length; i++)
-        {
-            var n = allNodes[i];
-            float d2 = ((Vector2)n.transform.position - worldPos).sqrMagnitude;
-            if (d2 < bestSq)
-            {
-                bestSq = d2;
-                best = n;
-            }
-        }
-        return best;
+        return GhostNavigation.NodeNear(p, radius);
     }
 }

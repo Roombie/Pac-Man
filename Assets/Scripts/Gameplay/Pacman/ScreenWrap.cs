@@ -7,6 +7,7 @@ public class ScreenWrap : MonoBehaviour
 
     private Camera mainCamera;
     private Vector2 screenBounds;
+    private int lastScreenWidth, lastScreenHeight; // bounds are re-measured only when the window size changes
 
     void Start()
     {
@@ -16,6 +17,9 @@ public class ScreenWrap : MonoBehaviour
 
     void Update()
     {
+        if (Screen.width != lastScreenWidth || Screen.height != lastScreenHeight)
+            CalculateScreenBounds();
+
         Wrap();
     }
 
@@ -26,6 +30,11 @@ public class ScreenWrap : MonoBehaviour
         // We use the camera size and aspect ratio to determine how far the edges of the screen are in world space.
         // Thanks to that now we can store these as screenBounds.x (horizontal screen bounds) and screenBounds.y (vertical screen bounds).
         // This video was really useful to get it how I needed it: https://youtu.be/1a9ag16PeFw (thanks Sunny Valley Studio)
+        lastScreenWidth = Screen.width;
+        lastScreenHeight = Screen.height;
+        if (mainCamera == null) mainCamera = Camera.main;
+        if (mainCamera == null || Screen.height == 0) return;
+
         float screenAspect = (float)Screen.width / Screen.height;
         float camHeight = mainCamera.orthographicSize * 2;
         screenBounds = new Vector2(camHeight * screenAspect / 2f, camHeight / 2f);

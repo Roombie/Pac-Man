@@ -15,7 +15,8 @@ public class Movement : MonoBehaviour
     public Vector2 direction { get; private set; }
     public Vector2 nextDirection { get; private set; }
     public Vector3 startingPosition { get; private set; }
-    public bool isBlocked { get; private set; }
+    /// <summary>True if the next tile ahead is a wall. Computed on demand (only the debug HUD reads it)</summary>
+    public bool isBlocked => direction != Vector2.zero && Occupied(direction);
 
     [Header("Cornering")]
     [SerializeField] private bool corneringEnabled = true;
@@ -69,7 +70,6 @@ public class Movement : MonoBehaviour
 
         cornering = false;
         cornerDir = Vector2.zero;
-        isBlocked = false;
         stallTime = 0f;
         enabled = true;
 
@@ -88,7 +88,6 @@ public class Movement : MonoBehaviour
         nextDirection = Vector2.zero;
         cornering = false;
         cornerDir = Vector2.zero;
-        isBlocked = false;
 
         if (rb != null)
         {
@@ -102,8 +101,6 @@ public class Movement : MonoBehaviour
         }
 
         Physics2D.SyncTransforms();
-
-        Debug.Log($"[Movement] ForceStartMove -> direction={direction}, enabled={enabled}, simulated={rb != null && rb.simulated}");
     }
 
     private void Update()
@@ -125,7 +122,6 @@ public class Movement : MonoBehaviour
             }
         }
 
-        isBlocked = direction != Vector2.zero && Occupied(direction);
     }
 
     private void FixedUpdate()

@@ -21,6 +21,8 @@ public class Pacman : MonoBehaviour
     private float bufferDuration = 0.18f; // How long buffered input lasts
     public bool isInputLocked = false; // Blocks movement during transitions
     private bool indicatorVisible = true; // Controls visibility of the direction arrow
+    private Vector2 facingDirection;      // Direction the sprite was last rotated to
+    private Quaternion facingRotation = Quaternion.identity;
 
     private SpriteRenderer spriteRenderer;
     public Animator animator;
@@ -50,18 +52,21 @@ public class Pacman : MonoBehaviour
             TrySetDirection(lastInputDirection);
         }
 
-        // Rotate Pac-Man sprite based on current movement direction
-        if (movement.direction != Vector2.zero)
+        // Face the movement direction. Writing the transform of a Rigidbody2D object forces physics
+        // to re-sync it, so only write when the actual rotation differs (also undoes any physics spin)
+        Vector2 dir = movement.direction;
+        if (dir != Vector2.zero && dir != facingDirection)
         {
-            float angle = Mathf.Atan2(movement.direction.y, movement.direction.x);
-            transform.rotation = Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
-        }
+            facingDirection = dir;
+            float angle = Mathf.Atan2(dir.y, dir.x);
+            facingRotation = Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
 
-        // Flip sprite vertically based on direction
-        if (movement.direction.x < 0)
-            spriteRenderer.flipY = true;
-        else if (movement.direction.x > 0)
-            spriteRenderer.flipY = false;
+            // Flip sprite vertically when heading left
+            if (dir.x < 0) spriteRenderer.flipY = true;
+            else if (dir.x > 0) spriteRenderer.flipY = false;
+        }
+        if (facingDirection != Vector2.zero && transform.rotation != facingRotation)
+            transform.rotation = facingRotation;
 
         // freeze animation if blocked
         // animator.speed = movement.isBlocked ? 0f : 1f;
@@ -81,16 +86,6 @@ public class Pacman : MonoBehaviour
         if (context.performed)
         {
             Vector2 inputDirection = context.ReadValue<Vector2>();
-
-            var activeControl = context.control;
-
-            // Debug which device triggered input
-            if (activeControl != null)
-            {
-                Debug.Log($"[Pacman] Input from: {activeControl.device.displayName} | " +
-                          $"Direction: {inputDirection} | " +
-                          $"Key: {activeControl.path}");
-            }
 
             // Prioritize dominant axis (horizontal or vertical)
             if (Mathf.Abs(inputDirection.x) > Mathf.Abs(inputDirection.y))
@@ -153,6 +148,7 @@ public class Pacman : MonoBehaviour
 
         transform.position = movement.startingPosition;
         transform.rotation = Quaternion.identity;
+        facingDirection = Vector2.zero;
 
         if (movement != null)
         {
@@ -236,6 +232,7 @@ public class Pacman : MonoBehaviour
 
         animator.speed = 1f;
         transform.rotation = Quaternion.identity;
+        facingDirection = Vector2.zero;
 
         if (spriteRenderer != null)
         {

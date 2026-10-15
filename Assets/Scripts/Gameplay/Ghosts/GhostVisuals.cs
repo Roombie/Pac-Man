@@ -157,16 +157,22 @@ public class GhostVisuals : MonoBehaviour
 
     private void KillFrightVisuals()
     {
-        if (white)  white.SetActive(false);
-        if (fright) fright.SetActive(false);
+        SetPart(white, false);
+        SetPart(fright, false);
     }
 
+    // Called every frame while frightened, so only touch parts whose state actually changes
     private void SetActive(bool body, bool eyes, bool fright, bool white)
     {
-        if (this.body)   this.body.SetActive(body);
-        if (this.eyes)   this.eyes.SetActive(eyes);
-        if (this.fright) this.fright.SetActive(fright);
-        if (this.white)  this.white.SetActive(white);
+        SetPart(this.body, body);
+        SetPart(this.eyes, eyes);
+        SetPart(this.fright, fright);
+        SetPart(this.white, white);
+    }
+
+    private static void SetPart(GameObject part, bool active)
+    {
+        if (part && part.activeSelf != active) part.SetActive(active);
     }
 
     public void OnFrightenedStart()

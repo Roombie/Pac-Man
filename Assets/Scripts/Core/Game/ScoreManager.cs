@@ -30,6 +30,7 @@ public class ScoreManager : MonoBehaviour
 
     private int  highScore;
     private bool isTwoPlayerMode;
+    private bool highScoreDirty; // set in memory every pellet, written to disk at safe points
 
     private int currentExtraPoints = 0;
     private int nextLifeScoreThreshold  = 0;
@@ -47,7 +48,23 @@ public class ScoreManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        FlushHighScore();
         if (Instance == this) Instance = null;
+    }
+
+    private void OnApplicationPause(bool paused)
+    {
+        if (paused) FlushHighScore();
+    }
+
+    private void OnApplicationQuit() => FlushHighScore();
+
+    /// <summary>Writes a new high score to disk. Cheap no-op when nothing changed</summary>
+    public void FlushHighScore()
+    {
+        if (!highScoreDirty) return;
+        highScoreDirty = false;
+        PlayerPrefs.Save();
     }
 
     /// <summary>Call from GameManager.Awake before anything else.</summary>
@@ -87,15 +104,13 @@ public class ScoreManager : MonoBehaviour
         {
             highScore = player.score;
             string key = isTwoPlayerMode ? "HighScoreMultiplayer" : "HighScoreSinglePlayer";
-            PlayerPrefs.SetInt(key, highScore);
-            PlayerPrefs.Save();
+            PlayerPrefs.SetInt(key, highScore); // in memory; saving to disk every pellet stalls the game
+            highScoreDirty = true;
             UIManager?.UpdateHighScore(highScore);
         }
 
-        int[] allScores = new int[totalPlayers];
-        for (int j = 0; j < totalPlayers; j++)
-            allScores[j] = players[j].score;
-        UIManager?.UpdateScores(allScores);
+        // Only the scoring player's number changed
+        UIManager?.SetScore(currentPlayerIndex, player.score);
 
         GameEvents.ScoreChanged(currentPlayerIndex, player.score, highScore);
 
@@ -119,14 +134,12 @@ public class ScoreManager : MonoBehaviour
     public void SetLives(int value)
     {
         CurrentPlayerData.lives = Mathf.Clamp(value, 1, GameConstants.MaxLives);
-        Debug.Log($"[ScoreManager] SetLives for player {currentPlayerIndex}: {CurrentPlayerData.lives}");
         GameEvents.LivesChanged(currentPlayerIndex, CurrentPlayerData.lives);
     }
 
     public void UpdateLifeIconsUI(CharacterSkin skin)
     {
         int lives = CurrentPlayerData.lives;
-        Debug.Log($"UpdateLifeIconsUI: player {currentPlayerIndex + 1}, lives = {lives}");
         LifeIcons?.UpdateIcons(Mathf.Max(0, lives - 1), skin?.lifeIconSprite);
     }
 
@@ -178,5 +191,10 @@ public class ScoreManager : MonoBehaviour
     public int GetBestRoundForPlayer(int playerIndex) => players[playerIndex - 1].bestRound;
     public HashSet<int> GetPelletIDsEaten() => CurrentPlayerData.eatenPellets;
     public int GetPelletsEaten() => CurrentPlayerData.pelletsEaten;
-    public bool AllPlayersDead() => System.Linq.Enumerable.All(players, p => p.lives <= 0);
+    public bool AllPlayersDead()
+    {
+        foreach (var p in players)
+            if (p.lives > 0) return false;
+        return true;
+    }
 }

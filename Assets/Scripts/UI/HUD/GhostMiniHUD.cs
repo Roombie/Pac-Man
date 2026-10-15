@@ -16,6 +16,9 @@ public class GhostMiniHUDUI : MonoBehaviour
     [SerializeField] Key toggleHotkey = Key.F3;  // renamed from toggleKey (old KeyCode values aren't valid Keys)
 
     bool visible;
+    float nextRefreshTime; // rebuilding the text + TMP layout every frame is wasteful for a debug readout
+    const float RefreshInterval = 0.1f;
+    readonly StringBuilder textBuilder = new(2048); // reused between refreshes
 
     void Awake()
     {
@@ -45,9 +48,13 @@ public class GhostMiniHUDUI : MonoBehaviour
         {
             visible = !visible && AllowedToShow();
             ApplyVisibility();
+            nextRefreshTime = 0f; // refresh right away when shown
         }
 
         if (!visible || !textTarget) return;
+        if (Time.unscaledTime < nextRefreshTime) return;
+
+        nextRefreshTime = Time.unscaledTime + RefreshInterval;
         textTarget.text = BuildDebugText();
     }
 
@@ -67,7 +74,7 @@ public class GhostMiniHUDUI : MonoBehaviour
 
     string BuildDebugText()
     {
-        var sb = new StringBuilder(2048);
+        var sb = textBuilder.Clear();
 
         sb.AppendLine("<b><size=22>Ghost Debug</size></b>");
         sb.AppendLine($"TimeScale: {Time.timeScale:0.###}    FPS~: {1f / Mathf.Max(Time.smoothDeltaTime, 1e-5f):0}");

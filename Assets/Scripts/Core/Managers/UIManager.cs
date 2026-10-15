@@ -54,10 +54,12 @@ public class UIManager : MonoBehaviour
 
     public void ShowGameOverText(bool visible) => gameOverText?.gameObject.SetActive(visible);
 
+    // TMP's SetText formats numbers without allocating a string (scores change every pellet).
+    // "{0:00}" pads to two digits like the previous ToString("D2")
     public void SetScore(int playerIndex, int score)
     {
-        if (IsValidPlayerIndex(playerIndex) && scoreTexts[playerIndex] != null)
-            scoreTexts[playerIndex].text = score.ToString("D2");
+        if (playerIndex >= 0 && playerIndex < scoreTexts.Length && scoreTexts[playerIndex] != null)
+            scoreTexts[playerIndex].SetText("{0:00}", score);
     }
 
     public void UpdateScores(int[] scores)
@@ -65,7 +67,7 @@ public class UIManager : MonoBehaviour
         for (int i = 0; i < scoreTexts.Length && i < scores.Length; i++)
         {
             if (scoreTexts[i] != null)
-                scoreTexts[i].text = scores[i].ToString("D2");
+                scoreTexts[i].SetText("{0:00}", scores[i]);
         }
     }
 
@@ -73,8 +75,9 @@ public class UIManager : MonoBehaviour
     {
         if (highScoreText != null)
         {
-            highScoreText.text = score.ToString("D2");
-            highScoreText.gameObject.SetActive(score > 0);
+            highScoreText.SetText("{0:00}", score);
+            if (highScoreText.gameObject.activeSelf != score > 0)
+                highScoreText.gameObject.SetActive(score > 0);
         }
     }
 
@@ -147,6 +150,7 @@ public class UIManager : MonoBehaviour
         if (group == null) yield break;
 
         bool fadingOut = false;
+        var wait = new WaitForSeconds(interval); // reused for the whole loop
 
         while (true)
         {
@@ -154,7 +158,7 @@ public class UIManager : MonoBehaviour
 
             group.alpha = fadingOut ? 0f : 1f;
             fadingOut = !fadingOut;
-            yield return new WaitForSeconds(interval);
+            yield return wait;
         }
     }
 

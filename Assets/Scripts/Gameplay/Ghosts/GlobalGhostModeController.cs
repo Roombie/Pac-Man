@@ -87,6 +87,7 @@ public class GlobalGhostModeController : MonoBehaviour
         new Vector2(-1.5f, -8.5f), new Vector2(1.5f, -8.5f)
     };
     private HashSet<Node> redZoneNodes;
+    private Node redZoneProbe; // any resolved red-zone node; destroyed means the cache is from a previous scene
 
     [Header("Frightened options")]
     [Tooltip("If active, ghosts within Home are also affected (slower + blue/white visuals) during Frightened.")]
@@ -151,7 +152,7 @@ public class GlobalGhostModeController : MonoBehaviour
         if (houseReleaseEnabled && GetPreferredHomeGhost() != null)
         {
             noDotTimer += Time.deltaTime;
-            TryReleaseByStall();
+            TryReleaseByStall(); // looks the ghost up again only once the timer actually expires
         }
         else if (!useGlobalCounter)
         {
@@ -229,13 +230,15 @@ public class GlobalGhostModeController : MonoBehaviour
         if (!node) return false;
 
         // Maze nodes are tile instances, so resolve the positions lazily (and again after a scene reload)
-        if (redZoneNodes == null || redZoneNodes.Any(n => !n))
+        // Called at every ghost decision: check one node instead of scanning the whole set
+        if (redZoneNodes == null || (redZoneProbe == null && redZoneNodes.Count > 0) || (redZoneProbe != null && !redZoneProbe))
         {
             redZoneNodes = new HashSet<Node>();
+            redZoneProbe = null;
             foreach (var pos in redZonePositions)
             {
                 var n = GhostNavigation.NodeNear(pos, 0.3f);
-                if (n) redZoneNodes.Add(n);
+                if (n) { redZoneNodes.Add(n); redZoneProbe ??= n; }
                 else Debug.LogWarning($"[GhostModes] No maze node found for red zone at {pos}");
             }
         }
@@ -270,7 +273,7 @@ public class GlobalGhostModeController : MonoBehaviour
 
             case Ghost.Mode.Home:
             {
-                var home = g.GetComponent<GhostHome>();
+                var home = g.Home;
                 m = home.GetHomeSpeedMult();
                 break;
             }
@@ -316,7 +319,7 @@ public class GlobalGhostModeController : MonoBehaviour
         g.movement.SetDirection(dir, forced: true);
 
         // Ensure visuals match
-        var eyes = g.GetComponent<GhostEyes>();
+        var eyes = g.Eyes;
         if (eyes) eyes.ResetEyes(dir);
 
         // Ensure Home speed is applied too
@@ -328,7 +331,7 @@ public class GlobalGhostModeController : MonoBehaviour
         ForEachGhost(g =>
         {
             if (!g) return;
-            var home = g.GetComponent<GhostHome>();
+            var home = g.Home;
             if (home) home.SetExitPaused(paused);
         });
     }
@@ -340,7 +343,7 @@ public class GlobalGhostModeController : MonoBehaviour
         // Pause visual flicker & anims so they freeze too
         ForEachGhost(ghost =>
         {
-            var vis = ghost ? ghost.GetComponent<GhostVisuals>() : null;
+            var vis = ghost ? ghost.Visuals : null;
             if (vis) vis.SetPaused(frozen);
         });
 
@@ -459,7 +462,7 @@ public class GlobalGhostModeController : MonoBehaviour
                 {
                     g.movement.SetEnvSpeedMultiplier(frightenedMult);
                     homeFrightened.Add(g);
-                    var vis = g.GetComponent<GhostVisuals>();
+                    var vis = g.Visuals;
                     if (vis) vis.OnFrightenedStart();
                 }
                 return;
@@ -470,7 +473,7 @@ public class GlobalGhostModeController : MonoBehaviour
             g.SetMode(Ghost.Mode.Frightened);
             ApplyModeSpeed(g, Ghost.Mode.Frightened);
 
-            var v = g.GetComponent<GhostVisuals>();
+            var v = g.Visuals;
             if (v) v.OnFrightenedStart();
         });
 
@@ -491,7 +494,7 @@ public class GlobalGhostModeController : MonoBehaviour
         if (!houseReleaseEnabled) return;
         if (!ghost.gameObject.activeInHierarchy) return;
 
-        var home = ghost.GetComponent<GhostHome>();
+        var home = ghost.Home;
         if (!home) return;
 
         home.RequestExit();
@@ -507,7 +510,7 @@ public class GlobalGhostModeController : MonoBehaviour
 
             if (startMode == Ghost.Mode.Home)
             {
-                var home = g.GetComponent<GhostHome>();
+                var home = g.Home;
                 if (home) home.StopExitNow();
 
                 SeedHomeIdle(g);
@@ -549,7 +552,7 @@ public class GlobalGhostModeController : MonoBehaviour
             if (startMode == Ghost.Mode.Home)
             {
                 // Stop any exit routine left from previous level/life
-                var home = g.GetComponent<GhostHome>();
+                var home = g.Home;
                 if (home) home.StopExitNow();
 
                 SeedHomeIdle(g);
@@ -577,7 +580,7 @@ public class GlobalGhostModeController : MonoBehaviour
             if (!g.gameObject.activeSelf)
                 g.gameObject.SetActive(true);
 
-            var home = g.GetComponent<GhostHome>();
+            var home = g.Home;
             bool isExitingHome = home && home.IsExiting;
 
             // Reset env/physics and ALWAYS enable movement
@@ -594,7 +597,7 @@ public class GlobalGhostModeController : MonoBehaviour
                 g.movement.enabled = true; // no more gating by isExitingHome
             }
 
-            var eyes = g.GetComponent<GhostEyes>();
+            var eyes = g.Eyes;
 
             if (g.CurrentMode == Ghost.Mode.Home)
             {
@@ -676,10 +679,10 @@ public class GlobalGhostModeController : MonoBehaviour
         {
             if (!g) return;
 
-            var home = g.GetComponent<GhostHome>();
+            var home = g.Home;
             if (home) home.StopExitNow();
 
-            var eyes = g.GetComponent<GhostEyes>();
+            var eyes = g.Eyes;
             if (eyes) eyes.enabled = false;
 
             if (g.movement)
@@ -771,7 +774,7 @@ public class GlobalGhostModeController : MonoBehaviour
             ApplyModeSpeed(g, Ghost.Mode.Frightened);
 
             // ensure visuals are blue + flicker after exiting
-            var vis = g.GetComponent<GhostVisuals>();
+            var vis = g.Visuals;
             if (vis) vis.OnFrightenedStart();
         }
         else
@@ -905,28 +908,37 @@ public class GlobalGhostModeController : MonoBehaviour
         personalDotCounter = 0;
     }
 
+    // Runs every frame: plain loops, no capturing lambdas (those allocate on each call)
     private Ghost GetPreferredHomeGhost()
     {
+        if (ghosts == null) return null;
+
         Ghost pinky = null, inky = null, clyde = null;
-        ForEachGhost(g =>
+        for (int i = 0; i < ghosts.Length; i++)
         {
-            if (!g) return;
-            if (!g.gameObject.activeInHierarchy) return; // avoid counting deactivated ghosts
-            if (g.CurrentMode != Ghost.Mode.Home) return;
+            var g = ghosts[i];
+            if (!g) continue;
+            if (!g.gameObject.activeInHierarchy) continue; // avoid counting deactivated ghosts
+            if (g.CurrentMode != Ghost.Mode.Home) continue;
             if (g.Type == GhostType.Pinky) pinky = g;
             else if (g.Type == GhostType.Inky) inky = g;
             else if (g.Type == GhostType.Clyde) clyde = g;
-        });
+        }
         if (pinky) return pinky;
         if (inky) return inky;
-        if (clyde) return clyde;
-        return null;
+        return clyde;
     }
 
     private Ghost GetHomeGhostByType(GhostType type)
     {
+        if (ghosts == null) return null;
+
         Ghost found = null;
-        ForEachGhost(g => { if (g && g.Type == type && g.CurrentMode == Ghost.Mode.Home) found = g; });
+        for (int i = 0; i < ghosts.Length; i++)
+        {
+            var g = ghosts[i];
+            if (g && g.Type == type && g.CurrentMode == Ghost.Mode.Home) found = g;
+        }
         return found;
     }
 
@@ -971,15 +983,14 @@ public class GlobalGhostModeController : MonoBehaviour
 
     private void TryReleaseByStall()
     {
+        if (noDotTimer < CurrentNoDotLimit()) return;
+
         var pref = GetPreferredHomeGhost();
         if (!pref) { noDotTimer = 0f; return; }
 
-        if (noDotTimer >= CurrentNoDotLimit())
-        {
-            EnsureExit(pref);
-            noDotTimer = 0f;
-            personalDotCounter = 0;
-        }
+        EnsureExit(pref);
+        noDotTimer = 0f;
+        personalDotCounter = 0;
     }
 
     // Global (post-death) counter: Pinky 7, Inky 17, Clyde 32

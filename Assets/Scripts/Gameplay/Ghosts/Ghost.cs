@@ -29,6 +29,11 @@ public class Ghost : MonoBehaviour
     private GhostEyes eyes;
     private GhostVisuals visuals;
 
+    // Cached sibling components for other systems (saves a GetComponent per call; safe before Awake)
+    public GhostHome Home => home ? home : (home = GetComponent<GhostHome>());
+    public GhostEyes Eyes => eyes ? eyes : (eyes = GetComponent<GhostEyes>());
+    public GhostVisuals Visuals => visuals ? visuals : (visuals = GetComponent<GhostVisuals>());
+
     [Header("Elroy (Blinky only)")]
     [SerializeField, Range(0, 2)] private int elroyStage = 0;
     public int ElroyStage => (Type == GhostType.Blinky) ? elroyStage : 0;

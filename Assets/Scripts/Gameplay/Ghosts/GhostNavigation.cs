@@ -13,30 +13,92 @@ public static class GhostNavigation
     private static Node[] nodes;
     private static readonly System.Random rng = new();
 
+    // Nodes bucketed by the 1x1 world cell they sit in, with cached positions (maze nodes never move)
+    private struct NodeEntry
+    {
+        public Node node;
+        public Vector2 position;
+    }
+    private static readonly Dictionary<Vector2Int, List<NodeEntry>> grid = new();
+
     /// <summary>All maze nodes. Re-scans if the cache is empty or from a previous scene</summary>
     public static Node[] AllNodes
     {
         get
         {
             if (nodes == null || nodes.Length == 0 || !nodes[0])
+            {
                 nodes = Object.FindObjectsByType<Node>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                BuildGrid();
+            }
             return nodes;
         }
     }
 
-    /// <summary>Closest node within radius of a position, or null</summary>
-    public static Node NodeNear(Vector2 position, float radius)
+    private static void BuildGrid()
     {
-        Node best = null;
-        float maxSq = radius * radius;
-
-        foreach (var n in AllNodes)
+        grid.Clear();
+        foreach (var n in nodes)
         {
             if (!n) continue;
-            float d2 = ((Vector2)n.transform.position - position).sqrMagnitude;
-            if (d2 <= maxSq) { maxSq = d2; best = n; }
+            Vector2 p = n.transform.position;
+            var cell = Cell(p);
+            if (!grid.TryGetValue(cell, out var list)) grid[cell] = list = new List<NodeEntry>(1);
+            list.Add(new NodeEntry { node = n, position = p });
+        }
+    }
+
+    private static Vector2Int Cell(Vector2 p) => new(Mathf.FloorToInt(p.x), Mathf.FloorToInt(p.y));
+
+    /// <summary>
+    /// Closest node within radius of a position, or null. Called by every ghost every frame,
+    /// so it only checks the cells the radius can reach instead of every node
+    /// </summary>
+    public static Node NodeNear(Vector2 position, float radius)
+    {
+        _ = AllNodes; // (re)build the cache if needed
+
+        Node best = null;
+        float maxSq = radius * radius;
+        int reach = Mathf.Max(1, Mathf.CeilToInt(radius));
+        var center = Cell(position);
+
+        for (int dx = -reach; dx <= reach; dx++)
+        {
+            for (int dy = -reach; dy <= reach; dy++)
+            {
+                if (!grid.TryGetValue(new Vector2Int(center.x + dx, center.y + dy), out var list)) continue;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    var e = list[i];
+                    float d2 = (e.position - position).sqrMagnitude;
+                    if (d2 <= maxSq && e.node) { maxSq = d2; best = e.node; }
+                }
+            }
         }
         return best;
+    }
+
+    /// <summary>Closest node to a position at any distance, or null</summary>
+    public static Node ClosestNode(Vector2 position)
+    {
+        Node best = null;
+        float bestSq = float.PositiveInfinity;
+        foreach (var list in GridLists())
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                float d2 = (list[i].position - position).sqrMagnitude;
+                if (d2 < bestSq && list[i].node) { bestSq = d2; best = list[i].node; }
+            }
+        }
+        return best;
+    }
+
+    private static Dictionary<Vector2Int, List<NodeEntry>>.ValueCollection GridLists()
+    {
+        _ = AllNodes;
+        return grid.Values;
     }
 
     /// <summary>

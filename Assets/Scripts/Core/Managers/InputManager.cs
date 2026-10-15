@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.InputSystem.Users;
 using UnityEngine.InputSystem.UI;
@@ -48,6 +49,7 @@ public class InputManager : MonoBehaviour
     private SlotBinding[] slotBindings = Array.Empty<SlotBinding>();
     private bool isTwoPlayerMode;
     private InputActionAsset actionsTemplate; // Used to look up which keys belong to each keyboard scheme
+    private readonly Dictionary<(int deviceId, string scheme, string action), ButtonControl[]> controlCache = new();
 
     private PlayerInputController[] controllers = Array.Empty<PlayerInputController>();
     private int activeSlot;
@@ -105,6 +107,7 @@ public class InputManager : MonoBehaviour
         this.isTwoPlayerMode = isTwoPlayerMode;
         waitingForRejoin = false;
         actionsTemplate = ResolveActionsTemplate();
+        controlCache.Clear();
 
         foreach (var c in controllers)
             if (c != null) Destroy(c.gameObject);
@@ -473,6 +476,22 @@ public class InputManager : MonoBehaviour
         if (actionsTemplate == null)
             return actionName == null && device is Keyboard kb && kb.anyKey.wasPressedThisFrame;
 
+        var controls = ControlsFor(device, scheme, actionName);
+        for (int i = 0; i < controls.Length; i++)
+            if (controls[i].wasPressedThisFrame) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// The buttons a scheme binds to an action on a device (actionName null = every action).
+    /// Resolving binding paths is slow and this is polled every frame, so results are cached
+    /// </summary>
+    private ButtonControl[] ControlsFor(InputDevice device, string scheme, string actionName)
+    {
+        var key = (device.deviceId, scheme, actionName);
+        if (controlCache.TryGetValue(key, out var cached)) return cached;
+
+        var found = new List<ButtonControl>();
         foreach (var action in actionsTemplate)
         {
             if (actionName != null && action.name != actionName) continue;
@@ -481,11 +500,14 @@ public class InputManager : MonoBehaviour
             {
                 if (binding.isComposite || !BindingInGroup(binding, scheme)) continue;
 
-                var control = InputControlPath.TryFindControl(device, binding.effectivePath) as ButtonControl;
-                if (control != null && control.wasPressedThisFrame) return true;
+                if (InputControlPath.TryFindControl(device, binding.effectivePath) is ButtonControl control && !found.Contains(control))
+                    found.Add(control);
             }
         }
-        return false;
+
+        var result = found.ToArray();
+        controlCache[key] = result;
+        return result;
     }
 
     private static bool BindingInGroup(InputBinding binding, string group)

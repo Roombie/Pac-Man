@@ -32,10 +32,14 @@ public class AudioManager : MonoBehaviour
     public AudioClip extend;
     public AudioClip creditReverse;
 
-    private Queue<AudioSource> sfxPool;
+    // SFX pool: a source is free when it's neither playing nor paused, so one-shots need no
+    // coroutine to hand them back and a source can never be handed out twice
+    private readonly List<AudioSource> sfxSources = new();
+    private AudioSource[] allSources = System.Array.Empty<AudioSource>(); // every AudioSource on this object
     private AudioSource musicSource;
     private readonly List<AudioSource> pausedSources = new();
     private readonly Dictionary<AudioClip, AudioSource> activeSounds = new();
+    private readonly List<AudioClip> clipsToRemove = new(); // reused by StopCategory
 
     public AudioClip CurrentMusic { get; private set; }
 
@@ -56,13 +60,18 @@ public class AudioManager : MonoBehaviour
 
     private void InitializePools()
     {
-        sfxPool = new Queue<AudioSource>();
         for (int i = 0; i < poolSize; i++)
-        {
-            AudioSource source = gameObject.AddComponent<AudioSource>();
-            source.playOnAwake = false;
-            sfxPool.Enqueue(source);
-        }
+            CreateSfxSource();
+    }
+
+    private AudioSource CreateSfxSource()
+    {
+        AudioSource source = gameObject.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.outputAudioMixerGroup = sfxMixerGroup;
+        sfxSources.Add(source);
+        allSources = GetComponents<AudioSource>();
+        return source;
     }
 
     private void ApplySavedVolumes()
@@ -101,8 +110,8 @@ public class AudioManager : MonoBehaviour
         float dB = Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1f)) * 20f;
         mixer.SetFloat(param, dB);
 
+        // Written to disk by SettingsManager after each change (and by Unity on quit), not on every slider tick
         PlayerPrefs.SetFloat(SettingsKeys.Get(type), volume);
-        PlayerPrefs.Save();
     }
 
     public float GetVolume(SettingType type, float fallback = 1f)
@@ -123,10 +132,6 @@ public class AudioManager : MonoBehaviour
 
         if (category == SoundCategory.Music)
             CurrentMusic = clip;
-
-        // Only auto-return one-shots. Loops manage their own lifetime.
-        if (category == SoundCategory.SFX && !loop)
-            StartCoroutine(ReturnToPoolAfterPlayback(source, clip.length / Mathf.Abs(pitch)));
     }
 
     public void PlayOnce(AudioClip clip, SoundCategory category = SoundCategory.SFX, float volume = 1f, float pitch = 1f)
@@ -149,18 +154,18 @@ public class AudioManager : MonoBehaviour
     public void StopCategory(SoundCategory category)
     {
         // Stop all the clips registered on the selected category
-        var toRemove = new List<AudioClip>();
+        clipsToRemove.Clear();
 
         foreach (var (clip, src) in activeSounds)
         {
             if (src != null && GetCategory(src.outputAudioMixerGroup) == category)
             {
                 src.Stop();
-                toRemove.Add(clip);
+                clipsToRemove.Add(clip);
             }
         }
 
-        foreach (var clip in toRemove)
+        foreach (var clip in clipsToRemove)
         {
             activeSounds.Remove(clip);
         }
@@ -193,22 +198,24 @@ public class AudioManager : MonoBehaviour
                 musicSource = gameObject.AddComponent<AudioSource>();
                 musicSource.playOnAwake = false;
                 musicSource.outputAudioMixerGroup = musicMixerGroup;
+                allSources = GetComponents<AudioSource>();
             }
 
             return musicSource;
         }
 
-        AudioSource source = (category == SoundCategory.SFX && sfxPool.Count > 0)
-            ? sfxPool.Dequeue()
-            : gameObject.AddComponent<AudioSource>();
-
-        source.outputAudioMixerGroup = category switch
+        for (int i = 0; i < sfxSources.Count; i++)
         {
-            _ => sfxMixerGroup
-        };
+            var source = sfxSources[i];
+            if (source != null && !source.isPlaying && !pausedSources.Contains(source))
+            {
+                source.outputAudioMixerGroup = sfxMixerGroup;
+                return source;
+            }
+        }
 
-        source.playOnAwake = false;
-        return source;
+        // Everything busy: grow the pool (it settles at the peak number of overlapping sounds)
+        return CreateSfxSource();
     }
 
     public void Stop(AudioClip clip)
@@ -219,7 +226,7 @@ public class AudioManager : MonoBehaviour
         }
 
         AudioSource source = activeSounds[clip];
-        if (source != null)
+        if (source != null && source.clip == clip) // the source may have been reused for another clip since
         {
             source.Stop();
         }
@@ -229,16 +236,20 @@ public class AudioManager : MonoBehaviour
 
 
     public bool IsPlaying(AudioClip clip)
-        => System.Array.Exists(GetComponents<AudioSource>(), src => src.clip == clip && src.isPlaying);
+    {
+        foreach (var src in allSources)
+            if (src != null && src.clip == clip && src.isPlaying) return true;
+        return false;
+    }
 
-    public void PauseAll() => PauseSources(GetComponents<AudioSource>());
+    public void PauseAll() => PauseSources(allSources);
     public void ResumeAll() => ResumeSources(pausedSources);
 
     public void PauseCategory(SoundCategory category)
     {
-        foreach (var source in GetComponents<AudioSource>())
+        foreach (var source in allSources)
         {
-            if (source.isPlaying && GetCategory(source) == category)
+            if (source != null && source.isPlaying && GetCategory(source) == category)
             {
                 source.Pause();
                 if (!pausedSources.Contains(source))
@@ -249,31 +260,29 @@ public class AudioManager : MonoBehaviour
 
     public void ResumeCategory(SoundCategory category)
     {
-        foreach (var source in pausedSources)
+        for (int i = pausedSources.Count - 1; i >= 0; i--)
         {
-            if (source != null && GetCategory(source) == category)
-                source.UnPause();
+            var source = pausedSources[i];
+            if (source == null) { pausedSources.RemoveAt(i); continue; }
+            if (GetCategory(source) != category) continue;
+
+            source.UnPause();
+            pausedSources.RemoveAt(i); // resumed sources must be free for the pool again
         }
     }
 
     public void StopAll()
     {
-        foreach (var source in GetComponents<AudioSource>())
-        {
-            source.Stop();
-            if (!sfxPool.Contains(source) && source != musicSource)
-                sfxPool.Enqueue(source);
-        }
+        foreach (var source in allSources)
+            if (source != null) source.Stop();
+
+        // Stopped sources are free again; nothing left to resume
+        pausedSources.Clear();
+        activeSounds.Clear();
+
         // keep state consistent for music
         if (musicSource != null) musicSource.clip = null;
         CurrentMusic = null;
-    }
-
-    private IEnumerator ReturnToPoolAfterPlayback(AudioSource source, float delay)
-    {
-        yield return new WaitForSecondsRealtime(delay);
-        source.Stop();
-        sfxPool.Enqueue(source);
     }
 
     public void PlayBackgroundMusic(AudioClip clip, float volume = 1f, float pitch = 1f, bool loop = true)
@@ -300,7 +309,7 @@ public class AudioManager : MonoBehaviour
     {
         foreach (var source in sources)
         {
-            if (source.isPlaying)
+            if (source != null && source.isPlaying)
             {
                 source.Pause();
                 if (!pausedSources.Contains(source))
