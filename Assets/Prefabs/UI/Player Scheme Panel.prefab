@@ -56,7 +56,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_Spacing: 0
+  m_Spacing: -5
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
@@ -236,6 +236,7 @@ MonoBehaviour:
     m_WaitForCompletion: 0
     m_LocalVariables: []
   deviceIconImage: {fileID: 8702860333272361937}
+  keyboardHalfText: {fileID: 0}
   iconKeyboard: {fileID: 8305092906236829481, guid: 20812e1bdb21a2f4f82cd8d51b89503a, type: 3}
   iconGamepad: {fileID: -894579921629993427, guid: 20812e1bdb21a2f4f82cd8d51b89503a, type: 3}
   frameImage: {fileID: 5292974566788370199}
@@ -345,6 +346,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
