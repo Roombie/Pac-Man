@@ -446,31 +446,42 @@ public class GameManager : MonoBehaviour
     private IEnumerator HandleTurnAfterDeath()
     {
         yield return new WaitForSeconds(0.1f);
-        SwitchPlayerTurn();
+        if (!SwitchPlayerTurn()) yield break; // game over: don't restart the level under the end screen
         RestartLevel();
     }
 
-    private void SwitchPlayerTurn()
+    /// <summary>Hands the turn to the next player with lives. Returns false (and ends the game) if nobody has any left</summary>
+    private bool SwitchPlayerTurn()
     {
-        if (totalPlayers <= 1) return;
+        if (totalPlayers <= 1) return true;
 
-        currentPlayer = GetNextPlayerWithLives();
-        if (ScoreManager.Instance.AllPlayersDead()) { GameOver(); return; }
+        // Check first: searching for a player with lives when there are none would never end
+        int next = GetNextPlayerWithLives();
+        if (next < 0 || ScoreManager.Instance.AllPlayersDead()) { GameOver(); return false; }
 
+        currentPlayer = next;
         ScoreManager.Instance.SetCurrentPlayerIndex(CurrentIndex);
         PacmanSpawner.Instance.SetCurrentPacman(CurrentIndex, false);
 
         Debug.Log($"[GameManager] Turn switched. Now it's Player {currentPlayer}");
         GameEvents.PlayerTurnChanged(CurrentIndex);
         GameEvents.RoundChanged(CurrentIndex, CurrentRound, BestRound);
+        return true;
     }
 
+    /// <summary>
+    /// Next player (1-based, after the current one, wrapping around to the current one last)
+    /// who still has lives, or -1 if nobody does
+    /// </summary>
     private int GetNextPlayerWithLives()
     {
         int next = currentPlayer;
-        do { next = (next % totalPlayers) + 1; }
-        while (ScoreManager.Instance.GetPlayerData(next - 1).lives <= 0);
-        return next;
+        for (int i = 0; i < totalPlayers; i++)
+        {
+            next = (next % totalPlayers) + 1;
+            if (ScoreManager.Instance.GetPlayerData(next - 1).lives > 0) return next;
+        }
+        return -1;
     }
 
     #endregion
@@ -483,6 +494,7 @@ public class GameManager : MonoBehaviour
         PacmanSpawner.Instance.CurrentPacman.gameObject.SetActive(false);
         bonusItemManager.DespawnBonusItem(true);
         uiManager.ShowGameOverText(true);
+        ScoreManager.Instance.FlushHighScore(); // a new high score hits the disk once, here
         SetState(GameState.GameOver);
         Debug.Log("Game Over!");
         StartCoroutine(GameOverSequence());
@@ -490,7 +502,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator GameOverSequence()
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSecondsRealtime(3f); // real time, so a leftover freeze can't block the end screen
 
         // 2P: announce who won before returning to the menu
         if (IsTwoPlayerMode)
