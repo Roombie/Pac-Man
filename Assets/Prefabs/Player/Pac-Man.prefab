@@ -202,6 +202,7 @@ MonoBehaviour:
   corneringEnabled: 1
   cornerWindow: 0.25
   snapEpsilon: 0.02
+  centerTurns: 1
 --- !u!114 &4467727290036966160
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -333,7 +334,7 @@ CircleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 256
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2

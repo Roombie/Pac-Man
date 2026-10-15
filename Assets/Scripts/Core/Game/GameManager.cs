@@ -156,15 +156,15 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Called by InputManager.OnRejoinCompleted after the player confirms their new device
-    /// (InputManager has already rebound that player's controller). Hides the overlay and resumes.
+    /// Called by InputManager.OnRejoinCompleted once every player has a device and someone confirmed
+    /// (InputManager has already rebound the players that changed). Hides the overlay and resumes.
     /// </summary>
-    private void OnRejoinCompleted(int slotIndex)
+    private void OnRejoinCompleted()
     {
         disconnectOverlay?.Show(false);
         PauseMenuController.Instance.Resume();
 
-        Debug.Log($"[GameManager] Player {slotIndex + 1} rejoined. Game resumed.");
+        Debug.Log("[GameManager] Players rejoined. Game resumed.");
     }
 
     private void Update()

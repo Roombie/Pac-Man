@@ -24,6 +24,12 @@ public class Movement : MonoBehaviour
     [Tooltip("Snap tolerance when locking to the new corridor centerline.")]
     [SerializeField] private float snapEpsilon = 0.02f;
 
+    [Header("Grid Movement (arcade Pac-Man)")]
+    [Tooltip("Tile-based movement: turns are allowed anywhere inside the intersection tile (arcade pre-turns/post-turns), " +
+             "Pac-Man glides diagonally onto the new corridor's centerline, and stops at a tile center facing a wall. " +
+             "The collider should exclude the obstacle layer so physics doesn't fight the diagonal.")]
+    [SerializeField] private bool centerTurns = false;
+
     private bool cornering = false;
     private Vector2 cornerDir = Vector2.zero;  // the perpendicular nextDirection we’re cornering into
 
@@ -106,7 +112,8 @@ public class Movement : MonoBehaviour
         {
             SetDirection(nextDirection);
 
-            if (corneringEnabled &&
+            if (!centerTurns &&
+                corneringEnabled &&
                 !cornering &&
                 direction != Vector2.zero &&
                 IsPerpendicular(direction, nextDirection) &&
@@ -137,6 +144,12 @@ public class Movement : MonoBehaviour
 
         if (direction == Vector2.zero)
             return;
+
+        if (centerTurns)
+        {
+            GridStep(pos, step);
+            return;
+        }
 
         if (cornering)
         {
@@ -222,6 +235,13 @@ public class Movement : MonoBehaviour
             return;
         }
 
+        // Grid movement: queue it, FixedUpdate turns once Pac-Man is inside a tile that opens that way
+        if (centerTurns && !forced && direction != Vector2.zero && IsPerpendicular(direction, dir))
+        {
+            nextDirection = dir;
+            return;
+        }
+
         if (forced || !Occupied(dir))
         {
             direction = dir;
@@ -277,6 +297,50 @@ public class Movement : MonoBehaviour
             activeObstacleMask
         ).collider != null;
     }
+
+    /// <summary>
+    /// One physics step of arcade grid movement (Pac-Man Dossier "Cornering"):
+    ///   - A queued perpendicular turn is taken anywhere inside the current tile if that side is open,
+    ///     before the center (pre-turn) or after it (post-turn)
+    ///   - Every step also slides the off-axis coordinate back onto the corridor centerline at the same
+    ///     rate, so a pre/post-turn moves at 45 degrees until it's centered
+    ///   - Facing a wall, Pac-Man stops on the tile center instead of pushing into it
+    /// </summary>
+    private void GridStep(Vector2 pos, float step)
+    {
+        Vector2 tileCenter = new Vector2(TileCenter(pos.x), TileCenter(pos.y));
+
+        if (nextDirection != Vector2.zero &&
+            IsPerpendicular(direction, nextDirection) &&
+            !CellBlocked(tileCenter, nextDirection))
+        {
+            direction = nextDirection;
+            nextDirection = Vector2.zero;
+        }
+
+        bool horizontal = direction.x != 0f;
+        float along = horizontal ? pos.x : pos.y;
+        float cross = horizontal ? pos.y : pos.x;
+        float alongCenter = horizontal ? tileCenter.x : tileCenter.y;
+        float crossCenter = horizontal ? tileCenter.y : tileCenter.x;
+        float sign = horizontal ? direction.x : direction.y;
+
+        float newAlong = along + sign * step;
+        if (CellBlocked(tileCenter, direction))
+            newAlong = sign > 0f ? Mathf.Min(newAlong, alongCenter) : Mathf.Max(newAlong, alongCenter);
+
+        float newCross = Mathf.MoveTowards(cross, crossCenter, step);
+
+        rb.MovePosition(horizontal ? new Vector2(newAlong, newCross) : new Vector2(newCross, newAlong));
+    }
+
+    /// <summary>True if the neighbouring cell in dir is a wall, checked from a tile center</summary>
+    private bool CellBlocked(Vector2 tileCenter, Vector2 dir)
+    {
+        return Physics2D.BoxCast(tileCenter, Vector2.one * 0.75f, 0f, dir, 1f, activeObstacleMask).collider != null;
+    }
+
+    private static float TileCenter(float v) => Mathf.Floor(v) + 0.5f;
 
     public void SetBaseSpeedMultiplier(float m)
     {
