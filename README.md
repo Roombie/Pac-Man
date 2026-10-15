@@ -32,32 +32,34 @@ Each control is mapped to a Unity action so it plugs directly into the Input Sys
 - **Start** → `Pause`
 - **Select** → `Special` *(separate action so it never accidentally confirms or cancels)*
 
-### Player 1 — `P1Keyboard`
+The keyboard is split into two halves, and any half or gamepad can be either player. The first device to press joins as Player 1, the next as Player 2, both in Character Select and on the in-game join/dejoin screen (press **Select** on your device to leave a slot). A half keeps its own keys whichever player it joins as.
 
-- **Move:** `W A S D`  
-- **Start (Pause):** `Tab`  
-- **Select (Special):** `Left Shift`  
-- **A (Confirm):** `Space`  
+### Keyboard (left half) — `P1Keyboard`
+
+- **Move:** `W A S D`
+- **Start (Pause):** `Tab`
+- **Select (Special):** `Left Shift`
+- **A (Confirm):** `Space`
 - **B (Back):** `Q`
 
-### Player 2 — `P2Keyboard`
+### Keyboard (right half) — `P2Keyboard`
 
-- **Move:** Arrow Keys `↑ ← ↓ →`  
-- **Start (Pause):** `Right Shift`  
-- **Select (Special):** `Right Alt`  
-- **A (Confirm):** `/` (Slash)  
+- **Move:** Arrow Keys `↑ ← ↓ →`
+- **Start (Pause):** `Right Shift`
+- **Select (Special):** `Right Alt`
+- **A (Confirm):** `/` (Slash)
 - **B (Back):** `.` (Period)
 
 ### Gamepad — `Gamepad` scheme (for any player)
 
-- **Move:** D-Pad (also Left Stick)  
-- **Start (Pause):** Start / Options  
-- **Select (Special):** View / Select / Share  
-- **A (Confirm):** South (A / ✕)  
+- **Move:** D-Pad (also Left Stick)
+- **Start (Pause):** Start / Options
+- **Select (Special):** View / Select / Share
+- **A (Confirm):** South (A / ✕)
 - **B (Back):** East (B / ○)
 
 ## Credits
 
 - [Zigurous](https://www.youtube.com/watch?v=TKt_VlMn_aA&t=10891s) — project head start  
 - [The Pac-Man Dossier](https://pacman.holenet.info/) — in-depth reference on Pac-Man mechanics  
-- [The Spriters Resource](https://www.spriters-resource.com/profile/caylie+c/) — sprites 
+- [The Spriters Resource](https://www.spriters-resource.com/profile/caylie+c/) — sprites

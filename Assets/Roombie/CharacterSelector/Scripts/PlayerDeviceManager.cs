@@ -7,8 +7,8 @@ namespace Roombie.CharacterSelect
 {
     /// <summary>
     /// Device & scheme reservation service + debounce + helper lookups.
-    /// Keyboard resolution is PANEL-STRICT in MP (exact token match only).
-    /// Gamepad + debounce follow JoinPolicyConfig.
+    /// Any device joins the first free panel: a gamepad, or either keyboard half (P1Keyboard/P2Keyboard),
+    /// which keeps its own scheme whichever panel it lands on. Debounce follows JoinPolicyConfig.
     /// </summary>
     public class PlayerDeviceManager : MonoBehaviour
     {
@@ -17,9 +17,6 @@ namespace Roombie.CharacterSelect
         [Header("Data")]
         [SerializeField] private KeyboardSchemeRegistry keyboardRegistry;
         [SerializeField] private JoinPolicyConfig joinPolicyConfig;
-
-        // Optional policy (used for gamepad & debounce rules only; not for keyboard scheme resolution)
-        private IJoinPolicy joinPolicy;
 
         // Reservations
         private readonly HashSet<string> reservedKeyboardSchemes = new();
@@ -30,9 +27,6 @@ namespace Roombie.CharacterSelect
         private float fallbackClaimDebounceSeconds = 0.20f;
         private float lastClaimTime = -999f;
 
-        // Temp array to avoid allocs
-        private readonly string[] oneCandidate = new string[1];
-
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => Instance = null;
 
@@ -41,8 +35,6 @@ namespace Roombie.CharacterSelect
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-
-            joinPolicy = new DefaultJoinPolicy(joinPolicyConfig);
         }
 
         #region Debounce
@@ -127,39 +119,25 @@ namespace Roombie.CharacterSelect
             return result;
         }
 
-        public string[] SinglePlayerCandidates()
+        /// <summary>Every keyboard half's scheme, e.g. { "P1Keyboard", "P2Keyboard" }</summary>
+        public string[] AllKeyboardSchemes()
         {
-            // SP path still uses all groups as candidates
             if (keyboardRegistry == null)
                 return new[] { "P1Keyboard", "P2Keyboard" };
             return keyboardRegistry.AllAsArray();
         }
 
-        public string[] ForPanelAsArray(int panelIndex)
-        {
-            oneCandidate[0] = ForPanel(panelIndex);
-            return oneCandidate;
-        }
         #endregion
 
-        #region Scheme resolution (PANEL-STRICT in MP; exact token only)
-        public string GetKeyboardSchemeForControl(
-            InputAction action,
-            InputControl control,
-            bool isSinglePlayer,
-            int panelIndex)
+        #region Scheme resolution
+        /// <summary>
+        /// Which keyboard half a press came from (e.g. "P2Keyboard"), or null if the key isn't bound
+        /// to any keyboard scheme. Not tied to a panel: the half keeps its scheme on whichever panel it joins
+        /// </summary>
+        public string GetKeyboardSchemeForControl(InputAction action, InputControl control)
         {
             if (action == null || control == null) return null;
-
-            if (isSinglePlayer)
-                return FirstMatchingKeyboardGroup(action, control, SinglePlayerCandidates());
-
-            // MP strict: expect this panel's exact token
-            var expected = ForPanel(panelIndex);
-            if (!string.IsNullOrEmpty(expected) && GroupsContainForPanel(action, control, expected, panelIndex))
-                return expected;
-
-            return null;
+            return FirstMatchingKeyboardGroup(action, control, AllKeyboardSchemes());
         }
         #endregion
 
@@ -218,60 +196,6 @@ namespace Roombie.CharacterSelect
             return false;
         }
 
-        public static bool GroupsContainForPanel(InputAction action, InputControl control, string groupName, int panelIndex)
-        {
-            if (action == null || control == null || string.IsNullOrEmpty(groupName)) return false;
-
-            int oneBased = panelIndex + 1;
-            var bindings = action.bindings;
-
-            for (int i = 0; i < bindings.Count; i++)
-            {
-                var b = bindings[i];
-                if (!InputControlPath.Matches(b.effectivePath, control))
-                    continue;
-
-                // direct / template tokens on this binding
-                if (!string.IsNullOrEmpty(b.groups))
-                {
-                    foreach (var tok in b.groups.Split(';'))
-                    {
-                        var t = tok.Trim();
-                        if (t == groupName) return true;
-
-                        // resolve templates like "P{0}Keyboard" or "P{index}Keyboard" or "P{2}Keyboard"
-                        var resolved = ResolvePanelGroupToken(t, oneBased);
-                        if (!string.IsNullOrEmpty(resolved) && resolved == groupName) return true;
-                    }
-                }
-
-                // composite parent case
-                if (b.isPartOfComposite)
-                {
-                    for (int p = i - 1; p >= 0; p--)
-                    {
-                        if (bindings[p].isComposite)
-                        {
-                            var parentGroups = bindings[p].groups;
-                            if (!string.IsNullOrEmpty(parentGroups))
-                            {
-                                foreach (var tok in parentGroups.Split(';'))
-                                {
-                                    var t = tok.Trim();
-                                    if (t == groupName) return true;
-                                    var resolved = ResolvePanelGroupToken(t, oneBased);
-                                    if (!string.IsNullOrEmpty(resolved) && resolved == groupName) return true;
-                                }
-                            }
-                            break;
-                        }
-                        if (!bindings[p].isPartOfComposite) break;
-                    }
-                }
-            }
-            return false;
-        }
-
         public void ResetAllReservations()
         {
             reservedKeyboardSchemes.Clear();
@@ -280,36 +204,11 @@ namespace Roombie.CharacterSelect
             Debug.Log("[PlayerDeviceManager] ResetAllReservations: cleared schemes, gamepads, debounce.");
         }
 
-        public static void DebugLogGroupMismatch(InputAction action, InputControl control, int panelIndex)
+        public static void DebugLogGroupMismatch(InputAction action, InputControl control)
         {
-            var expected = Instance.ForPanel(panelIndex);
-            string fired = null, resolved = null;
-
-            if (action != null && control != null)
-            {
-                var bindings = action.bindings;
-                for (int i = 0; i < bindings.Count; i++)
-                {
-                    var b = bindings[i];
-                    if (string.IsNullOrEmpty(b.groups)) continue;
-                    if (!InputControlPath.Matches(b.effectivePath, control)) continue;
-
-                    foreach (var tok in b.groups.Split(';'))
-                    {
-                        var t = tok.Trim();
-                        if (string.IsNullOrEmpty(t)) continue;
-                        fired = t;
-                        resolved = ResolvePanelGroupToken(t, panelIndex + 1);
-                        break;
-                    }
-                    if (fired != null) break;
-                }
-            }
-
             Debug.LogWarning(
-            $"[PlayerDeviceManager] Panel {panelIndex} expected '{expected}', " +
-            $"binding group was '{(fired ?? "<none>")}', resolved='{(resolved ?? "<n/a>")}'. " +
-            "Check Input Actions group tokens (root composite + parts).");
+                $"[PlayerDeviceManager] '{control?.path}' on action '{action?.name}' isn't bound to any keyboard scheme " +
+                $"({string.Join(", ", Instance.AllKeyboardSchemes())}). Check Input Actions group tokens (root composite + parts).");
         }
         #endregion
     }
