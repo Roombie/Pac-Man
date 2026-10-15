@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 /// <summary>
@@ -93,6 +94,7 @@ public class PauseMenuController : MonoBehaviour
     public void ShowMenu()
     {
         if (pauseMenu != null) MenuManager.Instance.OpenMenu(pauseMenu);
+        SetUIModuleNavigation(false);
         isPaused        = true;
         holdingDirection = false;
         lastDirection   = Vector2.zero;
@@ -104,7 +106,29 @@ public class PauseMenuController : MonoBehaviour
     public void HideMenu()
     {
         MenuManager.Instance.CloseAll();
+        SetUIModuleNavigation(true);
         isPaused = false;
+    }
+
+    /// <summary>
+    /// The EventSystem's UI module reads the shared actions asset, which no player controller
+    /// disables anymore. Mute its Move/Submit while paused so it doesn't navigate on top of
+    /// HandleNavigationInput (double steps + wrap-around made Up/Down look inverted)
+    /// </summary>
+    private void SetUIModuleNavigation(bool enabled)
+    {
+        var module = EventSystem.current != null
+            ? EventSystem.current.currentInputModule as InputSystemUIInputModule
+            : null;
+        if (module == null) return;
+
+        foreach (var reference in new[] { module.move, module.submit })
+        {
+            var action = reference != null ? reference.action : null;
+            if (action == null) continue;
+            if (enabled) action.Enable();
+            else action.Disable();
+        }
     }
 
     private void HandleNavigationInput()

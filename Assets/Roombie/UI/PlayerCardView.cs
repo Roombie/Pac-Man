@@ -46,9 +46,17 @@ namespace Roombie.UI
         public void SetIndex(int zeroBasedIndex)
         {
             _playerIndex = zeroBasedIndex;
-            if (playerLabelLocalized == null) return;
+
+            // Write the label right away; the prefab's text is a hard-coded "P1" and the async
+            // StringChanged callback isn't guaranteed to land (cards are built mid-input-callback,
+            // paused, under an inactive overlay), which left every card reading "P1"
+            if (titleText) titleText.text = $"P{_playerIndex + 1}";
+            if (playerLabelLocalized == null || playerLabelLocalized.IsEmpty) return;
 
             playerLabelLocalized.Arguments = new object[] { _playerIndex + 1 };
+            if (titleText) titleText.text = playerLabelLocalized.GetLocalizedString(_playerIndex + 1);
+
+            // Keep listening so the label follows language changes
             if (!_labelSubscribed)
             {
                 playerLabelLocalized.StringChanged += OnLabelChanged;

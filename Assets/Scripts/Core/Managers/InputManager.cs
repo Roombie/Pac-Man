@@ -31,7 +31,7 @@ public class InputManager : MonoBehaviour
     public event Action<InputDevice> OnDeviceLost;
     public event Action<InputDevice> OnDeviceRegained;  // invoked on gamepad reconnect
     public event Action<InputDevice> OnNewDevicePaired;
-    public event Action<int> OnRejoinCompleted;         // zero-based slot that confirmed its new device
+    public event Action OnRejoinCompleted;              // every slot has a device again and someone confirmed
 
     // Internal state tracking for input system configuration
     private bool hotSwapEnabled = false;
@@ -54,11 +54,9 @@ public class InputManager : MonoBehaviour
 
     // Rejoin system state
     [HideInInspector] public bool waitingForRejoin = false; // True while the rejoin overlay is open
-    private int rejoinSlot = -1;          // Zero-based slot that must pick a device
+    private SlotBinding[] draftBindings = Array.Empty<SlotBinding>(); // Roster being edited on the overlay
     private int rejoinStartFrame;         // Presses on this frame belong to the dejoin itself
-    private string pendingScheme;         // Device chosen on the overlay, not yet confirmed
-    private InputDevice pendingDevice;
-    private int pendingAssignFrame;       // The press that picks a device must not also confirm it
+    private int lastRosterChangeFrame;    // The press that joins/dejoins must not also confirm
 
     #region Initialization
 
@@ -89,7 +87,8 @@ public class InputManager : MonoBehaviour
 
     private void Update()
     {
-        if (dejoinOnGamepadDisconnect) CheckActiveGamepadDisconnected();
+        if (dejoinOnGamepadDisconnect) CheckGamepadDisconnected();
+        CheckIdlePlayersDejoin();
     }
 
     public bool IsTwoPlayerMode => isTwoPlayerMode;
@@ -272,31 +271,6 @@ public class InputManager : MonoBehaviour
         return false;
     }
 
-    private bool IsKeyboardSchemeUsedByOtherSlot(string scheme, int slotIndex)
-    {
-        for (int i = 0; i < slotBindings.Length; i++)
-            if (i != slotIndex && slotBindings[i].scheme == scheme) return true;
-        return false;
-    }
-
-    /// <summary>
-    /// Stores a slot's device in memory and in PlayerPrefs, and updates reservations
-    /// </summary>
-    private void SetSlotBinding(int slotIndex, string scheme, InputDevice device)
-    {
-        var previous = slotBindings[slotIndex];
-        ReleaseReservation(previous);
-
-        slotBindings[slotIndex] = new SlotBinding { scheme = scheme, device = device };
-
-        int slot = slotIndex + 1;
-        PlayerPrefs.SetString($"P{slot}_Scheme", scheme);
-        PlayerPrefs.SetString($"P{slot}_Devices", device.deviceId.ToString());
-        PlayerPrefs.Save();
-
-        MakeReservation(slotBindings[slotIndex]);
-    }
-
     private void MakeReservation(SlotBinding binding)
     {
         var pdm = PlayerDeviceManager.Instance;
@@ -318,10 +292,10 @@ public class InputManager : MonoBehaviour
 
     #region Game Integration API
     /// <summary>
-    /// Opens the rejoin overlay for the player that pressed Select (Special)
-    /// Only that player's device is released; the others keep theirs
+    /// Opens the rejoin overlay because a player pressed Select (Special), whether or not it's their turn
+    /// Only that player's device is released; the others keep theirs but can still dejoin from the overlay
     /// </summary>
-    public void RequestDejoin(GameManager gameManager, int currentPlayer, bool isTwoPlayerMode, int totalPlayers)
+    public void RequestDejoin(GameManager gameManager, int playerNumber, bool isTwoPlayerMode, int totalPlayers)
     {
         if (waitingForRejoin || gameManager == null) return;
         if (!this.isTwoPlayerMode) return; // 1P already accepts every device, nothing to reassign
@@ -330,80 +304,119 @@ public class InputManager : MonoBehaviour
         PauseMenuController.Instance.Pause();
         PauseMenuController.Instance.HideMenu(); // overlay replaces the pause menu
 
-        rejoinSlot = Mathf.Clamp(currentPlayer - 1, 0, Mathf.Max(0, slotBindings.Length - 1));
+        int slot = Mathf.Clamp(playerNumber - 1, 0, Mathf.Max(0, slotBindings.Length - 1));
+        draftBindings = (SlotBinding[])slotBindings.Clone();
         rejoinStartFrame = Time.frameCount;
-        pendingScheme = null;
-        pendingDevice = null;
+        lastRosterChangeFrame = Time.frameCount;
         waitingForRejoin = true;
-
-        // Release this slot's device so it can be picked again (or by someone else)
-        if (rejoinSlot < slotBindings.Length)
-            ReleaseReservation(slotBindings[rejoinSlot]);
 
         var overlay = gameManager.disconnectOverlay;
         if (overlay != null)
         {
             overlay.InitializeIfNeeded();
-            overlay.SetMode(totalPlayers, new[] { rejoinSlot });
+            overlay.SetMode(totalPlayers, new[] { slot });
             overlay.ShowWaitingForPresence();
-
-            // Other players keep showing the device they already have
-            for (int i = 0; i < slotBindings.Length; i++)
-            {
-                if (i == rejoinSlot) continue;
-                var d = slotBindings[i].device;
-                overlay.SetPresenceForSlot(i, d is Keyboard, d is Gamepad);
-            }
         }
 
-        Debug.Log($"[InputManager] Dejoin triggered by Player {rejoinSlot + 1}. Waiting for a device.");
+        // Every other player keeps showing the device they already have
+        for (int i = 0; i < draftBindings.Length; i++)
+            if (i != slot) RefreshOverlaySlot(i);
+
+        ClearDraftSlot(slot);
+
+        Debug.Log($"[InputManager] Dejoin triggered by Player {slot + 1}. Waiting for a device.");
     }
     #endregion
 
     #region Rejoin System
     /// <summary>
-    /// Called every frame while the rejoin overlay is open
-    /// Any button on a free gamepad, or a key from a free keyboard scheme, picks the device
-    /// (pressing on another device swaps it). A (Confirm) on the picked device finishes
+    /// Called every frame while the rejoin overlay is open, Nintendo controller-screen style:
+    ///   - Select on a player's own device dejoins that player (frees the slot)
+    ///   - Any button on a free gamepad / free keyboard half joins the lowest empty slot
+    ///   - A (Confirm) on any joined device resumes once every slot has a device
     /// </summary>
     public void PollRejoinInput()
     {
         if (!waitingForRejoin) return;
         if (Time.frameCount <= rejoinStartFrame) return; // ignore the Select press that opened the overlay
 
-        if (pendingDevice != null && Time.frameCount > pendingAssignFrame && WasConfirmPressed(pendingScheme, pendingDevice))
+        // A joined gamepad was unplugged while the overlay is open
+        for (int i = 0; i < draftBindings.Length; i++)
+            if (draftBindings[i].device != null && !draftBindings[i].device.added)
+                ClearDraftSlot(i);
+
+        // Dejoin: a joined player pressed Select on their device
+        for (int i = 0; i < draftBindings.Length; i++)
         {
-            FinishRejoin();
-            return;
+            if (!HasDevice(draftBindings[i])) continue;
+            if (!WasActionPressed(draftBindings[i], "Select")) continue;
+
+            ClearDraftSlot(i);
+            Debug.Log($"[InputManager] Rejoin: Player {i + 1} dejoined");
+            return; // the same press must not rejoin straight away
         }
 
-        if (!TryDetectDevicePress(out var scheme, out var device)) return;
-        if (scheme == pendingScheme && device == pendingDevice) return;
+        // Resume: every slot is filled and someone confirmed (not with the press that just joined)
+        if (Time.frameCount > lastRosterChangeFrame && AllDraftSlotsFilled())
+        {
+            for (int i = 0; i < draftBindings.Length; i++)
+            {
+                if (!WasActionPressed(draftBindings[i], "Submit")) continue;
+                FinishRejoin();
+                return;
+            }
+        }
 
-        pendingScheme = scheme;
-        pendingDevice = device;
-        pendingAssignFrame = Time.frameCount;
+        // Join: a free device fills the lowest empty slot
+        int emptySlot = Array.FindIndex(draftBindings, b => !HasDevice(b));
+        if (emptySlot < 0) return;
+        if (!TryDetectFreeDevicePress(out var scheme, out var device)) return;
+
+        draftBindings[emptySlot] = new SlotBinding { scheme = scheme, device = device };
+        MakeReservation(draftBindings[emptySlot]);
+        lastRosterChangeFrame = Time.frameCount;
         OnNewDevicePaired?.Invoke(device);
+        RefreshOverlaySlot(emptySlot);
 
-        var overlay = GameManager.Instance?.disconnectOverlay;
-        overlay?.SetPresenceForSlot(rejoinSlot, device is Keyboard, device is Gamepad);
-        overlay?.ShowConfirmHint(true);
+        Debug.Log($"[InputManager] Rejoin: Player {emptySlot + 1} joined with {scheme} ({device.displayName})");
+    }
 
-        Debug.Log($"[InputManager] Rejoin: slot {rejoinSlot + 1} picked {scheme} ({device.displayName})");
+    private static bool HasDevice(SlotBinding binding) => binding.device != null && binding.device.added;
+
+    private bool AllDraftSlotsFilled() => draftBindings.All(HasDevice);
+
+    /// <summary>
+    /// Frees a slot on the overlay and releases its device so anyone can pick it up
+    /// </summary>
+    private void ClearDraftSlot(int slot)
+    {
+        ReleaseReservation(draftBindings[slot]);
+        draftBindings[slot] = default;
+        lastRosterChangeFrame = Time.frameCount;
+        RefreshOverlaySlot(slot);
+    }
+
+    private void RefreshOverlaySlot(int slot)
+    {
+        var overlay = GameManager.Instance != null ? GameManager.Instance.disconnectOverlay : null;
+        if (overlay == null) return;
+
+        var device = HasDevice(draftBindings[slot]) ? draftBindings[slot].device : null;
+        overlay.SetPresenceForSlot(slot, device is Keyboard, device is Gamepad);
+        overlay.ShowConfirmHint(AllDraftSlotsFilled());
     }
 
     /// <summary>
-    /// Finds which device (and which keyboard half) was pressed this frame, skipping
-    /// devices that belong to other players
+    /// Finds a gamepad or keyboard half pressed this frame that no player on the overlay owns
     /// </summary>
-    private bool TryDetectDevicePress(out string scheme, out InputDevice device)
+    private bool TryDetectFreeDevicePress(out string scheme, out InputDevice device)
     {
         scheme = null;
         device = null;
 
         foreach (var gp in Gamepad.all)
         {
-            if (IsDeviceUsedByOtherSlot(gp, rejoinSlot)) continue;
+            if (draftBindings.Any(b => b.device == gp)) continue;
             if (AnyGamepadButtonPressed(gp))
             {
                 scheme = GamepadScheme;
@@ -415,19 +428,9 @@ public class InputManager : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null || !kb.anyKey.wasPressedThisFrame) return false;
 
-        if (!isTwoPlayerMode)
+        foreach (var candidate in KeyboardSchemes())
         {
-            // Single player owns the whole keyboard
-            scheme = DefaultKeyboardSchemeForSlot(rejoinSlot);
-            device = kb;
-            return true;
-        }
-
-        // Prefer this slot's own half of the keyboard, then any free half
-        string own = DefaultKeyboardSchemeForSlot(rejoinSlot);
-        foreach (var candidate in new[] { own }.Concat(KeyboardSchemes().Where(s => s != own)))
-        {
-            if (IsKeyboardSchemeUsedByOtherSlot(candidate, rejoinSlot)) continue;
+            if (draftBindings.Any(b => b.device is Keyboard && b.scheme == candidate)) continue;
             if (AnyKeyOfSchemePressed(kb, candidate, null))
             {
                 scheme = candidate;
@@ -447,28 +450,28 @@ public class InputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// A (Confirm) on the picked device: South on its gamepad, or the scheme's UI/Submit key
+    /// True if the given action was pressed this frame on a slot's own device / keyboard half
     /// </summary>
-    private bool WasConfirmPressed(string scheme, InputDevice device)
+    private bool WasActionPressed(SlotBinding binding, string actionName)
     {
-        if (device is Gamepad gp) return gp.buttonSouth.wasPressedThisFrame;
+        if (!HasDevice(binding)) return false;
 
-        if (device is Keyboard kb)
-        {
-            if (!isTwoPlayerMode)
-                return KeyboardSchemes().Any(s => AnyKeyOfSchemePressed(kb, s, "Submit"));
-            return AnyKeyOfSchemePressed(kb, scheme, "Submit");
-        }
-        return false;
+        if (binding.device is Gamepad gp && actionsTemplate == null)
+            return actionName == "Submit" ? gp.buttonSouth.wasPressedThisFrame
+                 : actionName == "Select" && gp.selectButton.wasPressedThisFrame;
+
+        string scheme = binding.device is Gamepad ? GamepadScheme : binding.scheme;
+        return AnyKeyOfSchemePressed(binding.device, scheme, actionName);
     }
 
     /// <summary>
-    /// True if a key bound to the given keyboard scheme was pressed this frame
+    /// True if a control bound to the given scheme was pressed this frame on the device
     /// actionName limits the check to one action (e.g. "Submit"); null checks every action
     /// </summary>
-    private bool AnyKeyOfSchemePressed(Keyboard kb, string scheme, string actionName)
+    private bool AnyKeyOfSchemePressed(InputDevice device, string scheme, string actionName)
     {
-        if (actionsTemplate == null) return actionName == null && kb.anyKey.wasPressedThisFrame;
+        if (actionsTemplate == null)
+            return actionName == null && device is Keyboard kb && kb.anyKey.wasPressedThisFrame;
 
         foreach (var action in actionsTemplate)
         {
@@ -478,7 +481,7 @@ public class InputManager : MonoBehaviour
             {
                 if (binding.isComposite || !BindingInGroup(binding, scheme)) continue;
 
-                var control = InputControlPath.TryFindControl(kb, binding.effectivePath) as KeyControl;
+                var control = InputControlPath.TryFindControl(device, binding.effectivePath) as ButtonControl;
                 if (control != null && control.wasPressedThisFrame) return true;
             }
         }
@@ -500,39 +503,71 @@ public class InputManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Stores the confirmed device for the rejoining slot and notifies listeners
+    /// Commits the overlay's roster: stores each slot's device and rebinds the players that changed
+    /// Reservations were already moved while players joined/dejoined on the overlay
     /// </summary>
-    public void FinishRejoin()
+    private void FinishRejoin()
     {
-        if (!waitingForRejoin || pendingDevice == null) return;
+        if (!waitingForRejoin || !AllDraftSlotsFilled()) return;
 
-        int slot = rejoinSlot;
-        SetSlotBinding(slot, pendingScheme, pendingDevice);
-        if (slot < controllers.Length) controllers[slot]?.Bind(pendingDevice, pendingScheme);
+        for (int i = 0; i < draftBindings.Length; i++)
+        {
+            var binding = draftBindings[i];
+            bool changed = binding.device != slotBindings[i].device || binding.scheme != slotBindings[i].scheme;
+            slotBindings[i] = binding;
+
+            int slot = i + 1;
+            PlayerPrefs.SetString($"P{slot}_Scheme", binding.scheme);
+            PlayerPrefs.SetString($"P{slot}_Devices", binding.device.deviceId.ToString());
+
+            if (changed && i < controllers.Length) controllers[i]?.Bind(binding.device, binding.scheme);
+            Debug.Log($"[InputManager] Player {slot}: {binding.scheme} / {binding.device.displayName}");
+        }
+        PlayerPrefs.Save();
 
         waitingForRejoin = false;
-        pendingScheme = null;
-        pendingDevice = null;
-        rejoinSlot = -1;
+        draftBindings = Array.Empty<SlotBinding>();
 
-        Debug.Log($"[InputManager] Rejoin completed for Player {slot + 1}: {slotBindings[slot].scheme} / {slotBindings[slot].device.displayName}");
-        OnRejoinCompleted?.Invoke(slot);
+        Debug.Log("[InputManager] Rejoin completed");
+        OnRejoinCompleted?.Invoke();
     }
 
     /// <summary>
-    /// Reacts when the playing slot's gamepad is unplugged
-    /// 2P: opens the rejoin overlay for that player. 1P: just pauses (keyboard still works)
+    /// In 2P, lets any player dejoin during play, not just the one whose turn it is
+    /// (the waiting player's actions are disabled, so their Select is polled here instead)
     /// </summary>
-    private void CheckActiveGamepadDisconnected()
+    private void CheckIdlePlayersDejoin()
+    {
+        if (!isTwoPlayerMode || waitingForRejoin) return;
+
+        var gm = GameManager.Instance;
+        if (gm == null || gm.CurrentGameState != GameManager.GameState.Playing) return;
+
+        for (int i = 0; i < slotBindings.Length; i++)
+        {
+            if (i == activeSlot) continue; // the active player's Select goes through PlayerInputController
+            if (!WasActionPressed(slotBindings[i], "Select")) continue;
+
+            RequestDejoin(gm, i + 1, isTwoPlayerMode, gm.TotalPlayers);
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Reacts when a player's gamepad is unplugged
+    /// 2P: opens the rejoin overlay for that player, whoever's turn it is. 1P: just pauses (keyboard still works)
+    /// </summary>
+    private void CheckGamepadDisconnected()
     {
         if (waitingForRejoin) return;
 
         var gm = GameManager.Instance;
         if (gm == null || gm.CurrentGameState != GameManager.GameState.Playing) return;
-        if (activeSlot < 0 || activeSlot >= controllers.Length || controllers[activeSlot] == null) return;
 
         if (!isTwoPlayerMode)
         {
+            if (activeSlot < 0 || activeSlot >= controllers.Length || controllers[activeSlot] == null) return;
+
             var controller = controllers[activeSlot];
             if (controller.LastUsedDevice is Gamepad lost && !lost.added)
             {
@@ -544,12 +579,15 @@ public class InputManager : MonoBehaviour
             return;
         }
 
-        var device = slotBindings[activeSlot].device;
-        if (device is Gamepad && !device.added)
+        for (int i = 0; i < slotBindings.Length; i++)
         {
-            Debug.Log($"[InputManager] Player {activeSlot + 1}'s gamepad disconnected. Opening rejoin overlay.");
+            var device = slotBindings[i].device;
+            if (device is not Gamepad || device.added) continue;
+
+            Debug.Log($"[InputManager] Player {i + 1}'s gamepad disconnected. Opening rejoin overlay.");
             OnDeviceLost?.Invoke(device);
-            RequestDejoin(gm, activeSlot + 1, isTwoPlayerMode, gm.TotalPlayers);
+            RequestDejoin(gm, i + 1, isTwoPlayerMode, gm.TotalPlayers);
+            return;
         }
     }
 
@@ -558,6 +596,7 @@ public class InputManager : MonoBehaviour
     /// </summary>
     public bool IsWaitingForRejoin => waitingForRejoin;
     #endregion
+
 
     #region Hot Swap
     /// <summary>
