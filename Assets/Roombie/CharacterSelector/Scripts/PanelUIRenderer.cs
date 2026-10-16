@@ -16,6 +16,11 @@ public class PanelUIRenderer : MonoBehaviour
     [SerializeField] private GameObject joinInstruction;
     [SerializeField] private LocalizedString playerLabelLocalized;
 
+    // Mobile only: taps on a skin icon (its index) or on the character portrait
+    public event System.Action<int> OnSkinIconTapped;
+    public event System.Action OnPortraitTapped;
+    private const float TouchPadding = 6f; // canvas units added around icons for fingers
+
     private PanelState state;
     private CharacterData[] characters;
     private readonly List<Image> skinIcons = new List<Image>();
@@ -33,6 +38,8 @@ public class PanelUIRenderer : MonoBehaviour
         this.playerIndex = index;
 
         ApplyPlayerLabel();
+        if (TouchInput.IsMobile && characterImage != null && characterImage.GetComponent<Button>() == null)
+            MakeTappable(characterImage, () => OnPortraitTapped?.Invoke());
         ShowJoinPrompt();       // default state
         ShowSkinOptions(false); // skins hidden until the character is selected
     }
@@ -154,6 +161,9 @@ public class PanelUIRenderer : MonoBehaviour
                 icon.sprite = skin.skinIcon;
                 icon.color  = Color.white;
                 skinIcons.Add(icon);
+
+                int skinIndex = i;
+                if (TouchInput.IsMobile) MakeTappable(icon, () => OnSkinIconTapped?.Invoke(skinIndex));
             }
             else
             {
@@ -222,6 +232,21 @@ public class PanelUIRenderer : MonoBehaviour
                 go.SetActive(false);
             }
         }
+    }
+
+    /// <summary>
+    /// A Button (no visuals, no keyboard focus) so the tap is handled here and doesn't also count as
+    /// a "tap anywhere to confirm"
+    /// </summary>
+    private static void MakeTappable(Image image, UnityEngine.Events.UnityAction onTap)
+    {
+        image.raycastTarget = true;
+        image.raycastPadding = -Vector4.one * TouchPadding; // negative padding grows the hit area
+
+        var button = image.gameObject.AddComponent<Button>();
+        button.transition = Selectable.Transition.None;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(onTap);
     }
 
     // ---------------- Player Label ----------------

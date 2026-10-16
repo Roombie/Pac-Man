@@ -331,6 +331,24 @@ public class PanelInputHandler : MonoBehaviour
         PlayerDeviceManager.Instance.MarkClaimed();
     }
 
+    /// <summary>
+    /// Joins this panel from the touchscreen (1P only). Touch has no device to reserve:
+    /// keyboard keeps working on the panel, just like a keyboard join in 1P
+    /// </summary>
+    public void ClaimTouch(Touchscreen touchscreen)
+    {
+        if (hasJoined || touchscreen == null) return;
+
+        chosenScheme = "Touch";
+        chosenDeviceIds = new[] { touchscreen.deviceId };
+        hasJoined = true;
+        joinFrame = Time.frameCount;
+
+        Debug.Log($"[PanelInputHandler] P{playerIndex + 1} joined with Touch");
+        CharacterSelectionManager.Instance.NotifyPanelJoined(playerIndex);
+        PlayerDeviceManager.Instance?.MarkClaimed();
+    }
+
     private void ReleaseReservations()
     {
         if (playerInput != null && playerInput.user.valid)

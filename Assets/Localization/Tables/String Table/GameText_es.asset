@@ -220,6 +220,22 @@ MonoBehaviour:
     m_Localized: Presione Espacio, / o A para continuar
     m_Metadata:
       m_Items: []
+  - m_Id: 22928612599361604
+    m_Localized: Toca Para Empezar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361605
+    m_Localized: Toca Para Confirmar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361606
+    m_Localized: Toca Para Jugar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361607
+    m_Localized: Toca La Skin Para Cambiar
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

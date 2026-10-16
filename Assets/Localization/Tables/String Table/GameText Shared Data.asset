@@ -207,6 +207,22 @@ MonoBehaviour:
     m_Key: Victory_Continue
     m_Metadata:
       m_Items: []
+  - m_Id: 22928612599361604
+    m_Key: Mobile_TapToStart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361605
+    m_Key: Mobile_TapToConfirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361606
+    m_Key: Mobile_TapToPlay
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361607
+    m_Key: Mobile_TapSkinToChange
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

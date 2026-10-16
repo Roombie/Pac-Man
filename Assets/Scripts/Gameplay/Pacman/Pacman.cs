@@ -78,40 +78,44 @@ public class Pacman : MonoBehaviour
     /// </summary>
     public void OnMove(InputAction.CallbackContext context)
     {
-        if (isDead || isInputLocked || !movement.enabled ||
-            GameManager.Instance == null ||
-            GameManager.Instance.CurrentGameState != GameManager.GameState.Playing)
-            return;
-
         if (context.performed)
-        {
-            Vector2 inputDirection = context.ReadValue<Vector2>();
-
-            // Prioritize dominant axis (horizontal or vertical)
-            if (Mathf.Abs(inputDirection.x) > Mathf.Abs(inputDirection.y))
-                inputDirection = new Vector2(Mathf.Sign(inputDirection.x), 0f);
-            else
-                inputDirection = new Vector2(0f, Mathf.Sign(inputDirection.y));
-
-            // Save new direction and buffer expiration time
-            if (lastInputDirection != inputDirection)
-            {
-                inputBufferTime = Time.time + bufferDuration;
-                lastInputDirection = inputDirection;
-            }
-
-            // Try to set direction immediately or buffer it
-            TrySetDirection(inputDirection);
-
-            // Update arrow indicator direction
-            UpdateIndicator(inputDirection);
-        }
-        else if (context.canceled)
-        {
-            // Clear buffer when input is released
-            inputBufferTime = 0f;
-        }
+            ApplyMoveInput(context.ReadValue<Vector2>());
+        else if (context.canceled && CanTakeInput)
+            inputBufferTime = 0f; // Clear buffer when input is released
     }
+
+    /// <summary>
+    /// Turns Pac-Man toward a direction (from the Move action or a swipe)
+    /// Handles movement buffering and the arrow indicator
+    /// </summary>
+    public void ApplyMoveInput(Vector2 inputDirection)
+    {
+        if (!CanTakeInput || inputDirection == Vector2.zero) return;
+
+        // Prioritize dominant axis (horizontal or vertical)
+        if (Mathf.Abs(inputDirection.x) > Mathf.Abs(inputDirection.y))
+            inputDirection = new Vector2(Mathf.Sign(inputDirection.x), 0f);
+        else
+            inputDirection = new Vector2(0f, Mathf.Sign(inputDirection.y));
+
+        // Save new direction and buffer expiration time
+        if (lastInputDirection != inputDirection)
+        {
+            inputBufferTime = Time.time + bufferDuration;
+            lastInputDirection = inputDirection;
+        }
+
+        // Try to set direction immediately or buffer it
+        TrySetDirection(inputDirection);
+
+        // Update arrow indicator direction
+        UpdateIndicator(inputDirection);
+    }
+
+    private bool CanTakeInput =>
+        !isDead && !isInputLocked && movement.enabled &&
+        GameManager.Instance != null &&
+        GameManager.Instance.CurrentGameState == GameManager.GameState.Playing;
 
     /// <summary>
     /// Safely attempts to change direction

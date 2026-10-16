@@ -216,6 +216,22 @@ MonoBehaviour:
     m_Localized: Press Space, / or A to continue
     m_Metadata:
       m_Items: []
+  - m_Id: 22928612599361604
+    m_Localized: Tap To Start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361605
+    m_Localized: Tap To Confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361606
+    m_Localized: Tap To Play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22928612599361607
+    m_Localized: Tap Skin To Change
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

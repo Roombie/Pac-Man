@@ -5,6 +5,8 @@ using Roombie.CharacterSelect;
 using UnityEngine.InputSystem.Users;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.UI;
+using TMPro;
 
 public class CharacterSelectionManager : MonoBehaviour
 {
@@ -45,6 +47,10 @@ public class CharacterSelectionManager : MonoBehaviour
     private bool allSelectedFired;
     private bool allConfirmedFired;
 
+    // Touch (1P only): tap = join/confirm, swipe left/right = change, swipe down = back
+    private readonly SwipeDetector swipe = new();
+    private int panelsResetFrame; // the tap that opened this menu must not also join
+
     public bool IsSinglePlayer => expectedPlayers == 1;
 
     private void Awake()
@@ -67,7 +73,189 @@ public class CharacterSelectionManager : MonoBehaviour
         }
     }
 
-    private void Start() => ResetPanels();
+    private void Start()
+    {
+        ResetPanels();
+        if (TouchInput.IsMobile) SetupMobileControls();
+    }
+
+    private void Update()
+    {
+        if (!IsSinglePlayer || Time.frameCount <= panelsResetFrame) return;
+        if (Touchscreen.current == null || panelInputs.Length == 0 || panelInputs[0] == null) return;
+
+        var panel = panelInputs[0];
+
+        // A phone has a single touch player, so there's nobody to wait for: P1 joins on arrival
+        if (TouchInput.IsMobile && !panel.HasJoined)
+        {
+            panel.ClaimTouch(Touchscreen.current);
+            return;
+        }
+
+        if (TouchInput.IsMobile) RefreshMobileHints();
+
+        if (TouchInput.TappedThisFrame())
+        {
+            if (!panel.HasJoined) panel.ClaimTouch(Touchscreen.current);
+            else HandleSubmit(0);
+            return;
+        }
+
+        if (!panel.HasJoined || !swipe.TryGetSwipe(out var direction)) return;
+
+        if (direction.x != 0f) HandleMove(0, (int)direction.x);
+        else if (direction.y < 0f) HandleCancel(0);
+    }
+
+    /// <summary>
+    /// Back from the on-screen button (mobile): steps back through skin -> character -> previous menu
+    /// </summary>
+    public void TouchBack()
+    {
+        if (panelInputs.Length > 0 && panelInputs[0] != null && panelInputs[0].HasJoined) HandleCancel(0);
+        else OnPlayerCancelledBeforeSelection?.Invoke();
+    }
+
+    /// <summary>
+    /// Mobile only, for P1:
+    ///   - the character arrows become tap targets (bigger than they look); the keyboard key-cap icons go
+    ///   - tapping a skin picks it, tapping it again confirms it; tapping the confirmed (yellow) skin
+    ///     un-confirms it and tapping another one switches to it
+    ///   - tapping the character portrait goes back to choosing the character
+    ///   - hint lines under the panels say what a tap does at each step
+    /// </summary>
+    private void SetupMobileControls()
+    {
+        if (panelRenderers.Length == 0 || panelRenderers[0] == null) return;
+        var panel = panelRenderers[0].transform;
+
+        MakeTouchArrow(FindDeep(panel, "Left Arrow Image"), -1);
+        MakeTouchArrow(FindDeep(panel, "Right Arrow Image"), 1);
+
+        foreach (var icon in new[] { "Left Input Icon Image", "Right Input Icon Image" })
+        {
+            var t = FindDeep(panel, icon);
+            if (t != null) t.gameObject.SetActive(false);
+        }
+
+        panelRenderers[0].OnSkinIconTapped += OnSkinIconTapped;
+        panelRenderers[0].OnPortraitTapped += OnPortraitTapped;
+
+        // The hints copy the menu's "Ready?" text so they keep the arcade font and colour
+        var menu = transform.parent;
+        var readyText = menu != null ? FindDeep(menu, "Ready? Text (TMP)") : null;
+        if (readyText != null)
+        {
+            mainHint = CreateHint(readyText, "Tap Hint Text (TMP)", MobileHintY);
+            mainHintKey = "Mobile_TapToConfirm";
+            LocalizedTextKey.Set(mainHint, mainHintKey);
+            changeSkinHint = CreateHint(readyText, "Change Skin Hint Text (TMP)", MobileHintY - MobileHintLineSpacing);
+            changeSkinHint.GetComponent<TMP_Text>().color = ArcadeWhite;
+            LocalizedTextKey.Set(changeSkinHint, "Mobile_TapSkinToChange");
+            changeSkinHint.SetActive(false);
+        }
+    }
+
+    private GameObject CreateHint(Transform source, string name, float y)
+    {
+        var hint = Instantiate(source.gameObject, source.parent);
+        hint.name = name;
+
+        var rect = (RectTransform)hint.transform;
+        rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, y);
+        rect.sizeDelta = new Vector2(MobileHintWidth, rect.sizeDelta.y);
+
+        // One line that shrinks to fit, whatever the language
+        var text = hint.GetComponent<TMP_Text>();
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.fontSizeMax = text.fontSize;
+        text.fontSizeMin = text.fontSize * 0.6f;
+        text.enableAutoSizing = true;
+
+        hint.SetActive(true);
+        return hint;
+    }
+
+    private void RefreshMobileHints()
+    {
+        if (mainHint == null || states.Length == 0) return;
+
+        bool confirmed = states[0].HasConfirmedSkin;
+        string key = confirmed ? "Mobile_TapToPlay" : "Mobile_TapToConfirm";
+        if (key != mainHintKey)
+        {
+            mainHintKey = key;
+            LocalizedTextKey.Set(mainHint, key);
+        }
+
+        if (changeSkinHint.activeSelf != confirmed) changeSkinHint.SetActive(confirmed);
+    }
+
+    private void OnSkinIconTapped(int skinIndex)
+    {
+        if (!TryGetValidState(0, out var state) || !state.HasSelectedCharacter) return;
+
+        if (state.HasConfirmedSkin)
+        {
+            HandleCancel(0); // un-confirm
+            if (skinIndex != state.SkinIndex) SelectSkin(state, skinIndex);
+        }
+        else if (skinIndex == state.SkinIndex) HandleSubmit(0); // second tap confirms
+        else SelectSkin(state, skinIndex);
+    }
+
+    private void OnPortraitTapped()
+    {
+        if (!TryGetValidState(0, out var state)) return;
+
+        if (!state.HasSelectedCharacter)
+        {
+            HandleSubmit(0); // same as tapping anywhere: pick this character
+            return;
+        }
+
+        // Back to choosing the character, from either skin step
+        if (state.HasConfirmedSkin) HandleCancel(0);
+        HandleCancel(0);
+    }
+
+    private void SelectSkin(PanelState state, int skinIndex) => ChangeSkin(0, state, skinIndex - state.SkinIndex);
+
+    private GameObject mainHint;
+    private GameObject changeSkinHint;
+    private string mainHintKey;
+
+    private const float MobileHintY = -150f;          // between the panels and the cherry at the bottom
+    private const float MobileHintLineSpacing = 22f;
+    private const float MobileHintWidth = 420f;       // the portrait canvas is 450 wide
+    private static readonly Color ArcadeWhite = new(0.87f, 0.87f, 1f);
+    private const float ArrowTouchPadding = 18f; // canvas units added around each arrow for fingers
+
+    private void MakeTouchArrow(Transform arrow, int direction)
+    {
+        if (arrow == null) return;
+
+        var image = arrow.GetComponent<Image>();
+        if (image != null)
+        {
+            image.raycastTarget = true;
+            image.raycastPadding = -Vector4.one * ArrowTouchPadding; // negative padding grows the hit area
+        }
+
+        // A Button so taps on it count as UI (TouchInput ignores them) instead of as "confirm"
+        var button = arrow.gameObject.AddComponent<Button>();
+        button.transition = Selectable.Transition.None;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(() => HandleMove(0, direction));
+    }
+
+    private static Transform FindDeep(Transform root, string name)
+    {
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            if (t.name == name) return t;
+        return null;
+    }
 
     /// <summary>
     /// Initialize only the active panels (0..expectedPlayers-1) and subscribe inputs for them.
@@ -76,6 +264,7 @@ public class CharacterSelectionManager : MonoBehaviour
     private void ResetPanels()
     {
         Instance = this;
+        panelsResetFrame = Time.frameCount;
         expectedPlayers = PlayerPrefs.GetInt(SettingsKeys.PlayerCountKey, 1);
         InputUser.listenForUnpairedDeviceActivity = 1; // 1 = true, 0 = false
 

@@ -19,6 +19,9 @@ public class PlayerInputController : MonoBehaviour
     private InputAction pauseAction;
     private InputAction selectAction;
 
+    private readonly SwipeDetector swipe = new();
+    private bool touchEnabled; // 1P only: touch has no device of its own to hand out between players
+
     public void Initialize(int slotIndex, InputActionAsset template)
     {
         SlotIndex = slotIndex;
@@ -72,7 +75,17 @@ public class PlayerInputController : MonoBehaviour
         }
 
         LastUsedDevice = device;
+        touchEnabled = device == null;
         if (wasEnabled) playerMap.Enable();
+    }
+
+    private void Update()
+    {
+        if (!touchEnabled || !playerMap.enabled) return;
+        if (!swipe.TryGetSwipe(out var direction)) return;
+
+        LastUsedDevice = Touchscreen.current;
+        if (TargetActive) Target.ApplyMoveInput(direction);
     }
 
     public void SetTarget(Pacman pacman) => Target = pacman;

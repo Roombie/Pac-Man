@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using UnityEngine.Localization.Settings;
 
 public enum NavigationAxis
@@ -11,7 +12,7 @@ public enum NavigationAxis
     Vertical
 }
 
-public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISelectHandler, IDeselectHandler
+public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISelectHandler, IDeselectHandler, IPointerClickHandler
 {
     [SettingTypeFilter(SettingType.MusicVolumeKey, SettingType.SoundVolumeKey, SettingType.PacmanLivesKey, SettingType.ExtraLifeThresholdKey, SettingType.LanguageKey)]
     public SettingType settingType;
@@ -33,6 +34,12 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
     private bool isSelected = false;
     private static OptionSelectorSettingHandler currentlySelecting = null;
     private ISettingsProvider settingsProvider;
+
+    // Mobile: the arrows sit either side of the value (◄ 5 ►), always visible and tappable
+    private bool touchArrows;
+    private const float TouchArrowGap = 6f;       // canvas units between the value and each arrow
+    private const float TouchArrowScale = 1.5f;   // the key-mode arrows are tiny for a finger
+    private const float TouchArrowPadding = 14f;  // extra hit area around each arrow
 
     void Awake() => arrowSelector = FindFirstObjectByType<ArrowSelector>();
 
@@ -66,6 +73,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
         }
 
         LoadLocalizedOptions();
+        if (TouchInput.IsMobile) SetupTouchArrows();
         ApplyFromSaved();
 
         SetArrowVisibility(false);
@@ -78,6 +86,8 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
         inputActions.UI.Navigate.performed += OnNavigate;
         inputActions.UI.Submit.performed += OnSubmit;
         inputActions.Enable();
+
+        LayoutTouchArrows(); // the value may have changed language while the menu was closed
     }
 
     void OnDisable()
@@ -171,6 +181,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
 
     private void SetArrowVisibility(bool visible)
     {
+        visible |= touchArrows;
         if (leftArrow != null) leftArrow.SetActive(visible);
         if (rightArrow != null) rightArrow.SetActive(visible);
     }
@@ -201,6 +212,7 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
 
         currentIndex = index;
         label.text = options[currentIndex];
+        LayoutTouchArrows();
 
         if (applyImmediately && settingsProvider != null)
         {
@@ -235,11 +247,98 @@ public class OptionSelectorSettingHandler : MonoBehaviour, ISettingHandler, ISel
         label.text = (options != null && currentIndex >= 0 && currentIndex < options.Length)
             ? options[currentIndex]
             : "";
+        LayoutTouchArrows();
     }
 
     private void LoadLocalizedOptions()
     {
         options = settingsProvider?.GetOptions(settingType);
+    }
+
+    /// <summary>
+    /// Touch/click on the row: left of the value steps it down, right of it up, applied right away
+    /// (keyboard and gamepad use the Submit -> Navigate -> Submit edit mode instead)
+    /// </summary>
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)transform, eventData.position, eventData.pressEventCamera, out var local))
+            return;
+
+        StepFromTouch(local.x < ValueCenterInRow().x ? -1 : 1);
+    }
+
+    private void StepFromTouch(int delta)
+    {
+        if (isSelected) return; // already being edited with keys/buttons
+
+        int before = currentIndex;
+        ChangeOption(delta);
+        if (currentIndex == before) return;
+
+        Save();
+        settingsProvider?.ApplySetting(settingType, currentIndex);
+    }
+
+    /// <summary>
+    /// Turns the key-mode arrows into horizontal ◄ ► buttons beside the value
+    /// </summary>
+    private void SetupTouchArrows()
+    {
+        if (leftArrow == null || rightArrow == null || label == null) return;
+
+        SetupTouchArrow(leftArrow, -1);
+        SetupTouchArrow(rightArrow, 1);
+        touchArrows = true;
+        SetArrowVisibility(true);
+    }
+
+    private void SetupTouchArrow(GameObject arrow, int delta)
+    {
+        // The sprite points right; mirroring it gives the left arrow (as in character select)
+        arrow.transform.localRotation = Quaternion.identity;
+        arrow.transform.localScale = new Vector3(delta * TouchArrowScale, TouchArrowScale, 1f);
+
+        if (arrow.TryGetComponent<Image>(out var image))
+        {
+            image.raycastTarget = true;
+            image.raycastPadding = -Vector4.one * TouchArrowPadding; // negative padding grows the hit area
+        }
+
+        if (!arrow.TryGetComponent<Button>(out var button)) button = arrow.AddComponent<Button>();
+        button.transition = Selectable.Transition.None;
+        button.navigation = new Navigation { mode = Navigation.Mode.None };
+        button.onClick.AddListener(() => StepFromTouch(delta));
+    }
+
+    /// <summary>
+    /// Keeps the arrows hugging the value text, whose width changes ("5" vs "Espanol")
+    /// </summary>
+    private void LayoutTouchArrows()
+    {
+        if (!touchArrows) return;
+
+        label.ForceMeshUpdate();
+        Vector2 center = ValueCenterInRow();
+        float half = label.textBounds.size.x / 2f;
+
+        PlaceTouchArrow(leftArrow, center, -(half + TouchArrowGap));
+        PlaceTouchArrow(rightArrow, center, half + TouchArrowGap);
+    }
+
+    // offset: from the value's centre to the arrow's inner edge (negative = left side)
+    private static void PlaceTouchArrow(GameObject arrow, Vector2 valueCenter, float offset)
+    {
+        var rect = (RectTransform)arrow.transform;
+        float halfWidth = rect.rect.width * TouchArrowScale / 2f;
+        float x = valueCenter.x + offset + Mathf.Sign(offset) * halfWidth;
+        rect.localPosition = new Vector3(x, valueCenter.y, rect.localPosition.z);
+    }
+
+    private Vector2 ValueCenterInRow()
+    {
+        var bounds = label.textBounds;
+        Vector3 center = bounds.size.x > 0f ? bounds.center : label.rectTransform.rect.center;
+        return transform.InverseTransformPoint(label.transform.TransformPoint(center));
     }
 
     public void OnSelect(BaseEventData eventData)

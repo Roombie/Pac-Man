@@ -146,6 +146,9 @@ public class InputManager : MonoBehaviour
             controllers[i] = controller;
         }
 
+        // Touch plays 1P only (see PlayerInputController.Bind), and has no Pause key
+        if (!isTwoPlayerMode) TouchPauseButton.CreateIfTouchDevice(transform);
+
         Debug.Log($"[InputManager] Created {controllers.Length} player controller(s). 2P={isTwoPlayerMode}");
     }
 

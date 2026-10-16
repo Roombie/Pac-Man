@@ -35,10 +35,18 @@ public class BackButtonHandler : MonoBehaviour
     private void OnCancelPressed(InputAction.CallbackContext ctx)
     {
         if (!ctx.performed) return;
+        GoBack();
+    }
 
+    /// <summary>
+    /// Same as pressing Cancel: first leaves an option being edited, otherwise backs out of this menu
+    /// Used by the on-screen back button on mobile
+    /// </summary>
+    public void GoBack()
+    {
         if (OptionSelectorSettingHandler.TryCancelCurrentSelection())
             return;
-            
+
         onCancelEvent?.Invoke();
     }
 }

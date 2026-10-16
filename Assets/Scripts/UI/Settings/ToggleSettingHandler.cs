@@ -3,8 +3,9 @@ using UnityEngine.UI;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using TMPro;
+using UnityEngine.EventSystems;
 
-public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
+public class ToggleSettingHandler : MonoBehaviour, ISettingHandler, IPointerClickHandler
 {
     [Header("Setting Config")]
     [SettingTypeFilter(SettingType.ShowIndicatorKey, SettingType.FullscreenKey)]
@@ -25,6 +26,19 @@ public class ToggleSettingHandler : MonoBehaviour, ISettingHandler
 
     private ISettingsProvider settingsProvider;
 
+
+    void Awake()
+    {
+        // Phones are always fullscreen; switching it off only reveals the system bars
+        if (settingType == SettingType.FullscreenKey && TouchInput.IsMobile)
+            SelectableNavigation.HideAndRouteAround(gameObject);
+    }
+
+    // Tapping the label flips the setting too, not just the small toggle box (which handles its own taps)
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (toggle != null && toggle.interactable) toggle.isOn = !toggle.isOn;
+    }
 
     void Start()
     {

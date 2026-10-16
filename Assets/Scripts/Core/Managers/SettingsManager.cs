@@ -61,7 +61,9 @@ public class SettingsManager : MonoBehaviour
     public void ApplyAllFromPrefs()
     {
         // Fullscreen
-        Screen.fullScreen = PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, 1) == 1;
+        // Phones are always fullscreen (the option is hidden there)
+        Screen.fullScreen = TouchInput.IsMobile
+            || PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, 1) == 1;
 
         // Volumes
         float music = PlayerPrefs.GetFloat(SettingsKeys.MusicVolumeKey, 0.6f);

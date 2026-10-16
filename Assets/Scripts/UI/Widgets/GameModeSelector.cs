@@ -19,12 +19,16 @@ public class GameModeSelector : MonoBehaviour
     private InputAction pause; // cached action
     private InputAction submit;
     private int currentMode = 1; // 1 = 1P, 2 = 2P
+    private int enabledFrame;    // the tap that opened this screen must not also confirm it
 
     private void OnEnable()
     {
+        enabledFrame = Time.frameCount;
+
         // Load and apply saved mode
         currentMode = PlayerPrefs.GetInt(SettingsKeys.GameModeKey, 1);
-        ApplyMode();
+        if (TouchInput.IsMobile && currentMode != 1) ToggleMode(); // touch plays 1P only
+        else ApplyMode();
 
         if (pauseAction != null)
         {
@@ -59,6 +63,15 @@ public class GameModeSelector : MonoBehaviour
 
     private void OnSubmitPerformed(InputAction.CallbackContext ctx)
     {
+        onSubmitEvent?.Invoke();
+    }
+
+    private void Update()
+    {
+        // Touch only plays 1P (there's no second touch player to join), so a tap starts a 1P game
+        if (Time.frameCount <= enabledFrame || !TouchInput.TappedThisFrame()) return;
+
+        if (currentMode != 1) ToggleMode();
         onSubmitEvent?.Invoke();
     }
 

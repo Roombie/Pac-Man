@@ -43,7 +43,7 @@ public class AnimationEndInputTrigger : MonoBehaviour
         if (!state.IsName(animationName))
             return;
 
-        if (input.UI.Submit.WasPressedThisFrame())
+        if (input.UI.Submit.WasPressedThisFrame() || TouchInput.TappedThisFrame())
         {
             if (!hasJumpedToEnd && state.normalizedTime < 1f)
             {
