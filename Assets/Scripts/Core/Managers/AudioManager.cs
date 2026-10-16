@@ -13,6 +13,9 @@ public class AudioManager : MonoBehaviour
 
     public int poolSize = 10;
 
+    [Tooltip("Mixer level at 100% volume. Below 0 dB leaves headroom so a full slider isn't full scale")]
+    [Range(-30f, 0f)] public float maxVolumeDb = -12f;
+
     [Header("Music Clips")]
     public AudioClip gameMusic;
     public AudioClip zeroSirenLoop;
@@ -55,8 +58,10 @@ public class AudioManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         InitializePools();
-        ApplySavedVolumes();
     }
+
+    // AudioMixer.SetFloat is ignored during Awake, so volumes are applied here
+    private void Start() => ApplySavedVolumes();
 
     private void InitializePools()
     {
@@ -84,7 +89,7 @@ public class AudioManager : MonoBehaviour
 
         foreach (SettingType type in audioTypes)
         {
-            float volume = GetVolume(type, 1f);
+            float volume = GetVolume(type, 0.6f);
             SetVolume(type, volume);
         }
     }
@@ -107,7 +112,7 @@ public class AudioManager : MonoBehaviour
 
         // Vout = voltage, Vin = input voltage
         // Standard formula dB = 20 dB × log10(Vout / Vin)
-        float dB = Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1f)) * 20f;
+        float dB = Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1f)) * 20f + maxVolumeDb;
         mixer.SetFloat(param, dB);
 
         // Written to disk by SettingsManager after each change (and by Unity on quit), not on every slider tick
