@@ -15,15 +15,8 @@ public class SettingsManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Set saved locale immediately so the very first frame renders in the correct language.
-        var savedCode = PlayerPrefs.GetString(SettingsKeys.LanguageKey, null);
-        if (!string.IsNullOrEmpty(savedCode))
-        {
-            var list = LocalizationSettings.AvailableLocales.Locales;
-            var saved = list.FirstOrDefault(l => l.Identifier.Code == savedCode);
-            if (saved != null)
-                LocalizationSettings.SelectedLocale = saved;
-        }
+        // The saved language is picked at startup by the Player Pref Locale Selector in Localization Settings
+        // (key "LanguageKey"); the locale list isn't loaded yet here, so it can't be set from Awake
 
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
