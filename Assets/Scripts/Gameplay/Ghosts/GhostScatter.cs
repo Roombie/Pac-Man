@@ -58,18 +58,25 @@ public class GhostScatter : GhostNodeSteering
 
     protected override Vector2 ChooseDirection(Node node, Vector2 current)
     {
-        // Elroy keeps chasing Pac-Man during Scatter
-        bool targetPacman =
-            elroyChasesDuringScatter &&
-            ghost.Type == GhostType.Blinky &&
-            ghost.IsElroy &&
-            ghost.CurrentPacman;
+        return GhostNavigation.ChooseTowardTarget(node, current, Target, noUp: IsRedZone(node));
+    }
 
-        Vector2 target = targetPacman
-            ? (Vector2)ghost.CurrentPacman.transform.position
-            : (cornerNode ? (Vector2)cornerNode.transform.position : Position);
+    /// <summary>Tile this ghost is heading for right now: its corner, or Pac-Man for Elroy</summary>
+    public Vector2 Target
+    {
+        get
+        {
+            // Elroy keeps chasing Pac-Man during Scatter
+            bool targetPacman =
+                elroyChasesDuringScatter &&
+                ghost.Type == GhostType.Blinky &&
+                ghost.IsElroy &&
+                ghost.CurrentPacman;
 
-        return GhostNavigation.ChooseTowardTarget(node, current, target, noUp: IsRedZone(node));
+            return targetPacman
+                ? (Vector2)ghost.CurrentPacman.transform.position
+                : (cornerNode ? (Vector2)cornerNode.transform.position : Position);
+        }
     }
 
 #if UNITY_EDITOR

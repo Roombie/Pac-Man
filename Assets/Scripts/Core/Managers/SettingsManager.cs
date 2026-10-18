@@ -62,8 +62,10 @@ public class SettingsManager : MonoBehaviour
     {
         // Fullscreen
         // Phones are always fullscreen (the option is hidden there)
-        Screen.fullScreen = TouchInput.IsMobile
-            || PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, 1) == 1;
+        // Browsers only allow fullscreen from a click/keypress, so on web it's only set from the options toggle
+        if (Application.platform != RuntimePlatform.WebGLPlayer)
+            Screen.fullScreen = TouchInput.IsMobile
+                || PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, 1) == 1;
 
         // Volumes
         float music = PlayerPrefs.GetFloat(SettingsKeys.MusicVolumeKey, 0.6f);
@@ -75,6 +77,8 @@ public class SettingsManager : MonoBehaviour
         bool showIndicator = PlayerPrefs.GetInt(SettingsKeys.ShowIndicatorKey, 1) == 1;
         foreach (var p in FindObjectsByType<Pacman>(FindObjectsSortMode.None))
             p.UpdateIndicatorVisibility(showIndicator);
+
+        GhostTargetMarker.Visible = PlayerPrefs.GetInt(SettingsKeys.ShowGhostTargetsKey, 0) == 1;
     }
 
     public static void Apply(SettingType type, bool on) => Apply(type, on ? 1 : 0);
@@ -141,6 +145,14 @@ public class SettingsManager : MonoBehaviour
                 PlayerPrefs.SetInt(SettingsKeys.ShowIndicatorKey, on ? 1 : 0);
                 foreach (var p in FindObjectsByType<Pacman>(FindObjectsSortMode.None))
                     p.UpdateIndicatorVisibility(on);
+                break;
+            }
+
+            case SettingType.ShowGhostTargetsKey:
+            {
+                bool on = (index == 1);
+                PlayerPrefs.SetInt(SettingsKeys.ShowGhostTargetsKey, on ? 1 : 0);
+                GhostTargetMarker.Visible = on;
                 break;
             }
         }

@@ -10,7 +10,8 @@ public enum SettingType
     PacmanLivesKey,
     ExtraLifeThresholdKey,
     GameModeKey,
-    PlayerCountKey
+    PlayerCountKey,
+    ShowGhostTargetsKey // Keep new values at the end: the enum is serialized as an int
 }
 
 public static class SettingsKeys
@@ -25,7 +26,8 @@ public static class SettingsKeys
         { SettingType.PacmanLivesKey, PacmanLivesKey },
         { SettingType.ExtraLifeThresholdKey, ExtraLifeThresholdKey },
         { SettingType.GameModeKey, GameModeKey },
-        { SettingType.PlayerCountKey, PlayerCountKey }
+        { SettingType.PlayerCountKey, PlayerCountKey },
+        { SettingType.ShowGhostTargetsKey, ShowGhostTargetsKey }
     };
 
     public static string Get(SettingType type) => keys.TryGetValue(type, out var value) ? value : type.ToString();
@@ -36,6 +38,7 @@ public static class SettingsKeys
 
     // General
     public const string ShowIndicatorKey = "ShowIndicator";
+    public const string ShowGhostTargetsKey = "ShowGhostTargets";
     public const string FullscreenKey = "Fullscreen";
     public const string LanguageKey = "LanguageKey";
     public const string PacmanLivesKey = "PacmanLives";

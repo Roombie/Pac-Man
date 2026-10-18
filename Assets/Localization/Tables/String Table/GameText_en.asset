@@ -232,6 +232,10 @@ MonoBehaviour:
     m_Localized: Tap Skin To Change
     m_Metadata:
       m_Items: []
+  - m_Id: 163121521299947520
+    m_Localized: Targets
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

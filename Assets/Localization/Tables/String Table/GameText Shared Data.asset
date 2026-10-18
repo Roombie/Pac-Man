@@ -223,6 +223,10 @@ MonoBehaviour:
     m_Key: Mobile_TapSkinToChange
     m_Metadata:
       m_Items: []
+  - m_Id: 163121521299947520
+    m_Key: OptionsMenu_ShowGhostTargetsKey
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -64,7 +64,9 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
                 => PlayerPrefs.GetInt(SettingsKeys.PacmanLivesKey, GameConstants.MaxLives) - 1,
 
             SettingType.FullscreenKey
-                => PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, Screen.fullScreen ? 1 : 0),
+                => Application.platform == RuntimePlatform.WebGLPlayer
+                    ? (Screen.fullScreen ? 1 : 0) // Web: fullscreen isn't restored from prefs, show the real state
+                    : PlayerPrefs.GetInt(SettingsKeys.FullscreenKey, Screen.fullScreen ? 1 : 0),
 
             SettingType.ExtraLifeThresholdKey
                 => System.Array.IndexOf(GameConstants.ExtraPoints, PlayerPrefs.GetInt(SettingsKeys.ExtraLifeThresholdKey, GameConstants.ExtraPoints[0])),
@@ -77,6 +79,9 @@ public class OptionsMenu : MonoBehaviour, ISettingsProvider
 
             SettingType.ShowIndicatorKey
                 => PlayerPrefs.GetInt(SettingsKeys.ShowIndicatorKey, 1),
+
+            SettingType.ShowGhostTargetsKey
+                => PlayerPrefs.GetInt(SettingsKeys.ShowGhostTargetsKey, 0),
 
             _ => 0
         };

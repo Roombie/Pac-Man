@@ -9,6 +9,9 @@ public class GhostChase : GhostNodeSteering
 
     protected override Ghost.Mode SteeringMode => Ghost.Mode.Chase;
 
+    /// <summary>Tile this ghost is heading for right now (needs a current Pac-Man)</summary>
+    public Vector2 Target => GetChaseTarget();
+
     protected override Vector2 ChooseDirection(Node node, Vector2 current)
     {
         if (!ghost.CurrentPacman) return current;

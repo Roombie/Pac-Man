@@ -68,6 +68,8 @@ public class Ghost : MonoBehaviour
 
         if (movement) levelSpeed = movement.speed;
 
+        if (!GetComponent<GhostTargetMarker>()) gameObject.AddComponent<GhostTargetMarker>();
+
         EnableOnly(CurrentMode);
     }
 
@@ -88,6 +90,24 @@ public class Ghost : MonoBehaviour
         settingMode = false;
 
         ModeChanged?.Invoke(this, prev, newMode);
+    }
+
+    /// <summary>
+    /// Where this ghost is steering right now. Only Scatter and Chase aim at a tile:
+    /// frightened ghosts turn at random, and eyes/home ghosts follow fixed paths
+    /// </summary>
+    public bool TryGetTarget(out Vector2 target)
+    {
+        target = default;
+
+        if (CurrentMode == Mode.Scatter && scatter)
+            target = scatter.Target;
+        else if (CurrentMode == Mode.Chase && chase && CurrentPacman)
+            target = chase.Target;
+        else
+            return false;
+
+        return true;
     }
 
     /// <summary>Normal (non-Elroy) speed for the current level, in world units per second</summary>
