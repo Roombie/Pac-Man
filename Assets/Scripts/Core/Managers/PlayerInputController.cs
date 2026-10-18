@@ -21,7 +21,7 @@ public class PlayerInputController : MonoBehaviour
 
     private readonly SwipeDetector swipe = new();
     private bool touchEnabled; // 1P only: touch has no device of its own to hand out between players
-    private Vector2 pendingSwipe; // Swipe made while Pacman couldn't take input, applied once it can
+    private Vector2 pendingDirection; // Last direction pressed/swiped while Pacman couldn't move, applied once it can
 
     public void Initialize(int slotIndex, InputActionAsset template)
     {
@@ -87,29 +87,30 @@ public class PlayerInputController : MonoBehaviour
         if (touchEnabled && swipe.TryGetSwipe(out var direction))
         {
             LastUsedDevice = Touchscreen.current;
-            pendingSwipe = direction;
+            if (!TargetActive || !Target.ApplyMoveInput(direction)) pendingDirection = direction;
+            else pendingDirection = Vector2.zero;
         }
 
         if (!TargetActive) return;
 
         // Re-apply the held direction every frame: Move only fires when its value changes, so a key
-        // pressed during a freeze (ghost eaten, READY, pause) would otherwise be lost once it ends
+        // held through a freeze (ghost eaten, READY, pause) would otherwise be lost once it ends
         Vector2 held = moveAction.ReadValue<Vector2>();
         if (held != Vector2.zero)
         {
-            Target.ApplyMoveInput(held);
-            pendingSwipe = Vector2.zero; // A held direction wins over an older swipe
+            if (Target.ApplyMoveInput(held)) pendingDirection = Vector2.zero; // Held wins over an older press
         }
-        else if (pendingSwipe != Vector2.zero && Target.ApplyMoveInput(pendingSwipe))
+        // A direction tapped and released during the freeze still counts once Pacman can move
+        else if (pendingDirection != Vector2.zero && Target.ApplyMoveInput(pendingDirection))
         {
-            pendingSwipe = Vector2.zero;
+            pendingDirection = Vector2.zero;
         }
     }
 
     public void SetTarget(Pacman pacman)
     {
         Target = pacman;
-        pendingSwipe = Vector2.zero;
+        pendingDirection = Vector2.zero;
     }
 
     public void SetInputEnabled(bool enabled)
@@ -127,7 +128,20 @@ public class PlayerInputController : MonoBehaviour
     private void OnMove(InputAction.CallbackContext ctx)
     {
         Track(ctx);
-        if (TargetActive) Target.OnMove(ctx);
+
+        if (ctx.performed)
+        {
+            // Pacman is hidden or frozen: remember the press instead of dropping it
+            Vector2 direction = ctx.ReadValue<Vector2>();
+            if (direction == Vector2.zero) return;
+
+            if (TargetActive && Target.ApplyMoveInput(direction)) pendingDirection = Vector2.zero;
+            else pendingDirection = direction;
+        }
+        else if (TargetActive)
+        {
+            Target.OnMove(ctx);
+        }
     }
 
     private void OnPause(InputAction.CallbackContext ctx)
