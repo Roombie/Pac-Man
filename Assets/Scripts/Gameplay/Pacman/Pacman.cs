@@ -87,10 +87,11 @@ public class Pacman : MonoBehaviour
     /// <summary>
     /// Turns Pac-Man toward a direction (from the Move action or a swipe)
     /// Handles movement buffering and the arrow indicator
+    /// Returns false if Pac-Man can't take input right now (frozen, locked, not playing)
     /// </summary>
-    public void ApplyMoveInput(Vector2 inputDirection)
+    public bool ApplyMoveInput(Vector2 inputDirection)
     {
-        if (!CanTakeInput || inputDirection == Vector2.zero) return;
+        if (!CanTakeInput || inputDirection == Vector2.zero) return false;
 
         // Prioritize dominant axis (horizontal or vertical)
         if (Mathf.Abs(inputDirection.x) > Mathf.Abs(inputDirection.y))
@@ -110,6 +111,7 @@ public class Pacman : MonoBehaviour
 
         // Update arrow indicator direction
         UpdateIndicator(inputDirection);
+        return true;
     }
 
     private bool CanTakeInput =>
