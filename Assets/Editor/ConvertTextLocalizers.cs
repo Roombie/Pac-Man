@@ -10,6 +10,7 @@ using UnityEngine.Events;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.PropertyVariants;
+using UnityEngine.Localization.PropertyVariants.TrackedObjects;
 using UnityEngine.Localization.PropertyVariants.TrackedProperties;
 using UnityEngine.SceneManagement;
 
@@ -18,7 +19,8 @@ using UnityEngine.SceneManagement;
 /// GameObjectLocalizer (Property Variants) translates once in Start and writes the text field directly, so texts
 /// that are hidden and shown again (animations) can miss the translation. LocalizeStringEvent refreshes on every
 /// enable and language change and goes through TMP's text property
-/// Localizers that do anything else (several properties, fonts, smart-string variables) are left alone and listed
+/// Localizers that also change layout per language are split: the text moves to a LocalizeStringEvent and the
+/// localizer keeps the rest. Texts with other tracked text properties or smart-string variables are left alone and listed
 /// </summary>
 public static class ConvertTextLocalizers
 {
@@ -31,8 +33,9 @@ public static class ConvertTextLocalizers
     private static void Convert()
     {
         if (!EditorUtility.DisplayDialog("Convert text localizers",
-                "Replaces every GameObjectLocalizer that only translates a TextMeshPro text with a LocalizeStringEvent, " +
-                "in every scene in Build Settings, and saves those scenes.\n\nCommit or back up first.",
+                "Moves every localized TextMeshPro text from its GameObjectLocalizer to a LocalizeStringEvent " +
+                "(localizers that also change layout keep the layout), in every scene in Build Settings, " +
+                "and saves those scenes.\n\nCommit or back up first.",
                 "Convert", "Cancel"))
             return;
 
@@ -60,7 +63,7 @@ public static class ConvertTextLocalizers
                 {
                     string path = PathOf(localizer.transform);
 
-                    if (!TryGetText(localizer, out var text, out var source, out var reason))
+                    if (!TryGetText(localizer, out var tracked, out var text, out var source, out var reason))
                     {
                         skipped++;
                         log.AppendLine($"  SKIP {path}: {reason}");
@@ -68,8 +71,9 @@ public static class ConvertTextLocalizers
                     }
 
                     converted++;
-                    log.AppendLine($"  {(convert ? "OK  " : "WILL")} {path}");
-                    if (convert) ConvertOne(localizer, text, source);
+                    bool split = localizer.TrackedObjects.Count > 1;
+                    log.AppendLine($"  {(convert ? "OK  " : "WILL")} {path}{(split ? " (text only, localizer keeps the layout)" : "")}");
+                    if (convert) ConvertOne(localizer, tracked, text, source);
                 }
 
                 if (convert) EditorSceneManager.SaveScene(scene);
@@ -91,21 +95,30 @@ public static class ConvertTextLocalizers
                 yield return localizer;
     }
 
-    /// <summary>Only localizers whose single job is a TMP text's m_text, without smart-string variables</summary>
-    private static bool TryGetText(GameObjectLocalizer localizer, out TMP_Text text, out LocalizedString source, out string reason)
+    /// <summary>
+    /// The localizer's TMP text, when that text only tracks m_text without smart-string variables
+    /// Other tracked objects (e.g. the RectTransform for per-language layout) don't matter, they stay on the localizer
+    /// </summary>
+    private static bool TryGetText(GameObjectLocalizer localizer, out TrackedObject tracked, out TMP_Text text,
+                                   out LocalizedString source, out string reason)
     {
+        tracked = null;
         text = null;
         source = null;
 
         if (localizer.GetComponent<LocalizeStringEvent>()) { reason = "already has a LocalizeStringEvent"; return false; }
-        if (localizer.TrackedObjects.Count != 1) { reason = $"tracks {localizer.TrackedObjects.Count} objects"; return false; }
 
-        var tracked = localizer.TrackedObjects[0];
-        text = tracked?.Target as TMP_Text;
-        if (text == null) { reason = "doesn't target a TextMeshPro text"; return false; }
+        foreach (var candidate in localizer.TrackedObjects)
+        {
+            if (candidate?.Target is not TMP_Text candidateText) continue;
+            if (tracked != null) { reason = "tracks several texts"; return false; }
+            tracked = candidate;
+            text = candidateText;
+        }
+        if (tracked == null) { reason = "doesn't target a TextMeshPro text"; return false; }
 
         var properties = tracked.TrackedProperties;
-        if (properties.Count != 1) { reason = $"tracks {properties.Count} properties"; return false; }
+        if (properties.Count != 1) { reason = $"text tracks {properties.Count} properties"; return false; }
 
         if (properties[0] is not LocalizedStringProperty { PropertyPath: "m_text" } property)
         {
@@ -121,7 +134,7 @@ public static class ConvertTextLocalizers
         return true;
     }
 
-    private static void ConvertOne(GameObjectLocalizer localizer, TMP_Text text, LocalizedString source)
+    private static void ConvertOne(GameObjectLocalizer localizer, TrackedObject tracked, TMP_Text text, LocalizedString source)
     {
         var go = localizer.gameObject;
 
@@ -136,7 +149,18 @@ public static class ConvertTextLocalizers
         var action = (UnityAction<string>)Delegate.CreateDelegate(typeof(UnityAction<string>), text, setter);
         UnityEventTools.AddPersistentListener(localizeEvent.OnUpdateString, action);
 
-        Undo.DestroyObjectImmediate(localizer);
+        if (localizer.TrackedObjects.Count == 1)
+        {
+            Undo.DestroyObjectImmediate(localizer);
+        }
+        else
+        {
+            // Per-language layout stays on the localizer; only the text moves
+            Undo.RecordObject(localizer, "Move localized text to LocalizeStringEvent");
+            localizer.TrackedObjects.Remove(tracked);
+            EditorUtility.SetDirty(localizer);
+        }
+
         EditorUtility.SetDirty(localizeEvent);
         EditorSceneManager.MarkSceneDirty(go.scene);
     }
