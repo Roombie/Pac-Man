@@ -91,6 +91,13 @@ public class PlayerInputController : MonoBehaviour
             else pendingDirection = Vector2.zero;
         }
 
+        // A new life starts clean: nothing pressed before or during the death carries over to the respawn
+        if (IsTargetDead)
+        {
+            pendingDirection = Vector2.zero;
+            return;
+        }
+
         if (!TargetActive) return;
 
         // Re-apply the held direction every frame: Move only fires when its value changes, so a key
@@ -116,6 +123,7 @@ public class PlayerInputController : MonoBehaviour
     public void SetInputEnabled(bool enabled)
     {
         if (playerMap == null) return;
+        pendingDirection = Vector2.zero; // Turn changes (2P) and pausing start without an old press
         if (enabled) playerMap.Enable();
         else playerMap.Disable();
     }
@@ -125,6 +133,9 @@ public class PlayerInputController : MonoBehaviour
     // Pacman only reacts while it's actually in the maze (it gets hidden during sequences)
     private bool TargetActive => Target != null && Target.gameObject.activeInHierarchy;
 
+    // Stays true from the hit until the respawn resets Pacman
+    private bool IsTargetDead => Target != null && Target.isDead;
+
     private void OnMove(InputAction.CallbackContext ctx)
     {
         Track(ctx);
@@ -133,7 +144,7 @@ public class PlayerInputController : MonoBehaviour
         {
             // Pacman is hidden or frozen: remember the press instead of dropping it
             Vector2 direction = ctx.ReadValue<Vector2>();
-            if (direction == Vector2.zero) return;
+            if (direction == Vector2.zero || IsTargetDead) return;
 
             if (TargetActive && Target.ApplyMoveInput(direction)) pendingDirection = Vector2.zero;
             else pendingDirection = direction;

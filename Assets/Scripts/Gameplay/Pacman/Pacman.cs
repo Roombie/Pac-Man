@@ -68,8 +68,9 @@ public class Pacman : MonoBehaviour
         if (facingDirection != Vector2.zero && transform.rotation != facingRotation)
             transform.rotation = facingRotation;
 
-        // freeze animation if blocked
-        // animator.speed = movement.isBlocked ? 0f : 1f;
+        // Mouth stops while pressed against a wall. Sequences that freeze the animation (death, ghost eaten,
+        // READY) also stop this Update, so they never fight over animator.speed
+        animator.speed = movement.IsStuck ? 0f : 1f;
     }
 
     /// <summary>

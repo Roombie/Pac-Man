@@ -17,6 +17,8 @@ public class Movement : MonoBehaviour
     public Vector3 startingPosition { get; private set; }
     /// <summary>True if the next tile ahead is a wall. Computed on demand (only the debug HUD reads it)</summary>
     public bool isBlocked => direction != Vector2.zero && Occupied(direction);
+    /// <summary>True while the last physics step didn't move it (stopped against a wall). Not set by dot-eating stalls</summary>
+    public bool IsStuck { get; private set; }
 
     [Header("Cornering")]
     [SerializeField] private bool corneringEnabled = true;
@@ -35,6 +37,9 @@ public class Movement : MonoBehaviour
     private Vector2 cornerDir = Vector2.zero;  // the perpendicular nextDirection we’re cornering into
 
     private float stallTime; // seconds left standing still (Pac-Man eating dots)
+
+    private Vector2 lastStepPosition; // Position at the previous moving step, to tell when it stopped
+    private bool hasLastStep;
 
     private void Awake()
     {
@@ -71,6 +76,7 @@ public class Movement : MonoBehaviour
         cornering = false;
         cornerDir = Vector2.zero;
         stallTime = 0f;
+        ClearStuck();
         enabled = true;
 
         Physics2D.SyncTransforms();
@@ -88,6 +94,7 @@ public class Movement : MonoBehaviour
         nextDirection = Vector2.zero;
         cornering = false;
         cornerDir = Vector2.zero;
+        ClearStuck();
 
         if (rb != null)
         {
@@ -132,6 +139,7 @@ public class Movement : MonoBehaviour
         if (stallTime > 0f)
         {
             stallTime -= Time.fixedDeltaTime;
+            hasLastStep = false; // Standing still on purpose, not stuck
             return;
         }
 
@@ -139,7 +147,15 @@ public class Movement : MonoBehaviour
         float step = speed * speedMultiplier * envMultiplier * Time.fixedDeltaTime;
 
         if (direction == Vector2.zero)
+        {
+            ClearStuck();
             return;
+        }
+
+        // The previous step's MovePosition has been applied by now: no change means it couldn't move
+        IsStuck = hasLastStep && (pos - lastStepPosition).sqrMagnitude < 1e-8f;
+        lastStepPosition = pos;
+        hasLastStep = true;
 
         if (centerTurns)
         {
@@ -181,6 +197,14 @@ public class Movement : MonoBehaviour
             Vector2 translation = direction * step;
             rb.MovePosition(pos + translation);
         }
+    }
+
+    private void OnDisable() => ClearStuck(); // Freezes and sequences start over
+
+    private void ClearStuck()
+    {
+        IsStuck = false;
+        hasLastStep = false;
     }
 
     /// <summary>Stops movement for a moment without changing direction (arcade dot-eating pause)</summary>
